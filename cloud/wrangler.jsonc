@@ -1,0 +1,59 @@
+{
+  // 摊位助手云端同步：Cloudflare Worker + Durable Objects（每个团队一个，内置 SQLite）+ D1（账号）
+  // 两个环境：
+  //   生产 abacus.naturoeye.com      npm run deploy
+  //   开发 abacus.dev.naturoeye.com  npm run deploy:dev
+  // 各自独立的 Worker、数据库、Durable Objects 和密钥，数据互不相通。
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "abacus-cloud",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TeamSync"] }],
+  "observability": { "enabled": true },
+
+  // ---------- 生产 ----------
+  "routes": [{ "pattern": "abacus.naturoeye.com", "custom_domain": true }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "abacus",
+      "database_id": "9e724930-79a7-40f4-8f78-4045de207397",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "TEAM", "class_name": "TeamSync" }]
+  },
+  "vars": {
+    // resend：通过 Resend 发验证码邮件。
+    // 本地开发在 .dev.vars 里覆盖为 log：验证码直接返回给客户端，绝不能用于正式环境。
+    "EMAIL_MODE": "resend",
+    "EMAIL_FROM": "摊位助手 <noreply@mail.naturoeye.com>"
+  },
+
+  "env": {
+    // ---------- 开发 ----------
+    "dev": {
+      "name": "abacus-cloud-dev",
+      "routes": [{ "pattern": "abacus.dev.naturoeye.com", "custom_domain": true }],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "abacus-dev",
+          "database_id": "dc671db1-3cd7-4518-b855-9d760df76fa5",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [{ "name": "TEAM", "class_name": "TeamSync" }]
+      },
+      "vars": {
+        "EMAIL_MODE": "resend",
+        "EMAIL_FROM": "摊位助手（开发） <noreply@mail.naturoeye.com>",
+        // 以这个后缀结尾的测试邮箱不发邮件，验证码直接返回（方便模拟器和自动测试）。
+        // 只在开发环境设置；真实邮箱照常收邮件。
+        "DEV_CODE_SUFFIX": "@test.local"
+      }
+    }
+  }
+}

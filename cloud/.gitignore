@@ -1,0 +1,6 @@
+node_modules/
+.wrangler/
+.dev.vars
+.wrangler-home/
+.key-wrap-secret
+.key-wrap-secret-dev

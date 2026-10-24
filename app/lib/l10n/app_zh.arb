@@ -1,0 +1,513 @@
+{
+  "@@locale": "zh",
+  "appTitle": "摊位助手",
+  "navPos": "收银",
+  "navOrders": "订单",
+  "navProducts": "商品",
+  "navStats": "统计",
+  "navSettings": "设置",
+  "comingSoon": "即将推出",
+  "offlineReady": "离线可用",
+  "save": "保存",
+  "cancel": "取消",
+  "delete": "删除",
+  "confirm": "确定",
+  "add": "添加",
+  "required": "必填",
+  "invalidAmount": "请输入正确的金额",
+  "invalidNumber": "请输入整数",
+  "none": "无",
+  "cart": "购物车",
+  "cartEmpty": "点商品加入购物车",
+  "checkout": "结账",
+  "clearCart": "清空",
+  "itemCount": "{count} 件",
+  "@itemCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subtotal": "小计",
+  "discount": "优惠",
+  "total": "合计",
+  "all": "全部",
+  "chooseEvent": "选择场次",
+  "noEventTitle": "还没有选择场次",
+  "noEventBody": "先新建或选择一个场次，收银台只显示本场带来的货。",
+  "noStockTitle": "本场还没有备货",
+  "noStockBody": "在「备货」里选择要带到本场的商品和数量。",
+  "goStock": "去备货",
+  "stockLeft": "剩 {count}",
+  "@stockLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chooseVariant": "选择规格",
+  "discountTitle": "整单优惠",
+  "discountAmountOff": "立减",
+  "discountPercentOff": "打折",
+  "discountFixedTotal": "一口价",
+  "discountPercentHint": "优惠百分比，如 20 表示 8 折",
+  "removeDiscount": "取消优惠",
+  "paymentMethod": "支付方式",
+  "cashTendered": "实收现金",
+  "change": "找零",
+  "notEnoughCash": "实收不足",
+  "exactAmount": "刚好",
+  "noQrImage": "还没有上传收款码，可在「设置 › 支付方式」里上传",
+  "confirmPayment": "确认收款",
+  "orderSaved": "已保存订单 {number}",
+  "@orderSaved": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "noPaymentMethods": "没有可用的支付方式，请在设置里启用",
+  "addProduct": "添加商品",
+  "editProduct": "编辑商品",
+  "noProducts": "还没有商品，点右下角添加",
+  "productName": "名称",
+  "creator": "作者",
+  "newCreator": "新建作者…",
+  "creatorName": "作者名",
+  "tags": "标签",
+  "tagsHint": "用逗号分隔，如：亚克力,徽章",
+  "kindSingle": "单品",
+  "kindVariants": "多规格",
+  "kindBundle": "套装",
+  "price": "售价",
+  "cost": "成本",
+  "variantLabel": "规格名",
+  "variantLabelHint": "如：红色 / 角色A",
+  "addVariant": "添加规格",
+  "needVariant": "至少需要一个规格",
+  "bundlePrice": "套装价",
+  "bundleComponents": "套装内容",
+  "addComponent": "添加商品",
+  "needComponent": "套装至少要包含一件商品",
+  "componentsValue": "单买合计 {amount}",
+  "@componentsValue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "chooseImage": "选择图片",
+  "removeImage": "移除图片",
+  "deleteProductTitle": "删除这个商品？",
+  "deleteProductBody": "历史订单不受影响。",
+  "variantCount": "{count} 个规格",
+  "@variantCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bundleSummary": "套装 · {count} 件",
+  "@bundleSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noComponentsAvailable": "先添加单品或多规格商品，才能组成套装",
+  "events": "场次",
+  "newEvent": "新建场次",
+  "editEvent": "编辑场次",
+  "eventName": "展会名称",
+  "eventNameHint": "如：CP30",
+  "eventDate": "日期",
+  "eventBooth": "摊位号",
+  "noEvents": "还没有场次，点右下角新建",
+  "currentEvent": "当前场次",
+  "stockForEvent": "备货",
+  "eventQty": "本场数量",
+  "bundleAvailable": "本场可售 {count} 套（按成分库存自动计算）",
+  "@bundleAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noOrders": "本场还没有订单",
+  "searchOrders": "搜索单号",
+  "ordersSummary": "{count} 单 · 实收 {amount}",
+  "@ordersSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "refunded": "已退款",
+  "refund": "整单退款",
+  "refundTitle": "确认退款？",
+  "refundBody": "将记录退款并把商品加回本场库存。",
+  "refundReason": "原因（可选）",
+  "refundDone": "已退款",
+  "orderDetail": "订单详情",
+  "paymentMethods": "支付方式",
+  "addPaymentMethod": "添加支付方式",
+  "editPaymentMethod": "编辑支付方式",
+  "paymentName": "名称",
+  "paymentKindCash": "现金",
+  "paymentKindQr": "收款码",
+  "paymentKindCard": "刷卡",
+  "paymentKindOther": "其他",
+  "uploadQr": "上传收款码",
+  "enabled": "启用",
+  "thisDevice": "本机设备",
+  "deviceCode": "设备号 {code} · 单号前缀 {prefix}",
+  "@deviceCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "prefix": {
+        "type": "String"
+      }
+    }
+  },
+  "priceFrom": "{price}起",
+  "@priceFrom": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "teamAndDevices": "团队与设备",
+  "teamName": "团队名称",
+  "devicesInTeam": "团队里的设备",
+  "thisDeviceTag": "本机",
+  "online": "在线",
+  "offline": "离线",
+  "inviteDevice": "邀请新设备",
+  "inviteTitle": "邀请新设备",
+  "inviteBody": "在新设备上打开 App，进入「设置 › 团队与设备 › 加入团队」，扫描这个二维码。新设备的订单号前缀将是 {code}。",
+  "@inviteBody": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "copyInviteCode": "复制邀请码",
+  "inviteCopied": "邀请码已复制",
+  "inviteWarning": "二维码里包含团队密钥，只给自己团队的设备扫。",
+  "joinTeam": "加入团队",
+  "joinTeamHint": "扫描团队里任意一台设备上的邀请二维码，或粘贴邀请码。",
+  "pasteInvite": "邀请码",
+  "invalidInvite": "邀请码无效",
+  "joinConfirmTitle": "加入「{team}」？",
+  "@joinConfirmTitle": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "joinConfirmBody": "本机现有的商品、场次和订单都会被清空，然后从团队里的其他设备同步数据。",
+  "join": "加入",
+  "cameraUnavailable": "无法使用相机，请粘贴邀请码",
+  "syncConnected": "已连接 {count} 台",
+  "@syncConnected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncAlone": "单机",
+  "syncHelp": "同一团队的设备连在同一个 Wi-Fi 或手机热点下会自动互相同步，不需要外网。",
+  "syncError": "同步服务启动失败：{error}",
+  "@syncError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "rename": "改名",
+  "deviceName": "设备名称",
+  "topSellers": "热销榜",
+  "byCreator": "按作者分账",
+  "byPayment": "按支付方式",
+  "noCreator": "未设置作者",
+  "revenue": "实收",
+  "orders": "订单",
+  "itemsSold": "售出件数",
+  "averageOrder": "客单价",
+  "discountTotal": "优惠合计",
+  "refunds": "退款",
+  "orderCount": "{count} 单",
+  "exportCsv": "导出订单 CSV",
+  "@orderCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cloudBackup": "云端备份",
+  "cloudSignedOutHint": "用邮箱登录后自动备份到云端，换手机也能找回数据；不在一起的设备也能互相同步。",
+  "signInWithEmail": "用邮箱登录",
+  "signOut": "退出登录",
+  "signOutTitle": "退出云端登录？",
+  "signOutBody": "本机数据不会删除，只是不再备份到云端。",
+  "cloudConnecting": "正在连接云端…",
+  "cloudConnected": "已连接，实时备份中",
+  "cloudOffline": "暂时连不上云端，有网后自动同步",
+  "lastSync": "上次同步 {time}",
+  "@lastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "neverSynced": "还没有同步过",
+  "email": "邮箱",
+  "sendCode": "发送验证码",
+  "verificationCode": "验证码",
+  "codeSentTo": "验证码已发送到 {email}，10 分钟内有效",
+  "@codeSentTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "devCodeHint": "开发模式：验证码已自动填好",
+  "signIn": "登录",
+  "resendCode": "重新发送",
+  "cloudSignedIn": "已开启云端备份",
+  "restoreFromCloud": "用邮箱从云端恢复",
+  "restoreHint": "登录后选择要恢复的团队，所有商品、场次和订单会下载到本机。",
+  "chooseTeamToRestore": "选择要恢复的团队",
+  "noCloudTeams": "这个邮箱下还没有备份过的团队",
+  "restoreConfirmTitle": "恢复「{team}」？",
+  "@restoreConfirmTitle": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreConfirmBody": "本机现有的数据会被清空，然后从云端下载这个团队的全部数据。",
+  "restore": "恢复",
+  "restoring": "正在从云端下载…",
+  "errInvalidEmail": "邮箱格式不对",
+  "errTooSoon": "发送太频繁，请 1 分钟后再试",
+  "errTooManyToday": "今天发送次数太多，请明天再试",
+  "errWrongCode": "验证码不对",
+  "errCodeExpired": "验证码已过期，请重新发送",
+  "errTooManyAttempts": "输错次数太多，请重新发送验证码",
+  "errNetwork": "连不上云端，请检查网络",
+  "errGeneric": "出错了：{code}",
+  "@errGeneric": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "endEvent": "结束场次",
+  "reopenEvent": "重新开启",
+  "eventEnded": "已结束",
+  "endEventTitle": "结束「{name}」？",
+  "@endEventTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "endEventSales": "本场 {count} 单 · 实收 {amount}",
+  "@endEventSales": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "endEventReturn": "本场剩余 {count} 件：",
+  "@endEventReturn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "endEventNothing": "本场没有剩余的货。",
+  "endEventOversold": "{name} 卖超 {count} 件",
+  "@endEventOversold": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "endEventMore": "等共 {count} 种",
+  "@endEventMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "endEventHint": "结束后收银台不再显示这个场次，订单和统计照常保留；点错了可以重新开启。",
+  "eventEndedDone": "「{name}」已结束，剩余 {count} 件",
+  "@eventEndedDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reopenEventTitle": "重新开启「{name}」？",
+  "@reopenEventTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reopenEventBody": "重新开启后可以继续在这个场次收银。",
+  "eventEndedTitle": "「{name}」已结束",
+  "@eventEndedTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "eventEndedBody": "选择另一个场次继续收银，或重新开启这个场次。",
+  "endPromptTitle": "「{name}」的日期已经过了，结束了吗？",
+  "@endPromptTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "endPromptBody": "结束后收银台不再显示这个场次，剩余数量会保留，下一场备货时可以沿用。",
+  "notYet": "还没结束",
+  "endPreviousTitle": "上一场「{name}」还没结束",
+  "@endPreviousTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "endPreviousBody": "还剩 {count} 件，要先结束它吗？剩余数量会保留，新场次备货时可以沿用。",
+  "@endPreviousBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "endPreviousConfirm": "结束「{name}」",
+  "@endPreviousConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "later": "先不",
+  "paymentRemarkHint": "请客人付款时在备注里填写",
+  "paymentReceived": "已收到付款",
+  "confirmLater": "稍后确认收款",
+  "orderSavedPending": "已保存订单 {number}，待确认收款",
+  "@orderSavedPending": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingPayment": "待确认收款",
+  "filterAll": "全部",
+  "filterPending": "待确认收款",
+  "confirmReceived": "确认已收款",
+  "paymentCode": "付款备注码",
+  "paymentConfirmedAt": "{time} 确认收款",
+  "@paymentConfirmedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentPendingBody": "核对到客人备注 {code} 的付款后，点下面的按钮。",
+  "@paymentPendingBody": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersPendingSummary": "待确认 {count} 单 · {amount}",
+  "@ordersPendingSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentConfirmedDone": "已确认收款",
+  "searchOrdersHint": "搜索单号或付款备注码",
+  "allEvents": "全部场次",
+  "eventComparison": "各场对比",
+  "comparisonOrders": "{count} 单",
+  "noEventDate": "未设日期",
+  "@comparisonOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "useLeftover": "沿用上一场剩余",
+  "useLeftoverBody": "把「{name}」剩下的 {count} 件设为本场数量？",
+  "noLeftover": "之前的场次没有剩余的货",
+  "@useLeftoverBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}

@@ -1,0 +1,513 @@
+{
+  "@@locale": "en",
+  "appTitle": "Booth Helper",
+  "navPos": "Till",
+  "navOrders": "Orders",
+  "navProducts": "Goods",
+  "navStats": "Stats",
+  "navSettings": "Settings",
+  "comingSoon": "Coming soon",
+  "offlineReady": "Works offline",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "confirm": "OK",
+  "add": "Add",
+  "required": "Required",
+  "invalidAmount": "Enter a valid amount",
+  "invalidNumber": "Enter a whole number",
+  "none": "None",
+  "cart": "Cart",
+  "cartEmpty": "Tap goods to add them to the cart",
+  "checkout": "Check out",
+  "clearCart": "Clear",
+  "itemCount": "{count} items",
+  "@itemCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subtotal": "Subtotal",
+  "discount": "Discount",
+  "total": "Total",
+  "all": "All",
+  "chooseEvent": "Choose event",
+  "noEventTitle": "No event selected",
+  "noEventBody": "Create or choose an event. The till only lists what you brought to it.",
+  "noStockTitle": "Nothing stocked for this event",
+  "noStockBody": "Use Stock to choose which goods to bring and how many.",
+  "goStock": "Stock",
+  "stockLeft": "{count} left",
+  "@stockLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chooseVariant": "Choose a variant",
+  "discountTitle": "Order discount",
+  "discountAmountOff": "Amount off",
+  "discountPercentOff": "Percent off",
+  "discountFixedTotal": "Set total",
+  "discountPercentHint": "Percent off, e.g. 20",
+  "removeDiscount": "Remove discount",
+  "paymentMethod": "Payment",
+  "cashTendered": "Cash received",
+  "change": "Change",
+  "notEnoughCash": "Not enough cash",
+  "exactAmount": "Exact",
+  "noQrImage": "No QR code yet. Upload one in Settings › Payment methods.",
+  "confirmPayment": "Confirm payment",
+  "orderSaved": "Order {number} saved",
+  "@orderSaved": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "noPaymentMethods": "No payment methods enabled. Turn one on in Settings.",
+  "addProduct": "Add goods",
+  "editProduct": "Edit goods",
+  "noProducts": "No goods yet. Tap + to add some.",
+  "productName": "Name",
+  "creator": "Creator",
+  "newCreator": "New creator…",
+  "creatorName": "Creator name",
+  "tags": "Tags",
+  "tagsHint": "Comma separated, e.g. acrylic,badge",
+  "kindSingle": "Single",
+  "kindVariants": "Variants",
+  "kindBundle": "Set",
+  "price": "Price",
+  "cost": "Cost",
+  "variantLabel": "Variant",
+  "variantLabelHint": "e.g. Red / Character A",
+  "addVariant": "Add variant",
+  "needVariant": "Add at least one variant",
+  "bundlePrice": "Set price",
+  "bundleComponents": "In this set",
+  "addComponent": "Add item",
+  "needComponent": "A set needs at least one item",
+  "componentsValue": "Sold separately: {amount}",
+  "@componentsValue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "chooseImage": "Choose image",
+  "removeImage": "Remove image",
+  "deleteProductTitle": "Delete these goods?",
+  "deleteProductBody": "Past orders are not affected.",
+  "variantCount": "{count} variants",
+  "@variantCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bundleSummary": "Set · {count} items",
+  "@bundleSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noComponentsAvailable": "Add single items or variants first to build a set",
+  "events": "Events",
+  "newEvent": "New event",
+  "editEvent": "Edit event",
+  "eventName": "Event name",
+  "eventNameHint": "e.g. Comic Con",
+  "eventDate": "Date",
+  "eventBooth": "Table",
+  "noEvents": "No events yet. Tap + to create one.",
+  "currentEvent": "Current event",
+  "stockForEvent": "Stock",
+  "eventQty": "At this event",
+  "bundleAvailable": "{count} sets available (from item stock)",
+  "@bundleAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noOrders": "No orders at this event yet",
+  "searchOrders": "Search order number",
+  "ordersSummary": "{count} orders · {amount} received",
+  "@ordersSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "refunded": "Refunded",
+  "refund": "Refund order",
+  "refundTitle": "Refund this order?",
+  "refundBody": "The refund is recorded and the goods go back into this event's stock.",
+  "refundReason": "Reason (optional)",
+  "refundDone": "Refunded",
+  "orderDetail": "Order",
+  "paymentMethods": "Payment methods",
+  "addPaymentMethod": "Add payment method",
+  "editPaymentMethod": "Edit payment method",
+  "paymentName": "Name",
+  "paymentKindCash": "Cash",
+  "paymentKindQr": "QR code",
+  "paymentKindCard": "Card",
+  "paymentKindOther": "Other",
+  "uploadQr": "Upload QR code",
+  "enabled": "Enabled",
+  "thisDevice": "This device",
+  "deviceCode": "Device {code} · order prefix {prefix}",
+  "@deviceCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "prefix": {
+        "type": "String"
+      }
+    }
+  },
+  "priceFrom": "from {price}",
+  "@priceFrom": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "teamAndDevices": "Team & devices",
+  "teamName": "Team name",
+  "devicesInTeam": "Devices in this team",
+  "thisDeviceTag": "This device",
+  "online": "Online",
+  "offline": "Offline",
+  "inviteDevice": "Invite a device",
+  "inviteTitle": "Invite a device",
+  "inviteBody": "On the new device, open the app and go to Settings › Team & devices › Join team, then scan this code. Its order numbers will start with {code}.",
+  "@inviteBody": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "copyInviteCode": "Copy invite code",
+  "inviteCopied": "Invite code copied",
+  "inviteWarning": "This code contains your team key. Only show it to your own devices.",
+  "joinTeam": "Join team",
+  "joinTeamHint": "Scan the invite QR code on any device in the team, or paste the invite code.",
+  "pasteInvite": "Invite code",
+  "invalidInvite": "This invite code is not valid",
+  "joinConfirmTitle": "Join “{team}”?",
+  "@joinConfirmTitle": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "joinConfirmBody": "Goods, events and orders on this device will be cleared, then synced from the other devices in the team.",
+  "join": "Join",
+  "cameraUnavailable": "Camera unavailable. Paste the invite code instead.",
+  "syncConnected": "{count} connected",
+  "@syncConnected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncAlone": "On its own",
+  "syncHelp": "Devices in the same team sync automatically when they are on the same Wi-Fi or phone hotspot. No internet needed.",
+  "syncError": "Sync could not start: {error}",
+  "@syncError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "rename": "Rename",
+  "deviceName": "Device name",
+  "topSellers": "Best sellers",
+  "byCreator": "By creator",
+  "byPayment": "By payment method",
+  "noCreator": "No creator",
+  "revenue": "Revenue",
+  "orders": "Orders",
+  "itemsSold": "Items sold",
+  "averageOrder": "Average order",
+  "discountTotal": "Discounts",
+  "refunds": "Refunds",
+  "orderCount": "{count} orders",
+  "exportCsv": "Export orders as CSV",
+  "@orderCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cloudBackup": "Cloud backup",
+  "cloudSignedOutHint": "Sign in with email to back up automatically, restore on a new phone, and sync devices that are not together.",
+  "signInWithEmail": "Sign in with email",
+  "signOut": "Sign out",
+  "signOutTitle": "Sign out of the cloud?",
+  "signOutBody": "Data on this device stays. It just stops backing up.",
+  "cloudConnecting": "Connecting to the cloud…",
+  "cloudConnected": "Connected, backing up live",
+  "cloudOffline": "Can't reach the cloud. Will sync when online.",
+  "lastSync": "Last synced {time}",
+  "@lastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "neverSynced": "Not synced yet",
+  "email": "Email",
+  "sendCode": "Send code",
+  "verificationCode": "Code",
+  "codeSentTo": "Code sent to {email}. Valid for 10 minutes.",
+  "@codeSentTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "devCodeHint": "Development mode: the code was filled in for you",
+  "signIn": "Sign in",
+  "resendCode": "Resend",
+  "cloudSignedIn": "Cloud backup is on",
+  "restoreFromCloud": "Restore from the cloud",
+  "restoreHint": "After signing in, choose a team to restore. Its goods, events and orders will download to this device.",
+  "chooseTeamToRestore": "Choose a team to restore",
+  "noCloudTeams": "No teams are backed up under this email yet",
+  "restoreConfirmTitle": "Restore “{team}”?",
+  "@restoreConfirmTitle": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreConfirmBody": "Data on this device will be cleared, then the team's data will download from the cloud.",
+  "restore": "Restore",
+  "restoring": "Downloading from the cloud…",
+  "errInvalidEmail": "That email doesn't look right",
+  "errTooSoon": "Too many requests. Try again in a minute.",
+  "errTooManyToday": "Too many codes today. Try again tomorrow.",
+  "errWrongCode": "Wrong code",
+  "errCodeExpired": "The code expired. Send a new one.",
+  "errTooManyAttempts": "Too many wrong tries. Send a new code.",
+  "errNetwork": "Can't reach the cloud. Check your connection.",
+  "errGeneric": "Something went wrong: {code}",
+  "@errGeneric": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "endEvent": "End event",
+  "reopenEvent": "Reopen",
+  "eventEnded": "Ended",
+  "endEventTitle": "End “{name}”?",
+  "@endEventTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "endEventSales": "{count} orders · {amount} received",
+  "@endEventSales": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "endEventReturn": "{count} items left:",
+  "@endEventReturn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "endEventNothing": "Nothing left at this event.",
+  "endEventOversold": "{name}: oversold by {count}",
+  "@endEventOversold": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "endEventMore": "{count} kinds in total",
+  "@endEventMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "endEventHint": "The event leaves the till. Orders and stats stay. You can reopen it if needed.",
+  "eventEndedDone": "“{name}” ended with {count} items left",
+  "@eventEndedDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reopenEventTitle": "Reopen “{name}”?",
+  "@reopenEventTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reopenEventBody": "You can sell at this event again after reopening.",
+  "eventEndedTitle": "“{name}” has ended",
+  "@eventEndedTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "eventEndedBody": "Choose another event to keep selling, or reopen this one.",
+  "endPromptTitle": "“{name}” is in the past. Has it ended?",
+  "@endPromptTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "endPromptBody": "It leaves the till. Leftover counts are kept and can be reused when stocking the next event.",
+  "notYet": "Not yet",
+  "endPreviousTitle": "“{name}” hasn't ended yet",
+  "@endPreviousTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "endPreviousBody": "{count} items left. End it first? Leftover counts are kept for stocking the new event.",
+  "@endPreviousBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "endPreviousConfirm": "End “{name}”",
+  "@endPreviousConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "later": "Not now",
+  "paymentRemarkHint": "Ask the customer to put this in the payment note",
+  "paymentReceived": "Payment received",
+  "confirmLater": "Confirm later",
+  "orderSavedPending": "Order {number} saved, payment to confirm",
+  "@orderSavedPending": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingPayment": "Payment to confirm",
+  "filterAll": "All",
+  "filterPending": "To confirm",
+  "confirmReceived": "Mark as paid",
+  "paymentCode": "Payment note code",
+  "paymentConfirmedAt": "Paid, confirmed {time}",
+  "@paymentConfirmedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentPendingBody": "Once you find a payment with the note {code}, tap the button below.",
+  "@paymentPendingBody": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersPendingSummary": "{count} to confirm · {amount}",
+  "@ordersPendingSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentConfirmedDone": "Marked as paid",
+  "searchOrdersHint": "Search order number or note code",
+  "allEvents": "All events",
+  "eventComparison": "By event",
+  "comparisonOrders": "{count} orders",
+  "noEventDate": "No date",
+  "@comparisonOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "useLeftover": "Use last leftover",
+  "useLeftoverBody": "Set this event to the {count} items left from “{name}”?",
+  "noLeftover": "No leftover from previous events",
+  "@useLeftoverBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}
