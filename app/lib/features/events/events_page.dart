@@ -1,15 +1,17 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../data/database.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
+import '../../ui/large_title_page.dart';
+import '../../ui/layout.dart';
+import '../../ui/grouped_list.dart';
 import '../../ui/empty_state.dart';
 import 'end_event.dart';
-
-final _dateFormat = DateFormat('yyyy-MM-dd');
+import 'event_dates.dart';
 
 enum _EventAction { edit, end, reopen }
 
@@ -27,6 +29,8 @@ class _EventTile extends ConsumerWidget {
       await promptEndPrevious(context, ref, nextEventId: event.id);
     }
     await ref.read(inventoryRepositoryProvider).setCurrentEvent(event.id);
+    // 选好就回收银台，不用再点返回。
+    if (context.mounted) context.go('/pos');
   }
 
   @override
@@ -53,7 +57,7 @@ class _EventTile extends ConsumerWidget {
       ),
       subtitle: Text(
         [
-          if (event.startsOn != null) _dateFormat.format(event.startsOn!),
+          ?event.dateLabel(),
           ?event.booth,
           if (ended) l10n.eventEnded else if (isCurrent) l10n.currentEvent,
         ].join(' · '),
@@ -96,7 +100,7 @@ class _EventTile extends ConsumerWidget {
   }
 }
 
-/// 场次列表：点一下切换为当前场次，“备货”进入调拨页面。
+/// 场次列表：点一下切换为当前场次并回到收银台，“备货”进入调拨页面。
 class EventsPage extends ConsumerWidget {
   const EventsPage({super.key});
 
@@ -106,11 +110,15 @@ class EventsPage extends ConsumerWidget {
     final events = ref.watch(eventsProvider);
     final currentId = ref.watch(currentEventIdProvider).value;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.events)),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _editEvent(context, ref),
-        icon: const Icon(Icons.add),
-        label: Text(l10n.newEvent),
+      appBar: AppBar(
+        title: Text(l10n.events),
+        actions: [
+          BarButton(
+            tooltip: l10n.newEvent,
+            icon: CupertinoIcons.add,
+            onPressed: () => _editEvent(context, ref),
+          ),
+        ],
       ),
       body: events.when(
         loading: () => asyncLoading,
@@ -118,10 +126,18 @@ class EventsPage extends ConsumerWidget {
         data: (events) => events.isEmpty
             ? EmptyState(icon: Icons.event_outlined, title: l10n.noEvents)
             : ListView(
-                padding: const EdgeInsets.only(bottom: 96),
+                padding: withBottomBar(
+                  context,
+                  const EdgeInsets.symmetric(vertical: 12),
+                ),
                 children: [
-                  for (final e in events)
-                    _EventTile(event: e, isCurrent: e.id == currentId),
+                  GroupedSection(
+                    dividerIndent: 56,
+                    children: [
+                      for (final e in events)
+                        _EventTile(event: e, isCurrent: e.id == currentId),
+                    ],
+                  ),
                 ],
               ),
       ),
@@ -145,7 +161,8 @@ Future<void> _editEvent(
     if (context.mounted) await promptEndPrevious(context, ref);
     final id = await repo.createEvent(
       name: result.name,
-      startsOn: result.date,
+      startsOn: result.start,
+      endsOn: result.end,
       booth: result.booth,
     );
     await repo.setCurrentEvent(id);
@@ -153,13 +170,19 @@ Future<void> _editEvent(
     await repo.updateEvent(
       event.id,
       name: result.name,
-      startsOn: result.date,
+      startsOn: result.start,
+      endsOn: result.end,
       booth: result.booth,
     );
   }
 }
 
-typedef _EventForm = ({String name, DateTime? date, String booth});
+typedef _EventForm = ({
+  String name,
+  DateTime? start,
+  DateTime? end,
+  String booth,
+});
 
 class _EventDialog extends StatefulWidget {
   const _EventDialog({this.event});
@@ -173,8 +196,10 @@ class _EventDialog extends StatefulWidget {
 class _EventDialogState extends State<_EventDialog> {
   late final _name = TextEditingController(text: widget.event?.name);
   late final _booth = TextEditingController(text: widget.event?.booth);
-  late DateTime? _date =
-      widget.event?.startsOn ?? (widget.event == null ? DateTime.now() : null);
+  late DateTime? _start =
+      widget.event?.startsOn ??
+      (widget.event == null ? DateUtils.dateOnly(DateTime.now()) : null);
+  late DateTime? _end = widget.event?.endsOn;
   String? _error;
 
   @override
@@ -213,15 +238,28 @@ class _EventDialogState extends State<_EventDialog> {
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.calendar_today_outlined),
               title: Text(l10n.eventDate),
-              trailing: Text(_date == null ? '—' : _dateFormat.format(_date!)),
+              subtitle: Text(l10n.eventDateHint),
+              trailing: Text(
+                _start == null ? '—' : formatDateRange(_start!, _end),
+              ),
               onTap: () async {
-                final picked = await showDatePicker(
+                // 两天的展先点第一天再点第二天；一天的展点同一天两次。
+                final start = DateUtils.dateOnly(_start ?? DateTime.now());
+                final picked = await showDateRangePicker(
                   context: context,
-                  initialDate: _date ?? DateTime.now(),
+                  initialDateRange: DateTimeRange(
+                    start: start,
+                    end: _end == null || _end!.isBefore(start) ? start : _end!,
+                  ),
                   firstDate: DateTime(2020),
                   lastDate: DateTime(2100),
                 );
-                if (picked != null) setState(() => _date = picked);
+                if (picked != null) {
+                  setState(() {
+                    _start = picked.start;
+                    _end = picked.end;
+                  });
+                }
               },
             ),
           ],
@@ -240,7 +278,8 @@ class _EventDialogState extends State<_EventDialog> {
             }
             Navigator.pop<_EventForm>(context, (
               name: _name.text,
-              date: _date,
+              start: _start,
+              end: _end,
               booth: _booth.text,
             ));
           },

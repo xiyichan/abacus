@@ -7,6 +7,7 @@ import 'package:drift/drift.dart' show TableUpdateQuery;
 
 import '../data/database.dart';
 import '../data/session.dart';
+import 'media_store.dart';
 import 'op_store.dart';
 
 /// 一条双向二进制通道（WebSocket，或测试里的内存管道）。
@@ -55,12 +56,16 @@ class TeamCipher {
 /// 3. 之后本机数据库一有变化（本机写入或从别处收到的操作），就把对方缺的部分推过去，
 ///    所以三台以上设备即使没有两两直连也能经中间设备转发。
 /// 4. 收到 ops 后合并到本机，并记下对方已经有这些操作，避免回传。
+/// 5. 图片（给了 [media] 时）：各自发 media-want 告诉对方本机缺哪些文件，
+///    有的一方用 media 消息发过去。对方要的文件本机暂时也没有时先记着，
+///    等本机从别处收到再转给它。
 class PeerSession {
   PeerSession({
     required this.channel,
     required this.db,
     required this.session,
     required this.dialedByUs,
+    this.media,
     this.onClosed,
   }) : _store = OpStore(db),
        _cipher = TeamCipher(session.teamKey);
@@ -68,6 +73,7 @@ class PeerSession {
   final FrameChannel channel;
   final AppDatabase db;
   final Session session;
+  final MediaStore? media;
 
   /// 是不是本机主动连过去的。两台设备互相连了两条时，用它决定保留哪一条。
   final bool dialedByUs;
@@ -81,9 +87,15 @@ class PeerSession {
   VersionVector _peerVector = {};
   StreamSubscription<void>? _changes;
   StreamSubscription<Uint8List>? _incoming;
+  StreamSubscription<String>? _mediaReceived;
   bool _pushing = false;
   bool _dirty = false;
   bool _closed = false;
+
+  /// 上次告诉对方本机缺的图片；对方还要、本机还没发的图片。
+  Set<String> _wanted = {};
+  Set<String> _peerWants = {};
+  Timer? _wantTimer;
 
   /// 收到的消息按顺序逐条处理，保证同一来源的操作按序号合并。
   Future<void> _processing = Future.value();
@@ -124,8 +136,29 @@ class PeerSession {
         if (!_ready.isCompleted) _ready.complete();
         _changes = db
             .tableUpdates(TableUpdateQuery.onAllTables(_store.tables))
-            .listen((_) => _schedulePush());
+            .listen((_) {
+              _schedulePush();
+              _scheduleWants();
+            });
+        _mediaReceived = media?.received.listen((name) {
+          _scheduleWants();
+          if (_peerWants.contains(name)) unawaited(_sendMedia({name}));
+        });
         _schedulePush();
+        _scheduleWants();
+      case 'media-want':
+        _peerWants = {
+          for (final n in message['names'] as List)
+            if (n is String && MediaStore.isValidName(n)) n,
+        };
+        await _sendMedia(_peerWants);
+      case 'media':
+        final name = message['name'];
+        final data = message['data'];
+        // 只收本机确实缺的文件。
+        if (media == null || name is! String || data is! String) return;
+        if (!(await media!.missing(db)).contains(name)) return;
+        await media!.write(name, base64Decode(data));
       case 'ops':
         final ops = [
           for (final o in message['ops'] as List)
@@ -170,6 +203,33 @@ class PeerSession {
     }
   }
 
+  /// 本机缺的图片有变化时告诉对方（数据库变化很频繁，稍微攒一下）。
+  void _scheduleWants() {
+    if (media == null || _closed || (_wantTimer?.isActive ?? false)) return;
+    _wantTimer = Timer(const Duration(milliseconds: 300), () async {
+      if (_closed) return;
+      final missing = await media!.missing(db);
+      if (missing.length == _wanted.length && missing.containsAll(_wanted)) {
+        return;
+      }
+      _wanted = missing;
+      await _send({'type': 'media-want', 'names': missing.toList()});
+    });
+  }
+
+  /// 把 [names] 里本机有的图片发给对方。
+  Future<void> _sendMedia(Set<String> names) async {
+    final store = media;
+    if (store == null) return;
+    for (final name in names.toList()) {
+      if (_closed) return;
+      final bytes = await store.read(name);
+      if (bytes == null) continue;
+      await _send({'type': 'media', 'name': name, 'data': base64Encode(bytes)});
+      _peerWants.remove(name);
+    }
+  }
+
   Future<void> _send(Map<String, Object?> message) async {
     if (_closed) return;
     channel.send(await _cipher.seal(message));
@@ -178,6 +238,8 @@ class PeerSession {
   Future<void> close() async {
     if (_closed) return;
     _closed = true;
+    _wantTimer?.cancel();
+    await _mediaReceived?.cancel();
     await _changes?.cancel();
     await _incoming?.cancel();
     await channel.close();

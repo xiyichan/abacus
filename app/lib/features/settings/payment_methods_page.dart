@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +6,9 @@ import '../../data/database.dart';
 import '../../data/sales_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
+import '../../ui/large_title_page.dart';
+import '../../ui/layout.dart';
+import '../../ui/grouped_list.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/media.dart';
 
@@ -24,54 +28,69 @@ class PaymentMethodsPage extends ConsumerWidget {
     final methods = ref.watch(paymentMethodsProvider);
     final repo = ref.read(salesRepositoryProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.paymentMethods)),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showDialog<void>(
-          context: context,
-          builder: (_) =>
-              _PaymentMethodDialog(sortOrder: methods.value?.length ?? 0),
-        ),
-        icon: const Icon(Icons.add),
-        label: Text(l10n.addPaymentMethod),
+      appBar: AppBar(
+        title: Text(l10n.paymentMethods),
+        actions: [
+          BarButton(
+            tooltip: l10n.addPaymentMethod,
+            icon: CupertinoIcons.add,
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (_) =>
+                  _PaymentMethodDialog(sortOrder: methods.value?.length ?? 0),
+            ),
+          ),
+        ],
       ),
       body: methods.when(
         loading: () => asyncLoading,
         error: asyncError,
         data: (methods) => ListView(
-          padding: const EdgeInsets.only(bottom: 96),
+          padding: withBottomBar(
+            context,
+            const EdgeInsets.symmetric(vertical: 12),
+          ),
           children: [
-            for (final m in methods)
-              ListTile(
-                leading: SizedBox.square(
-                  dimension: 40,
-                  child: m.qrImagePath == null
-                      ? Icon(switch (m.kind) {
-                          PaymentKind.cash => Icons.payments_outlined,
-                          PaymentKind.qr => Icons.qr_code_2,
-                          PaymentKind.card => Icons.credit_card,
-                          _ => Icons.account_balance_wallet_outlined,
-                        })
-                      : StoredImage(m.qrImagePath),
-                ),
-                title: Text(m.name),
-                subtitle: Text(paymentKindLabel(l10n, m.kind)),
-                trailing: Switch(
-                  value: m.enabled,
-                  onChanged: (v) => repo.savePaymentMethod(
-                    id: m.id,
-                    name: m.name,
-                    kind: m.kind,
-                    qrImagePath: m.qrImagePath,
-                    sortOrder: m.sortOrder,
-                    enabled: v,
+            GroupedSection(
+              dividerIndent: 72,
+              children: [
+                for (final m in methods)
+                  ListTile(
+                    leading: SizedBox.square(
+                      dimension: 40,
+                      child: m.qrImagePath == null
+                          ? Icon(switch (m.kind) {
+                              PaymentKind.cash => Icons.payments_outlined,
+                              PaymentKind.qr => Icons.qr_code_2,
+                              PaymentKind.card => Icons.credit_card,
+                              _ => Icons.account_balance_wallet_outlined,
+                            })
+                          : StoredImage(m.qrImagePath),
+                    ),
+                    title: Text(m.name),
+                    subtitle: Text(paymentKindLabel(l10n, m.kind)),
+                    trailing: Switch.adaptive(
+                      value: m.enabled,
+                      activeTrackColor: Theme.of(context).colorScheme.primary,
+                      onChanged: (v) => repo.savePaymentMethod(
+                        id: m.id,
+                        name: m.name,
+                        kind: m.kind,
+                        qrImagePath: m.qrImagePath,
+                        sortOrder: m.sortOrder,
+                        enabled: v,
+                      ),
+                    ),
+                    onTap: () => showDialog<void>(
+                      context: context,
+                      builder: (_) => _PaymentMethodDialog(
+                        method: m,
+                        sortOrder: m.sortOrder,
+                      ),
+                    ),
                   ),
-                ),
-                onTap: () => showDialog<void>(
-                  context: context,
-                  builder: (_) =>
-                      _PaymentMethodDialog(method: m, sortOrder: m.sortOrder),
-                ),
-              ),
+              ],
+            ),
           ],
         ),
       ),

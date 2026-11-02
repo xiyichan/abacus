@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#FFE4E1"/>
+  <rect x="179" y="205" width="666" height="614" rx="104" fill="none" stroke="#B4465A" stroke-width="46"/>
+  <g stroke="#401518" stroke-width="20" stroke-linecap="round">
+    <line x1="214" y1="371" x2="810" y2="371"/>
+    <line x1="214" y1="512" x2="810" y2="512"/>
+    <line x1="214" y1="653" x2="810" y2="653"/>
+  </g>
+  <ellipse cx="324" cy="371" rx="72" ry="52" fill="#B4465A"/>
+  <ellipse cx="468" cy="371" rx="72" ry="52" fill="#B4465A"/>
+  <ellipse cx="700" cy="371" rx="65" ry="45" fill="#FFD1DC" stroke="#B4465A" stroke-width="14"/>
+  <ellipse cx="324" cy="512" rx="65" ry="45" fill="#FFD1DC" stroke="#B4465A" stroke-width="14"/>
+  <ellipse cx="556" cy="512" rx="72" ry="52" fill="#B4465A"/>
+  <ellipse cx="700" cy="512" rx="72" ry="52" fill="#B4465A"/>
+  <ellipse cx="324" cy="653" rx="72" ry="52" fill="#B4465A"/>
+  <path d="M630 716 C572 676 548 654 548 624 C548 600 566 584 588 584 C606 584 621 594 630 608 C639 594 654 584 672 584 C694 584 712 600 712 624 C712 654 688 676 630 716 Z" fill="#B4465A"/>
+</svg>

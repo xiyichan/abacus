@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +9,9 @@ import '../../data/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../sync/team_invite.dart';
+import '../../ui/layout.dart';
 import '../../ui/empty_state.dart';
+import '../../ui/grouped_list.dart';
 import '../../ui/input_dialog.dart';
 import 'cloud_card.dart';
 
@@ -46,23 +49,30 @@ class TeamPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.teamAndDevices)),
       body: ListView(
-        padding: const EdgeInsets.only(bottom: 32),
+        padding: withBottomBar(
+          context,
+          const EdgeInsets.only(top: 12, bottom: 32),
+        ),
         children: [
-          ListTile(
-            leading: const Icon(Icons.groups_outlined),
-            title: Text(team?.name ?? '…'),
-            subtitle: Text(l10n.teamName),
-            trailing: const Icon(Icons.edit_outlined),
-            onTap: team == null
-                ? null
-                : () => rename(
-                    title: l10n.teamName,
-                    initial: team.name,
-                    save: repo.renameTeam,
-                  ),
+          GroupedSection(
+            dividerIndent: GroupedTile.iconIndent,
+            children: [
+              GroupedTile(
+                icon: CupertinoIcons.person_3_fill,
+                title: team?.name ?? '…',
+                subtitle: l10n.teamName,
+                onTap: team == null
+                    ? null
+                    : () => rename(
+                        title: l10n.teamName,
+                        initial: team.name,
+                        save: repo.renameTeam,
+                      ),
+              ),
+            ],
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Card(
               child: ListTile(
                 leading: Icon(
@@ -86,48 +96,49 @@ class TeamPage extends ConsumerWidget {
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: CloudCard(),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-            child: Text(l10n.devicesInTeam, style: theme.textTheme.titleSmall),
-          ),
-          ...devices.when(
-            loading: () => [asyncLoading],
-            error: (e, s) => [asyncError(e, s)],
-            data: (devices) => [
-              for (final d in devices)
-                ListTile(
-                  leading: CircleAvatar(
-                    child: Text(orderPrefixOf(d.shortCode)),
-                  ),
-                  title: Text(d.name),
-                  subtitle: Text(
-                    '${d.shortCode} · ${d.id == session.deviceId
-                        ? l10n.thisDeviceTag
-                        : peers.contains(d.id)
-                        ? l10n.online
-                        : l10n.offline}',
-                  ),
-                  trailing: d.id == session.deviceId
-                      ? IconButton(
-                          tooltip: l10n.rename,
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: () => rename(
-                            title: l10n.deviceName,
-                            initial: d.name,
-                            save: repo.renameDevice,
+          const SizedBox(height: 8),
+          devices.when(
+            loading: () => asyncLoading,
+            error: asyncError,
+            data: (devices) => GroupedSection(
+              header: l10n.devicesInTeam,
+              dividerIndent: 72,
+              children: [
+                for (final d in devices)
+                  ListTile(
+                    leading: CircleAvatar(
+                      child: Text(orderPrefixOf(d.shortCode)),
+                    ),
+                    title: Text(d.name),
+                    subtitle: Text(
+                      '${d.shortCode} · ${d.id == session.deviceId
+                          ? l10n.thisDeviceTag
+                          : peers.contains(d.id)
+                          ? l10n.online
+                          : l10n.offline}',
+                    ),
+                    trailing: d.id == session.deviceId
+                        ? IconButton(
+                            tooltip: l10n.rename,
+                            icon: const Icon(CupertinoIcons.pencil),
+                            onPressed: () => rename(
+                              title: l10n.deviceName,
+                              initial: d.name,
+                              save: repo.renameDevice,
+                            ),
+                          )
+                        : Icon(
+                            Icons.circle,
+                            size: 12,
+                            color: peers.contains(d.id)
+                                ? Colors.green
+                                : theme.colorScheme.outlineVariant,
                           ),
-                        )
-                      : Icon(
-                          Icons.circle,
-                          size: 12,
-                          color: peers.contains(d.id)
-                              ? Colors.green
-                              : theme.colorScheme.outlineVariant,
-                        ),
-                ),
-            ],
+                  ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Wrap(

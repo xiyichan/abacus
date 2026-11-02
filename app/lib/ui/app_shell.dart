@@ -1,12 +1,14 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../l10n/app_localizations.dart';
+import '../features/lock/cashier_lock.dart';
 import '../providers.dart';
-import 'layout.dart';
+import 'floating_tab_bar.dart';
 
-/// 主框架：手机用底部导航栏，平板用左侧导航栏。同时负责启动局域网同步。
+/// 主框架：底部悬浮的玻璃标签栏（手机和平板都一样）。同时负责启动局域网同步。
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.navigationShell});
 
@@ -44,68 +46,53 @@ class _AppShellState extends ConsumerState<AppShell> {
     ref.watch(cloudSyncProvider); // 已登录时同时连云端
     final navigationShell = widget.navigationShell;
     final l10n = AppLocalizations.of(context);
-    // 订单导航上用角标提示待确认收款的单数。
+    // 收银锁：只留收银台，不显示导航。
+    if (ref.watch(cashierLockedProvider).value ?? false) {
+      return Scaffold(body: navigationShell);
+    }
+    // 订单标签上用角标提示待确认收款的单数。
     final pending = ref.watch(pendingPaymentCountProvider);
-    Widget badged(IconData icon, int count) => Badge(
-      isLabelVisible: count > 0,
-      label: Text('$count'),
-      child: Icon(icon),
-    );
-    final destinations = [
-      (Icons.point_of_sale_outlined, Icons.point_of_sale, l10n.navPos, 0),
-      (
-        Icons.receipt_long_outlined,
-        Icons.receipt_long,
-        l10n.navOrders,
-        pending,
+    // iOS 26 的悬浮玻璃标签栏：未选中用线条图标，选中用实心图标。手机和平板都用它，内容从下面透过来。
+    final tabs = [
+      FloatingTab(
+        icon: CupertinoIcons.cart,
+        selectedIcon: CupertinoIcons.cart_fill,
+        label: l10n.navPos,
       ),
-      (Icons.inventory_2_outlined, Icons.inventory_2, l10n.navProducts, 0),
-      (Icons.insights_outlined, Icons.insights, l10n.navStats, 0),
-      (Icons.settings_outlined, Icons.settings, l10n.navSettings, 0),
+      FloatingTab(
+        icon: CupertinoIcons.doc_text,
+        selectedIcon: CupertinoIcons.doc_text_fill,
+        label: l10n.navOrders,
+        badge: pending,
+      ),
+      FloatingTab(
+        icon: CupertinoIcons.cube_box,
+        selectedIcon: CupertinoIcons.cube_box_fill,
+        label: l10n.navProducts,
+      ),
+      FloatingTab(
+        icon: CupertinoIcons.chart_bar,
+        selectedIcon: CupertinoIcons.chart_bar_fill,
+        label: l10n.navStats,
+      ),
+      FloatingTab(
+        icon: CupertinoIcons.gear,
+        selectedIcon: CupertinoIcons.gear_solid,
+        label: l10n.navSettings,
+      ),
     ];
 
-    void onSelect(int index) => navigationShell.goBranch(
-      index,
-      initialLocation: index == navigationShell.currentIndex,
-    );
-
-    if (context.isTablet) {
-      return Scaffold(
-        body: Row(
-          children: [
-            NavigationRail(
-              selectedIndex: navigationShell.currentIndex,
-              onDestinationSelected: onSelect,
-              labelType: NavigationRailLabelType.all,
-              destinations: [
-                for (final (icon, selected, label, count) in destinations)
-                  NavigationRailDestination(
-                    icon: badged(icon, count),
-                    selectedIcon: badged(selected, count),
-                    label: Text(label),
-                  ),
-              ],
-            ),
-            const VerticalDivider(width: 1),
-            Expanded(child: navigationShell),
-          ],
-        ),
-      );
-    }
-
     return Scaffold(
+      // 内容延伸到标签栏下面；各页面的滚动列表用 MediaQuery 的底部内边距留出它的高度。
+      extendBody: true,
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: FloatingTabBar(
+        tabs: tabs,
         selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: onSelect,
-        destinations: [
-          for (final (icon, selected, label, count) in destinations)
-            NavigationDestination(
-              icon: badged(icon, count),
-              selectedIcon: badged(selected, count),
-              label: label,
-            ),
-        ],
+        onSelect: (index) => navigationShell.goBranch(
+          index,
+          initialLocation: index == navigationShell.currentIndex,
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import '../data/database.dart';
 import '../data/session.dart';
+import 'media_store.dart';
 import 'peer_session.dart';
 
 /// 同步状态，用于界面显示“已连接 N 台设备”。
@@ -49,10 +50,18 @@ const _serviceType = '_abacussync._tcp';
 /// 局域网同步：本机开一个 WebSocket 服务并用 mDNS/Bonjour 广播，
 /// 同时发现同一团队的其他设备并连接过去。任何一台设备都可以随时加入或离开。
 class LanSyncService implements SyncService {
-  LanSyncService(this._db, this._session, {this.useDiscovery = true});
+  LanSyncService(
+    this._db,
+    this._session, {
+    this.media,
+    this.useDiscovery = true,
+  });
 
   final AppDatabase _db;
   final Session _session;
+
+  /// 给了时，连上的设备之间也互传图片。
+  final MediaStore? media;
 
   /// 关闭时不广播也不发现，只能用 [dialAddress] 手动连接（测试用）。
   final bool useDiscovery;
@@ -121,7 +130,12 @@ class LanSyncService implements SyncService {
       switch (event) {
         case BonsoirDiscoveryServiceFoundEvent(:final service):
           if (service.attributes['dev'] != _session.deviceId) {
-            discovery.serviceResolver.resolveService(service);
+            // 附近设备解析失败（比如已经离开）很常见，忽略即可，下次发现会再试。
+            unawaited(
+              Future.sync(
+                () => discovery.serviceResolver.resolveService(service),
+              ).catchError((Object _) {}),
+            );
           }
         case BonsoirDiscoveryServiceResolvedEvent(:final service) ||
             BonsoirDiscoveryServiceUpdatedEvent(:final service):
@@ -142,7 +156,7 @@ class LanSyncService implements SyncService {
         default:
           break;
       }
-    });
+    }, onError: (Object _) {});
     await discovery.start();
     _discovery = discovery;
   }
@@ -225,6 +239,7 @@ class LanSyncService implements SyncService {
       db: _db,
       session: _session,
       dialedByUs: dialedByUs,
+      media: media,
       onClosed: (s) {
         _sessions.remove(s);
         _publish();

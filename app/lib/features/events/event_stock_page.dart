@@ -6,8 +6,8 @@ import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/input_dialog.dart';
-import 'end_event.dart';
 import '../../ui/money.dart';
+import 'end_event.dart';
 
 /// 备货：每场单独记带了多少件货，可以沿用上一场的剩余。
 class EventStockPage extends ConsumerWidget {
@@ -175,7 +175,7 @@ class _StockRow extends StatelessWidget {
             onPressed: current > 0 ? () => onChanged(current - 1) : null,
           ),
           InkWell(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             onTap: () => _edit(context),
             child: Container(
               constraints: const BoxConstraints(minWidth: 48),

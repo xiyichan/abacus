@@ -1,6 +1,7 @@
 import 'package:abacus/data/catalog_repository.dart';
 import 'package:abacus/data/inventory_repository.dart';
 import 'package:abacus/domain/stock.dart';
+import 'package:abacus/features/events/event_dates.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -53,6 +54,36 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, '选择场次'));
     await settle(tester);
     expect(find.textContaining(' · 已结束'), findsOneWidget);
+    await unmountApp(tester);
+  });
+
+  testWidgets('两天的展第二天不提醒结束，场次列表显示日期范围', (tester) async {
+    final today = DateUtils.dateOnly(DateTime.now());
+    final yesterday = today.subtract(const Duration(days: 1));
+    await pumpApp(
+      tester,
+      size: const Size(1180, 820),
+      seed: (db, session) async {
+        final inventory = InventoryRepository(db, session);
+        final id = await inventory.createEvent(
+          name: 'CP31',
+          startsOn: yesterday,
+          endsOn: today,
+        );
+        await inventory.setCurrentEvent(id);
+      },
+    );
+
+    await tester.tap(find.text('收银'));
+    await settle(tester);
+    expect(find.textContaining('的日期已经过了'), findsNothing);
+
+    await tester.tap(find.widgetWithText(TextButton, 'CP31'));
+    await settle(tester);
+    expect(
+      find.textContaining(formatDateRange(yesterday, today)),
+      findsOneWidget,
+    );
     await unmountApp(tester);
   });
 }

@@ -63,9 +63,14 @@ class EventComparisonRow {
     required this.revenue,
     required this.itemCount,
     required this.pendingCount,
+    this.expenses = 0,
   });
 
-  factory EventComparisonRow.fromOrders(Event event, List<OrderDetail> orders) {
+  factory EventComparisonRow.fromOrders(
+    Event event,
+    List<OrderDetail> orders, {
+    int expenses = 0,
+  }) {
     var count = 0, revenue = 0, items = 0, pending = 0;
     for (final d in orders) {
       if (d.refund != null) continue;
@@ -80,6 +85,7 @@ class EventComparisonRow {
       revenue: revenue,
       itemCount: items,
       pendingCount: pending,
+      expenses: expenses,
     );
   }
 
@@ -88,6 +94,12 @@ class EventComparisonRow {
   final int revenue;
   final int itemCount;
   final int pendingCount;
+
+  /// 这一场记的支出合计。
+  final int expenses;
+
+  /// 净收入 = 实收 − 支出。
+  int get net => revenue - expenses;
 }
 
 /// 付款备注码：订单号去掉横杠，如 A-007 → A007，方便客人在付款备注里输入。
@@ -444,7 +456,14 @@ class SalesRepository {
 
   /// 各场次对比：每场的订单数、实收、件数、待确认收款数。按场次日期从新到旧。
   Stream<List<EventComparisonRow>> watchEventComparison() => _db.watchTables(
-    {_db.events, _db.orders, _db.orderItems, _db.orderPayments, _db.refunds},
+    {
+      _db.events,
+      _db.orders,
+      _db.orderItems,
+      _db.orderPayments,
+      _db.refunds,
+      _db.expenses,
+    },
     () async {
       final events =
           await (_db.select(_db.events)..where(
@@ -456,9 +475,25 @@ class SalesRepository {
       for (final d in await loadOrderDetails(null)) {
         byEvent.putIfAbsent(d.order.eventId, () => []).add(d);
       }
+      final spent = <String, int>{};
+      final expenses =
+          await (_db.select(_db.expenses)..where(
+                (t) =>
+                    t.teamId.equals(_session.teamId) &
+                    t.deleted.equals(false) &
+                    t.eventId.isNotNull(),
+              ))
+              .get();
+      for (final x in expenses) {
+        spent.update(x.eventId!, (a) => a + x.amount, ifAbsent: () => x.amount);
+      }
       final rows = [
         for (final e in events)
-          EventComparisonRow.fromOrders(e, byEvent[e.id] ?? const []),
+          EventComparisonRow.fromOrders(
+            e,
+            byEvent[e.id] ?? const [],
+            expenses: spent[e.id] ?? 0,
+          ),
       ];
       rows.sort((a, b) {
         final da = a.event.startsOn, db = b.event.startsOn;

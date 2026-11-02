@@ -91,7 +91,7 @@ void main() {
     expect(find.text('未设置作者'), findsOneWidget);
     expect(find.text('¥30.00 · 75%'), findsOneWidget);
     expect(find.text('1 单 · ¥10.00'), findsOneWidget); // 微信
-    expect(find.byTooltip('导出订单 CSV'), findsOneWidget);
+    expect(find.byTooltip('导出 CSV（订单和支出）'), findsOneWidget);
 
     // 全部场次：合计 + 各场对比。
     await tester.tap(find.widgetWithText(ChoiceChip, '全部场次'));
@@ -101,12 +101,8 @@ void main() {
     expect(find.textContaining('2 单'), findsWidgets);
 
     // 点对比表里的一行切到那一场。
-    await tester.tap(
-      find.descendant(
-        of: find.byType(ListView).last,
-        matching: find.text('CP29'),
-      ),
-    );
+    // 标签行在前，对比表在后：最后一个 “CP29” 是对比表里的那一行。
+    await tester.tap(find.text('CP29').last);
     await settle(tester);
     expect(
       tester

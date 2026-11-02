@@ -11,6 +11,7 @@ part 'database.g.dart';
     Teams,
     Devices,
     Creators,
+    Categories,
     Products,
     Variants,
     BundleItems,
@@ -21,6 +22,7 @@ part 'database.g.dart';
     OrderItems,
     OrderPayments,
     Refunds,
+    Expenses,
     OpLog,
     LocalSettings,
   ],
@@ -30,7 +32,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'abacus'));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -46,6 +48,12 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         await m.addColumn(orderPayments, orderPayments.pending);
         await m.addColumn(orderPayments, orderPayments.confirmedAt);
+      }
+      if (from < 6) await m.createTable(expenses);
+      if (from < 7) await m.addColumn(events, events.endsOn);
+      if (from < 8) {
+        await m.createTable(categories);
+        await m.addColumn(products, products.categoryIds);
       }
       if (from < 3) {
         await installOpLogTriggers(this);

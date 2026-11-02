@@ -3,10 +3,12 @@ import 'dart:typed_data';
 
 import 'package:abacus/data/catalog_repository.dart';
 import 'package:abacus/data/sales_repository.dart';
+import 'package:abacus/sync/media_store.dart';
 import 'package:abacus/sync/peer_session.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'media_store_test.dart' show tempMedia;
 import 'op_store_test.dart' show Node;
 
 /// 内存里的一对通道，模拟一条网络连接。
@@ -32,19 +34,26 @@ class _Pipe implements FrameChannel {
   Future<void> close() => _out.close();
 }
 
-Future<(PeerSession, PeerSession)> connect(Node a, Node b) async {
+Future<(PeerSession, PeerSession)> connect(
+  Node a,
+  Node b, {
+  MediaStore? mediaA,
+  MediaStore? mediaB,
+}) async {
   final (ca, cb) = memoryPipe();
   final sa = PeerSession(
     channel: ca,
     db: a.db,
     session: a.session,
     dialedByUs: true,
+    media: mediaA,
   );
   final sb = PeerSession(
     channel: cb,
     db: b.db,
     session: b.session,
     dialedByUs: false,
+    media: mediaB,
   );
   await sa.start();
   await sb.start();
@@ -147,5 +156,67 @@ void main() {
     await sb.start();
     await eventually(() async => sa.isClosed && sb.isClosed);
     expect(sa.peerDeviceId, isNull);
+  });
+
+  test('图片：连上后缺的商品图和收款码从对方传过来', () async {
+    final a = await Node.founder();
+    final b = await Node.joining(a);
+    addTearDown(a.db.close);
+    addTearDown(b.db.close);
+    final mediaA = await tempMedia();
+    final mediaB = await tempMedia();
+    await mediaA.write('p1.jpg', List.filled(300 * 1024, 7));
+    await a.catalog.saveProduct(
+      ProductDraft(
+        name: '徽章',
+        imagePath: 'p1.jpg',
+        variants: [VariantDraft(price: 1500)],
+      ),
+    );
+
+    final (sa, sb) = await connect(a, b, mediaA: mediaA, mediaB: mediaB);
+    await eventually(() async => await mediaB.has('p1.jpg'));
+    expect((await mediaB.read('p1.jpg'))!.length, 300 * 1024);
+
+    // 连接期间 B 上传了收款码，A 也收到。
+    await mediaB.write('qr.png', [1, 2, 3]);
+    final wechat = (await b.sales.watchPaymentMethods().first)[1];
+    await b.sales.savePaymentMethod(
+      id: wechat.id,
+      name: wechat.name,
+      kind: wechat.kind,
+      qrImagePath: 'qr.png',
+      sortOrder: wechat.sortOrder,
+    );
+    await eventually(() async => await mediaA.has('qr.png'));
+
+    await sa.close();
+    await sb.close();
+  });
+
+  test('图片：A—B—C 链式连接，B 收到后转给 C', () async {
+    final a = await Node.founder();
+    final b = await Node.joining(a);
+    final c = await Node.joining(a);
+    addTearDown(() async {
+      for (final n in [a, b, c]) {
+        await n.db.close();
+      }
+    });
+    final media = [for (var i = 0; i < 3; i++) await tempMedia()];
+    final (ab1, ab2) = await connect(a, b, mediaA: media[0], mediaB: media[1]);
+    final (bc1, bc2) = await connect(b, c, mediaA: media[1], mediaB: media[2]);
+    await media[0].write('p2.jpg', [4, 5, 6]);
+    await a.catalog.saveProduct(
+      ProductDraft(
+        name: '色纸',
+        imagePath: 'p2.jpg',
+        variants: [VariantDraft(price: 2000)],
+      ),
+    );
+    await eventually(() async => await media[2].has('p2.jpg'));
+    for (final s in [ab1, ab2, bc1, bc2]) {
+      await s.close();
+    }
   });
 }

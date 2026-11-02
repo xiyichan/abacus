@@ -28,12 +28,21 @@ class CatalogProduct {
   final Map<String, List<BundleComponent>> components;
 
   bool get isBundle => product.kind == ProductKind.bundle;
+
+  /// 商品所属分类的 id（按商品里记的顺序）。
+  List<String> get categoryIds => splitIds(product.categoryIds);
   bool get hasVariants => product.kind == ProductKind.variants;
 
   /// 规格在收银台和订单上显示的名字，如“徽章 · 红”。
   String displayName(Variant v) =>
       v.label.isEmpty ? product.name : '${product.name} · ${v.label}';
 }
+
+/// 逗号分隔的 id 列表。
+List<String> splitIds(String ids) => [
+  for (final id in ids.split(','))
+    if (id.trim().isNotEmpty) id.trim(),
+];
 
 class VariantDraft {
   VariantDraft({this.id, this.label = '', this.price = 0, this.cost = 0});
@@ -51,6 +60,7 @@ class ProductDraft {
     this.kind = ProductKind.single,
     this.creatorId,
     this.tags = '',
+    this.categoryIds = const [],
     this.imagePath,
     List<VariantDraft>? variants,
     List<BundleComponent>? components,
@@ -62,6 +72,7 @@ class ProductDraft {
   String kind;
   String? creatorId;
   String tags;
+  List<String> categoryIds;
   String? imagePath;
   List<VariantDraft> variants;
 
@@ -150,6 +161,68 @@ class CatalogRepository {
     return id;
   }
 
+  Stream<List<ProductCategory>> watchCategories() =>
+      (_db.select(_db.categories)
+            ..where(
+              (t) => t.teamId.equals(_session.teamId) & t.deleted.equals(false),
+            )
+            ..orderBy([
+              (t) => OrderingTerm(expression: t.sortOrder),
+              (t) => OrderingTerm(expression: t.name),
+            ]))
+          .watch();
+
+  /// 新建分类，排在最后。
+  Future<String> createCategory(String name) async {
+    final id = newId();
+    final last = await watchCategories().first;
+    await _db
+        .into(_db.categories)
+        .insert(
+          CategoriesCompanion.insert(
+            id: id,
+            updatedAt: _session.clock.tick(),
+            teamId: _session.teamId,
+            name: name.trim(),
+            sortOrder: Value(
+              last.fold(0, (a, c) => a > c.sortOrder ? a : c.sortOrder) + 1,
+            ),
+          ),
+        );
+    return id;
+  }
+
+  Future<void> renameCategory(String id, String name) =>
+      (_db.update(_db.categories)..where((t) => t.id.equals(id))).write(
+        CategoriesCompanion(
+          name: Value(name.trim()),
+          updatedAt: Value(_session.clock.tick()),
+        ),
+      );
+
+  /// 软删除分类。商品上记的 id 留着也没关系，找不到的分类会被忽略。
+  Future<void> deleteCategory(String id) =>
+      (_db.update(_db.categories)..where((t) => t.id.equals(id))).write(
+        CategoriesCompanion(
+          deleted: const Value(true),
+          updatedAt: Value(_session.clock.tick()),
+        ),
+      );
+
+  /// 按 [ids] 的顺序重新排分类，只改顺序变了的。
+  Future<void> reorderCategories(List<String> ids) => _db.transaction(() async {
+    final current = {for (final c in await watchCategories().first) c.id: c};
+    for (final (i, id) in ids.indexed) {
+      if (current[id]?.sortOrder == i) continue;
+      await (_db.update(_db.categories)..where((t) => t.id.equals(id))).write(
+        CategoriesCompanion(
+          sortOrder: Value(i),
+          updatedAt: Value(_session.clock.tick()),
+        ),
+      );
+    }
+  });
+
   /// 新建或更新商品。规格被移除时软删除；家里库存有变化时记一条盘点流水。
   Future<String> saveProduct(ProductDraft draft) {
     return _db.transaction(() async {
@@ -167,6 +240,7 @@ class CatalogRepository {
               creatorId: Value(draft.creatorId),
               imagePath: Value(draft.imagePath),
               tags: Value(draft.tags.trim()),
+              categoryIds: Value(draft.categoryIds.join(',')),
             ),
           );
 

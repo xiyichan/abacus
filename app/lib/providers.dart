@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'data/expense_repository.dart';
 import 'data/catalog_repository.dart';
 import 'data/database.dart';
 import 'data/inventory_repository.dart';
@@ -14,6 +15,7 @@ import 'data/team_repository.dart';
 import 'sync/cloud_api.dart';
 import 'sync/cloud_sync_service.dart';
 import 'sync/lan_sync_service.dart';
+import 'sync/media_store.dart';
 
 /// 以下三个在 main() 启动时初始化后通过 overrides 注入（测试里同样注入）。
 final databaseProvider = Provider<AppDatabase>(
@@ -28,6 +30,13 @@ final mediaDirProvider = Provider<Directory>(
   (ref) => throw UnimplementedError('override in main()'),
 );
 
+/// 图片文件，局域网和云端同步都通过它收发。
+final mediaStoreProvider = Provider((ref) {
+  final store = MediaStore(ref.watch(mediaDirProvider));
+  ref.onDispose(store.dispose);
+  return store;
+});
+
 final catalogRepositoryProvider = Provider(
   (ref) => CatalogRepository(
     ref.watch(databaseProvider),
@@ -40,6 +49,18 @@ final inventoryRepositoryProvider = Provider(
     ref.watch(sessionProvider),
   ),
 );
+final expenseRepositoryProvider = Provider(
+  (ref) => ExpenseRepository(
+    ref.watch(databaseProvider),
+    ref.watch(sessionProvider),
+  ),
+);
+
+/// key 为 null 时是全部支出。
+final expensesProvider = StreamProvider.family<List<Expense>, String?>(
+  (ref, eventId) => ref.watch(expenseRepositoryProvider).watchExpenses(eventId),
+);
+
 final salesRepositoryProvider = Provider(
   (ref) =>
       SalesRepository(ref.watch(databaseProvider), ref.watch(sessionProvider)),
@@ -47,6 +68,9 @@ final salesRepositoryProvider = Provider(
 
 final catalogProvider = StreamProvider(
   (ref) => ref.watch(catalogRepositoryProvider).watchCatalog(),
+);
+final categoriesProvider = StreamProvider(
+  (ref) => ref.watch(catalogRepositoryProvider).watchCategories(),
 );
 final creatorsProvider = StreamProvider(
   (ref) => ref.watch(catalogRepositoryProvider).watchCreators(),
@@ -113,6 +137,7 @@ final syncServiceProvider = Provider<SyncService>((ref) {
   final service = LanSyncService(
     ref.watch(databaseProvider),
     ref.watch(sessionProvider),
+    media: ref.watch(mediaStoreProvider),
   );
   unawaited(service.start());
   ref.onDispose(service.dispose);
@@ -138,6 +163,7 @@ final cloudSyncProvider = Provider<CloudSyncService>((ref) {
     ref.watch(databaseProvider),
     ref.watch(sessionProvider),
     ref.watch(cloudApiProvider),
+    media: ref.watch(mediaStoreProvider),
   );
   unawaited(service.start());
   ref.onDispose(service.dispose);

@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 
 import '../domain/checkout.dart';
 import '../domain/csv.dart';
+import 'database.dart';
 import 'sales_repository.dart';
 
 final _time = DateFormat('yyyy-MM-dd HH:mm:ss');
@@ -58,5 +59,56 @@ String buildOrdersCsv(
       d.refund?.reason ?? '',
     ]);
   }
+  return toCsv(rows);
+}
+
+const _expenseCategoryNames = {
+  'travel': '差旅交通',
+  'booth': '摊位费',
+  'lodging': '住宿',
+  'food': '餐饮',
+  'supplies': '物料制作',
+  'shipping': '快递运费',
+  'other': '其他',
+};
+
+final _date = DateFormat('yyyy-MM-dd');
+
+/// 支出明细导出为 CSV：一行一笔，最后空一行附上对账汇总（实收、支出合计、净收入）。
+/// [revenue] 是同一范围的实收（不含已退款订单）。
+/// 传入 [eventNames] 时（导出多个场次）第一列为场次名，不属于场次的留空。
+String buildExpensesCsv(
+  List<Expense> expenses, {
+  required int revenue,
+  Map<String, String>? eventNames,
+}) {
+  final multi = eventNames != null;
+  final rows = <List<Object?>>[
+    [if (multi) '场次', '日期', '分类', '金额', '备注'],
+  ];
+  var total = 0;
+  for (final x in expenses) {
+    total += x.amount;
+    rows.add([
+      if (multi) x.eventId == null ? '' : eventNames[x.eventId] ?? '',
+      _date.format(x.spentOn),
+      _expenseCategoryNames[x.category] ?? x.category,
+      plainAmount(x.amount),
+      x.note,
+    ]);
+  }
+  // 汇总的“金额”放在同一列，表格里对齐好看。
+  List<Object?> summary(String label, int cents) => [
+    if (multi) '',
+    '',
+    label,
+    plainAmount(cents),
+    '',
+  ];
+  rows
+    ..add([])
+    ..add(summary('实收', revenue))
+    ..add(summary('支出合计', total))
+    ..add(summary('净收入', revenue - total));
   return toCsv(rows);
 }

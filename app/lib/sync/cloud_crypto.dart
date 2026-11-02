@@ -73,5 +73,37 @@ class CloudKeys {
     }
   }
 
+  /// 加密一张图片。文件名作为附加认证数据，防止把一张图的密文当成另一张。
+  Future<Uint8List> sealMedia(String name, List<int> bytes) async {
+    final box = await _aes.encrypt(
+      bytes,
+      secretKey: _dataKey,
+      aad: _mediaAad(name),
+    );
+    return box.concatenation();
+  }
+
+  /// 解密一张图片；被篡改、文件名对不上或不是本团队的数据返回 null。
+  Future<Uint8List?> openMedia(String name, List<int> sealed) async {
+    try {
+      final box = SecretBox.fromConcatenation(
+        sealed,
+        nonceLength: _aes.nonceLength,
+        macLength: _aes.macAlgorithm.macLength,
+      );
+      final clear = await _aes.decrypt(
+        box,
+        secretKey: _dataKey,
+        aad: _mediaAad(name),
+      );
+      return Uint8List.fromList(clear);
+    } on Object {
+      return null;
+    }
+  }
+
   static Uint8List _aad(String origin, int seq) => utf8.encode('$origin:$seq');
+
+  // 带“media/”前缀，和同步记录的“设备:序号”不会重合。
+  static Uint8List _mediaAad(String name) => utf8.encode('media/$name');
 }

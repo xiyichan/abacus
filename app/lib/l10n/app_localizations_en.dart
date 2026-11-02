@@ -10,7 +10,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Booth Helper';
+  String get appTitle => 'Abacus';
 
   @override
   String get navPos => 'Till';
@@ -64,7 +64,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cart => 'Cart';
 
   @override
-  String get cartEmpty => 'Tap goods to add them to the cart';
+  String get cartEmpty => 'Tap a product to add it';
 
   @override
   String get checkout => 'Check out';
@@ -173,7 +173,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProduct => 'Edit goods';
 
   @override
-  String get noProducts => 'No goods yet. Tap + to add some.';
+  String get noProducts => 'No products yet';
 
   @override
   String get productName => 'Name';
@@ -280,6 +280,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventDate => 'Date';
+
+  @override
+  String get eventDateHint => 'Pick a range for multi-day events';
 
   @override
   String get eventBooth => 'Table';
@@ -504,7 +507,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get exportCsv => 'Export orders as CSV';
+  String get exportCsv => 'Export orders and expenses as CSV';
 
   @override
   String get cloudBackup => 'Cloud backup';
@@ -792,4 +795,232 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noLeftover => 'No leftover from previous events';
+
+  @override
+  String get displayName => 'Username';
+
+  @override
+  String get setDisplayName => 'Set username';
+
+  @override
+  String get editDisplayName => 'Change username';
+
+  @override
+  String get displayNameHint =>
+      'Shown on your cloud account so you can tell accounts apart. You still sign in with an email code.';
+
+  @override
+  String get skip => 'Skip';
+
+  @override
+  String get errInvalidName => 'Username can be at most 30 characters';
+
+  @override
+  String get displayNameSaved => 'Username saved';
+
+  @override
+  String get cashierLock => 'Till lock';
+
+  @override
+  String get cashierLockHint =>
+      'Only the till is shown while locked, so customers can’t see orders, products, stats or settings. Unlock with a PIN.';
+
+  @override
+  String get changeLockPin => 'Change till lock PIN';
+
+  @override
+  String get setLockPin => 'Set till lock PIN';
+
+  @override
+  String get confirmLockPin => 'Enter the PIN again';
+
+  @override
+  String get pinMismatch => 'The PINs don’t match';
+
+  @override
+  String get unlockTitle => 'Enter PIN to unlock';
+
+  @override
+  String get wrongPin => 'Wrong PIN';
+
+  @override
+  String pinHint(int count) {
+    return '$count digits';
+  }
+
+  @override
+  String get unlock => 'Unlock';
+
+  @override
+  String get lockedTooltip => 'Locked — tap to unlock';
+
+  @override
+  String get expenses => 'Expenses';
+
+  @override
+  String get addExpense => 'Expense';
+
+  @override
+  String get newExpense => 'Add expense';
+
+  @override
+  String get editExpense => 'Edit expense';
+
+  @override
+  String get expenseCategory => 'Category';
+
+  @override
+  String get expenseAmount => 'Amount';
+
+  @override
+  String get expenseNote => 'Note (optional)';
+
+  @override
+  String get expenseNoteHint => 'e.g. train tickets, two hotel nights';
+
+  @override
+  String get expenseDate => 'Date';
+
+  @override
+  String get expenseEvent => 'Event';
+
+  @override
+  String get expenseNoEvent => 'Not tied to an event';
+
+  @override
+  String get noExpenses => 'No expenses yet';
+
+  @override
+  String get deleteExpenseTitle => 'Delete this expense?';
+
+  @override
+  String get netIncome => 'Net income';
+
+  @override
+  String netShort(String amount) {
+    return 'net $amount';
+  }
+
+  @override
+  String expenseSaved(String amount) {
+    return 'Expense $amount saved';
+  }
+
+  @override
+  String get expenseCat_travel => 'Travel';
+
+  @override
+  String get expenseCat_booth => 'Booth fee';
+
+  @override
+  String get expenseCat_lodging => 'Lodging';
+
+  @override
+  String get expenseCat_food => 'Food';
+
+  @override
+  String get expenseCat_supplies => 'Supplies';
+
+  @override
+  String get expenseCat_shipping => 'Shipping';
+
+  @override
+  String get expenseCat_other => 'Other';
+
+  @override
+  String get nothingToExport => 'No orders or expenses to export';
+
+  @override
+  String get otherCategory => 'Other';
+
+  @override
+  String get addOne => 'Add one';
+
+  @override
+  String get removeOne => 'Remove one';
+
+  @override
+  String get categories => 'Categories';
+
+  @override
+  String get manageCategories => 'Categories';
+
+  @override
+  String get newCategory => 'New category';
+
+  @override
+  String get categoryName => 'Category name';
+
+  @override
+  String deleteCategoryTitle(String name) {
+    return 'Delete category “$name”?';
+  }
+
+  @override
+  String get deleteCategoryBody =>
+      'Products are kept; they just leave this category.';
+
+  @override
+  String get noCategories => 'No categories yet';
+
+  @override
+  String get noCategoriesBody =>
+      'Create categories (e.g. Badges, Stands) and tick them on products; the till groups products by them.';
+
+  @override
+  String get categoriesHint =>
+      'Drag the handle to reorder; the till shows categories in this order. Tap a row to rename.';
+
+  @override
+  String categoryProductCount(int count) {
+    return '$count products';
+  }
+
+  @override
+  String get moveHandle => 'Drag to reorder';
+
+  @override
+  String orderedCount(int count) {
+    return '$count in cart';
+  }
+
+  @override
+  String get collapseCart => 'Hide cart items';
+
+  @override
+  String get expandCart => 'Show cart items';
+
+  @override
+  String get collapseCartPanel => 'Hide cart';
+
+  @override
+  String get expandCartPanel => 'Show cart';
+
+  @override
+  String categorySize(int count) {
+    return '$count items';
+  }
+
+  @override
+  String get searchProductsHint => 'Search products, creators or tags';
+
+  @override
+  String productTotal(int count) {
+    return '$count items';
+  }
+
+  @override
+  String get noMatchingProducts => 'No matching products';
+
+  @override
+  String get optional => 'Optional';
+
+  @override
+  String get productKindAndPrice => 'Type & price';
+
+  @override
+  String get deleteProduct => 'Delete product';
+
+  @override
+  String get changeImage => 'Change image';
 }

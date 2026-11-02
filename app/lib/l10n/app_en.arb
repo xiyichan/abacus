@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Booth Helper",
+  "appTitle": "Abacus",
   "navPos": "Till",
   "navOrders": "Orders",
   "navProducts": "Goods",
@@ -18,7 +18,7 @@
   "invalidNumber": "Enter a whole number",
   "none": "None",
   "cart": "Cart",
-  "cartEmpty": "Tap goods to add them to the cart",
+  "cartEmpty": "Tap a product to add it",
   "checkout": "Check out",
   "clearCart": "Clear",
   "itemCount": "{count} items",
@@ -72,7 +72,7 @@
   "noPaymentMethods": "No payment methods enabled. Turn one on in Settings.",
   "addProduct": "Add goods",
   "editProduct": "Edit goods",
-  "noProducts": "No goods yet. Tap + to add some.",
+  "noProducts": "No products yet",
   "productName": "Name",
   "creator": "Creator",
   "newCreator": "New creator…",
@@ -127,6 +127,7 @@
   "eventName": "Event name",
   "eventNameHint": "e.g. Comic Con",
   "eventDate": "Date",
+  "eventDateHint": "Pick a range for multi-day events",
   "eventBooth": "Table",
   "noEvents": "No events yet. Tap + to create one.",
   "currentEvent": "Current event",
@@ -255,7 +256,7 @@
   "discountTotal": "Discounts",
   "refunds": "Refunds",
   "orderCount": "{count} orders",
-  "exportCsv": "Export orders as CSV",
+  "exportCsv": "Export orders and expenses as CSV",
   "@orderCount": {
     "placeholders": {
       "count": {
@@ -509,5 +510,100 @@
         "type": "int"
       }
     }
-  }
+  },
+  "displayName": "Username",
+  "setDisplayName": "Set username",
+  "editDisplayName": "Change username",
+  "displayNameHint": "Shown on your cloud account so you can tell accounts apart. You still sign in with an email code.",
+  "skip": "Skip",
+  "errInvalidName": "Username can be at most 30 characters",
+  "displayNameSaved": "Username saved",
+  "cashierLock": "Till lock",
+  "cashierLockHint": "Only the till is shown while locked, so customers can’t see orders, products, stats or settings. Unlock with a PIN.",
+  "changeLockPin": "Change till lock PIN",
+  "setLockPin": "Set till lock PIN",
+  "confirmLockPin": "Enter the PIN again",
+  "pinMismatch": "The PINs don’t match",
+  "unlockTitle": "Enter PIN to unlock",
+  "wrongPin": "Wrong PIN",
+  "pinHint": "{count} digits",
+  "unlock": "Unlock",
+  "lockedTooltip": "Locked — tap to unlock",
+  "@pinHint": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "expenses": "Expenses",
+  "addExpense": "Expense",
+  "newExpense": "Add expense",
+  "editExpense": "Edit expense",
+  "expenseCategory": "Category",
+  "expenseAmount": "Amount",
+  "expenseNote": "Note (optional)",
+  "expenseNoteHint": "e.g. train tickets, two hotel nights",
+  "expenseDate": "Date",
+  "expenseEvent": "Event",
+  "expenseNoEvent": "Not tied to an event",
+  "noExpenses": "No expenses yet",
+  "deleteExpenseTitle": "Delete this expense?",
+  "netIncome": "Net income",
+  "netShort": "net {amount}",
+  "expenseSaved": "Expense {amount} saved",
+  "expenseCat_travel": "Travel",
+  "expenseCat_booth": "Booth fee",
+  "expenseCat_lodging": "Lodging",
+  "expenseCat_food": "Food",
+  "expenseCat_supplies": "Supplies",
+  "expenseCat_shipping": "Shipping",
+  "expenseCat_other": "Other",
+  "@netShort": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "@expenseSaved": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "nothingToExport": "No orders or expenses to export",
+  "otherCategory": "Other",
+  "addOne": "Add one",
+  "removeOne": "Remove one",
+  "categories": "Categories",
+  "manageCategories": "Categories",
+  "newCategory": "New category",
+  "categoryName": "Category name",
+  "deleteCategoryTitle": "Delete category “{name}”?",
+  "deleteCategoryBody": "Products are kept; they just leave this category.",
+  "noCategories": "No categories yet",
+  "noCategoriesBody": "Create categories (e.g. Badges, Stands) and tick them on products; the till groups products by them.",
+  "categoriesHint": "Drag the handle to reorder; the till shows categories in this order. Tap a row to rename.",
+  "categoryProductCount": "{count} products",
+  "moveHandle": "Drag to reorder",
+  "orderedCount": "{count} in cart",
+  "collapseCart": "Hide cart items",
+  "expandCart": "Show cart items",
+  "collapseCartPanel": "Hide cart",
+  "expandCartPanel": "Show cart",
+  "categorySize": "{count} items",
+  "searchProductsHint": "Search products, creators or tags",
+  "productTotal": "{count} items",
+  "@productTotal": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "noMatchingProducts": "No matching products",
+  "optional": "Optional",
+  "productKindAndPrice": "Type & price",
+  "deleteProduct": "Delete product",
+  "changeImage": "Change image"
 }

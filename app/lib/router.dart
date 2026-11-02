@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import 'features/events/event_stock_page.dart';
@@ -5,6 +6,7 @@ import 'features/events/events_page.dart';
 import 'features/orders/order_detail_page.dart';
 import 'features/orders/orders_page.dart';
 import 'features/pos/pos_page.dart';
+import 'features/products/categories_page.dart';
 import 'features/products/product_editor_page.dart';
 import 'features/products/products_page.dart';
 import 'features/settings/payment_methods_page.dart';
@@ -15,8 +17,12 @@ import 'features/team/join_team_page.dart';
 import 'features/team/team_page.dart';
 import 'ui/app_shell.dart';
 
-GoRouter createRouter() => GoRouter(
+/// [locked] 为 true（收银锁）时只能停在收银台首页，其他页面一律跳回去。
+GoRouter createRouter({ValueListenable<bool>? locked}) => GoRouter(
   initialLocation: '/pos',
+  refreshListenable: locked,
+  redirect: (_, state) =>
+      (locked?.value ?? false) && state.uri.path != '/pos' ? '/pos' : null,
   routes: [
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => AppShell(navigationShell: shell),
@@ -68,6 +74,10 @@ GoRouter createRouter() => GoRouter(
                 GoRoute(
                   path: 'new',
                   builder: (_, _) => const ProductEditorPage(),
+                ),
+                GoRoute(
+                  path: 'categories',
+                  builder: (_, _) => const CategoriesPage(),
                 ),
                 GoRoute(
                   path: ':productId',

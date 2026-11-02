@@ -10,7 +10,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => '摊位助手';
+  String get appTitle => '小算盘';
 
   @override
   String get navPos => '收银';
@@ -64,7 +64,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cart => '购物车';
 
   @override
-  String get cartEmpty => '点商品加入购物车';
+  String get cartEmpty => '点左边的商品加入购物车';
 
   @override
   String get checkout => '结账';
@@ -169,7 +169,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editProduct => '编辑商品';
 
   @override
-  String get noProducts => '还没有商品，点右下角添加';
+  String get noProducts => '还没有商品';
 
   @override
   String get productName => '名称';
@@ -275,6 +275,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get eventDate => '日期';
+
+  @override
+  String get eventDateHint => '多天的展可以选一个日期范围';
 
   @override
   String get eventBooth => '摊位号';
@@ -493,7 +496,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get exportCsv => '导出订单 CSV';
+  String get exportCsv => '导出 CSV（订单和支出）';
 
   @override
   String get cloudBackup => '云端备份';
@@ -772,4 +775,227 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noLeftover => '之前的场次没有剩余的货';
+
+  @override
+  String get displayName => '用户名';
+
+  @override
+  String get setDisplayName => '设置用户名';
+
+  @override
+  String get editDisplayName => '修改用户名';
+
+  @override
+  String get displayNameHint => '显示在云端账号上，方便认出是谁的账号。登录仍用邮箱验证码。';
+
+  @override
+  String get skip => '跳过';
+
+  @override
+  String get errInvalidName => '用户名最多 30 个字';
+
+  @override
+  String get displayNameSaved => '用户名已保存';
+
+  @override
+  String get cashierLock => '收银锁';
+
+  @override
+  String get cashierLockHint => '锁上后只显示收银台，客人看不到订单、商品、统计和设置。解锁需要输入 PIN。';
+
+  @override
+  String get changeLockPin => '修改收银锁 PIN';
+
+  @override
+  String get setLockPin => '设置收银锁 PIN';
+
+  @override
+  String get confirmLockPin => '再输一遍 PIN';
+
+  @override
+  String get pinMismatch => '两次输入的 PIN 不一样';
+
+  @override
+  String get unlockTitle => '输入 PIN 解锁';
+
+  @override
+  String get wrongPin => 'PIN 不对';
+
+  @override
+  String pinHint(int count) {
+    return '$count 位数字';
+  }
+
+  @override
+  String get unlock => '解锁';
+
+  @override
+  String get lockedTooltip => '已锁定，点此解锁';
+
+  @override
+  String get expenses => '支出';
+
+  @override
+  String get addExpense => '记支出';
+
+  @override
+  String get newExpense => '记一笔支出';
+
+  @override
+  String get editExpense => '修改支出';
+
+  @override
+  String get expenseCategory => '分类';
+
+  @override
+  String get expenseAmount => '金额';
+
+  @override
+  String get expenseNote => '备注（可选）';
+
+  @override
+  String get expenseNoteHint => '如：高铁往返、两晚酒店';
+
+  @override
+  String get expenseDate => '日期';
+
+  @override
+  String get expenseEvent => '场次';
+
+  @override
+  String get expenseNoEvent => '不属于某个场次';
+
+  @override
+  String get noExpenses => '还没有记支出';
+
+  @override
+  String get deleteExpenseTitle => '删除这笔支出？';
+
+  @override
+  String get netIncome => '净收入';
+
+  @override
+  String netShort(String amount) {
+    return '净 $amount';
+  }
+
+  @override
+  String expenseSaved(String amount) {
+    return '已记下支出 $amount';
+  }
+
+  @override
+  String get expenseCat_travel => '差旅交通';
+
+  @override
+  String get expenseCat_booth => '摊位费';
+
+  @override
+  String get expenseCat_lodging => '住宿';
+
+  @override
+  String get expenseCat_food => '餐饮';
+
+  @override
+  String get expenseCat_supplies => '物料制作';
+
+  @override
+  String get expenseCat_shipping => '快递运费';
+
+  @override
+  String get expenseCat_other => '其他';
+
+  @override
+  String get nothingToExport => '没有可导出的订单或支出';
+
+  @override
+  String get otherCategory => '其他';
+
+  @override
+  String get addOne => '加一件';
+
+  @override
+  String get removeOne => '减一件';
+
+  @override
+  String get categories => '分类';
+
+  @override
+  String get manageCategories => '管理分类';
+
+  @override
+  String get newCategory => '新建分类';
+
+  @override
+  String get categoryName => '分类名称';
+
+  @override
+  String deleteCategoryTitle(String name) {
+    return '删除分类「$name」？';
+  }
+
+  @override
+  String get deleteCategoryBody => '商品不会被删除，只是不再属于这个分类。';
+
+  @override
+  String get noCategories => '还没有分类';
+
+  @override
+  String get noCategoriesBody => '建几个分类（如 吧唧、立牌、色纸），再在商品里勾上，收银台左边就按分类显示。';
+
+  @override
+  String get categoriesHint => '按住右边的把手拖动排序，收银台左边按这个顺序显示。点一行改名。';
+
+  @override
+  String categoryProductCount(int count) {
+    return '$count 个商品';
+  }
+
+  @override
+  String get moveHandle => '拖动排序';
+
+  @override
+  String orderedCount(int count) {
+    return '已点 $count 件';
+  }
+
+  @override
+  String get collapseCart => '收起已点';
+
+  @override
+  String get expandCart => '展开已点';
+
+  @override
+  String get collapseCartPanel => '收起购物车';
+
+  @override
+  String get expandCartPanel => '展开购物车';
+
+  @override
+  String categorySize(int count) {
+    return '$count 款';
+  }
+
+  @override
+  String get searchProductsHint => '搜索商品、作者或标签';
+
+  @override
+  String productTotal(int count) {
+    return '共 $count 款';
+  }
+
+  @override
+  String get noMatchingProducts => '没有符合条件的商品';
+
+  @override
+  String get optional => '选填';
+
+  @override
+  String get productKindAndPrice => '类型与价格';
+
+  @override
+  String get deleteProduct => '删除商品';
+
+  @override
+  String get changeImage => '更换图片';
 }

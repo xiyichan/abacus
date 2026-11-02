@@ -37,6 +37,15 @@ class Creators extends Table with SyncColumns {
   TextColumn get name => text()();
 }
 
+/// 商品分类（收银台左边的分类栏），按 [sortOrder] 排。
+/// 数据类不叫 Category，免得和 Flutter 的同名注解冲突。
+@DataClassName('ProductCategory')
+class Categories extends Table with SyncColumns {
+  TextColumn get teamId => text()();
+  TextColumn get name => text()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+}
+
 /// 商品。[kind]: single / variants / bundle
 class Products extends Table with SyncColumns {
   TextColumn get teamId => text()();
@@ -47,6 +56,9 @@ class Products extends Table with SyncColumns {
 
   /// 逗号分隔的标签，如“亚克力,徽章”。
   TextColumn get tags => text().withDefault(const Constant(''))();
+
+  /// 所属分类的 id，逗号分隔；一个商品可以在多个分类里。
+  TextColumn get categoryIds => text().withDefault(const Constant(''))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 }
 
@@ -76,6 +88,9 @@ class Events extends Table with SyncColumns {
   TextColumn get teamId => text()();
   TextColumn get name => text()();
   DateTimeColumn get startsOn => dateTime().nullable()();
+
+  /// 最后一天（含）。为 null 表示只有 [startsOn] 那一天。
+  DateTimeColumn get endsOn => dateTime().nullable()();
   TextColumn get booth => text().nullable()();
 
   /// 结束（收摊）时间。结束时剩余库存退回家里；为 null 表示进行中。
@@ -149,6 +164,20 @@ class Refunds extends Table with SyncColumns {
   TextColumn get orderId => text()();
   IntColumn get amount => integer()();
   TextColumn get reason => text().nullable()();
+  TextColumn get deviceId => text()();
+  DateTimeColumn get createdAt => dateTime()();
+}
+
+/// 支出（差旅、摊位费等），统计时从实收里扣掉算净收入。
+/// [eventId] 为 null 表示不属于某个场次的支出。
+/// [category]: travel / booth / lodging / food / supplies / shipping / other
+class Expenses extends Table with SyncColumns {
+  TextColumn get teamId => text()();
+  TextColumn get eventId => text().nullable()();
+  TextColumn get category => text()();
+  IntColumn get amount => integer()();
+  TextColumn get note => text().withDefault(const Constant(''))();
+  DateTimeColumn get spentOn => dateTime()();
   TextColumn get deviceId => text()();
   DateTimeColumn get createdAt => dateTime()();
 }

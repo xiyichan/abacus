@@ -7,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/money.dart';
+import 'event_dates.dart';
 
 /// 结束场次：先展示本场销售和剩余汇总，确认后标记结束。返回是否已结束。
 Future<bool> confirmEndEvent(
@@ -200,10 +201,10 @@ class _EndEventReminderState extends ConsumerState<EndEventReminder> {
   }
 
   Future<void> _load() async {
-    final startsOn = widget.event.startsOn;
+    // 多天的展到最后一天过了才提醒。
+    final lastDay = widget.event.lastDay;
     final today = DateUtils.dateOnly(DateTime.now());
-    final past =
-        startsOn != null && DateUtils.dateOnly(startsOn).isBefore(today);
+    final past = lastDay != null && DateUtils.dateOnly(lastDay).isBefore(today);
     final dismissedOn = await ref.read(databaseProvider).getSetting(_key);
     if (mounted) setState(() => _dismissed = !past || dismissedOn == _today());
   }

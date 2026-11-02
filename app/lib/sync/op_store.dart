@@ -60,6 +60,7 @@ List<TableInfo> syncedTables(AppDatabase db) => [
   db.teams,
   db.devices,
   db.creators,
+  db.categories,
   db.products,
   db.variants,
   db.bundleItems,
@@ -70,6 +71,7 @@ List<TableInfo> syncedTables(AppDatabase db) => [
   db.orderItems,
   db.orderPayments,
   db.refunds,
+  db.expenses,
 ];
 
 /// 为每张同步表建触发器：本机的每次插入/更新都自动记一条操作日志。

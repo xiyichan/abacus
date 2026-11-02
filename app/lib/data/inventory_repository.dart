@@ -29,9 +29,11 @@ class InventoryRepository {
             ]))
           .watch();
 
+  /// [endsOn] 是最后一天（含），不晚于 [startsOn] 时按单日场次处理。
   Future<String> createEvent({
     required String name,
     DateTime? startsOn,
+    DateTime? endsOn,
     String? booth,
   }) async {
     final id = newId();
@@ -44,6 +46,7 @@ class InventoryRepository {
             teamId: _session.teamId,
             name: name.trim(),
             startsOn: Value(startsOn),
+            endsOn: Value(_lastDay(startsOn, endsOn)),
             booth: Value(booth?.trim().isEmpty ?? true ? null : booth!.trim()),
           ),
         );
@@ -54,15 +57,23 @@ class InventoryRepository {
     String id, {
     required String name,
     DateTime? startsOn,
+    DateTime? endsOn,
     String? booth,
   }) => (_db.update(_db.events)..where((t) => t.id.equals(id))).write(
     EventsCompanion(
       updatedAt: Value(_session.clock.tick()),
       name: Value(name.trim()),
       startsOn: Value(startsOn),
+      endsOn: Value(_lastDay(startsOn, endsOn)),
       booth: Value(booth?.trim().isEmpty ?? true ? null : booth!.trim()),
     ),
   );
+
+  /// 单日场次不存结束日期。
+  static DateTime? _lastDay(DateTime? startsOn, DateTime? endsOn) =>
+      startsOn != null && endsOn != null && endsOn.isAfter(startsOn)
+      ? endsOn
+      : null;
 
   /// 本机当前在哪个场次收银（只存本机，不同设备可以各自选择）。
   Stream<String?> watchCurrentEventId() => _db.watchSetting(_currentEventKey);

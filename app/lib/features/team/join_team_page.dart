@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../sync/team_invite.dart';
+import '../../ui/layout.dart';
 import '../../ui/empty_state.dart';
 
 /// 加入团队：扫邀请二维码，或粘贴邀请码（模拟器没有相机时用）。
@@ -72,7 +73,7 @@ class _JoinTeamPageState extends ConsumerState<JoinTeamPage> {
           constraints: const BoxConstraints(maxWidth: 520),
           child: ListView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.all(16),
+            padding: withBottomBar(context, const EdgeInsets.all(16)),
             children: [
               Text(l10n.joinTeamHint),
               const SizedBox(height: 16),

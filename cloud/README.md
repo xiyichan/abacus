@@ -1,4 +1,4 @@
-# 摊位助手 · 云端同步
+# 小算盘 · 云端同步
 
 Cloudflare Worker + Durable Objects（每个团队一个，内置 SQLite，保管加密后的同步记录）+ D1（账号、登录、团队登记）。
 

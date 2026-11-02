@@ -38,7 +38,7 @@ class CloudTeam {
   final String currency;
 }
 
-/// 云端的 HTTP 接口：邮箱验证码登录、团队登记、取回团队密钥。
+/// 云端的 HTTP 接口：邮箱验证码登录、团队登记、取回团队密钥、图片上传下载。
 class CloudApi {
   CloudApi({String baseUrl = cloudBaseUrl, http.Client? client})
     : _base = Uri.parse(baseUrl),
@@ -59,10 +59,37 @@ class CloudApi {
     return json['devCode'] as String?;
   }
 
-  /// 校验验证码，成功返回登录令牌。
-  Future<String> verifyLogin(String email, String code) async {
+  /// 校验验证码，成功返回登录令牌和账号的用户名（还没设置时为 null）。
+  Future<({String token, String? displayName})> verifyLogin(
+    String email,
+    String code,
+  ) async {
     final json = await _post('/auth/verify', {'email': email, 'code': code});
-    return json['token'] as String;
+    return (
+      token: json['token'] as String,
+      displayName: json['displayName'] as String?,
+    );
+  }
+
+  /// 账号的用户名（只用来显示）。
+  Future<String?> fetchDisplayName(String token) async {
+    final json = await _get('/me', token);
+    return json['displayName'] as String?;
+  }
+
+  /// 修改用户名；传空字符串清除。返回保存后的用户名。
+  Future<String?> setDisplayName(String token, String name) async {
+    final json = await _send(
+      () => _client.put(
+        _base.replace(path: '/me'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'displayName': name}),
+      ),
+    );
+    return json['displayName'] as String?;
   }
 
   Future<void> logout(String token) =>
@@ -107,6 +134,62 @@ class CloudApi {
     );
   }
 
+  Uri _mediaUri(String teamId, String name) =>
+      _base.replace(path: '/teams/$teamId/media/$name');
+
+  /// 上传一张加密后的图片。云端已有同名文件时直接成功。
+  Future<void> putMedia(
+    String token, {
+    required String teamId,
+    required String teamToken,
+    required String name,
+    required List<int> sealed,
+  }) => _send(
+    () => _client.put(
+      _mediaUri(teamId, name),
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Authorization': 'Bearer $token',
+        'X-Team-Token': teamToken,
+      },
+      body: sealed,
+    ),
+    timeout: _mediaTimeout,
+  );
+
+  /// 下载一张加密后的图片；云端还没有（上传它的设备还没传上来）时返回 null。
+  Future<Uint8List?> getMedia(
+    String token, {
+    required String teamId,
+    required String teamToken,
+    required String name,
+  }) async {
+    final http.Response response;
+    try {
+      response = await _client
+          .get(
+            _mediaUri(teamId, name),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'X-Team-Token': teamToken,
+            },
+          )
+          .timeout(_mediaTimeout);
+    } on Object {
+      throw const CloudApiException('network');
+    }
+    if (response.statusCode == 404) return null;
+    if (response.statusCode >= 400) {
+      throw CloudApiException(
+        'http_${response.statusCode}',
+        response.statusCode,
+      );
+    }
+    return response.bodyBytes;
+  }
+
+  static const _mediaTimeout = Duration(seconds: 60);
+
   Future<Map<String, dynamic>> _post(
     String path,
     Map<String, Object?> body, {
@@ -130,11 +213,12 @@ class CloudApi {
   );
 
   Future<Map<String, dynamic>> _send(
-    Future<http.Response> Function() request,
-  ) async {
+    Future<http.Response> Function() request, {
+    Duration timeout = const Duration(seconds: 15),
+  }) async {
     final http.Response response;
     try {
-      response = await request().timeout(const Duration(seconds: 15));
+      response = await request().timeout(timeout);
     } on Object {
       throw const CloudApiException('network');
     }

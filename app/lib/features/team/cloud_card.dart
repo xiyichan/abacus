@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +8,27 @@ import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../sync/cloud_sync_service.dart';
 import '../../ui/empty_state.dart';
+import '../../ui/input_dialog.dart';
+import 'cloud_login_page.dart' show cloudErrorText;
+
+/// 问用户名（只用来显示）。取消返回 null；[firstLogin] 时取消按钮叫“跳过”。
+Future<String?> askDisplayName(
+  BuildContext context, {
+  String initial = '',
+  bool firstLogin = false,
+}) {
+  final l10n = AppLocalizations.of(context);
+  return showInputDialog(
+    context,
+    title: initial.isEmpty ? l10n.setDisplayName : l10n.editDisplayName,
+    label: l10n.displayName,
+    body: l10n.displayNameHint,
+    initialValue: initial,
+    inputFormatters: [LengthLimitingTextInputFormatter(30)],
+    confirmLabel: l10n.save,
+    cancelLabel: firstLogin ? l10n.skip : l10n.cancel,
+  ).then((v) => v?.trim());
+}
 
 /// 团队与设备页里的“云端备份”卡片：登录入口或当前同步状态。
 class CloudCard extends ConsumerWidget {
@@ -17,6 +39,26 @@ class CloudCard extends ConsumerWidget {
     final sameDay =
         now.year == time.year && now.month == time.month && now.day == time.day;
     return DateFormat(sameDay ? 'HH:mm' : 'MM-dd HH:mm').format(time);
+  }
+
+  Future<void> _editDisplayName(
+    BuildContext context,
+    WidgetRef ref,
+    CloudStatus status,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    final name = await askDisplayName(
+      context,
+      initial: status.displayName ?? '',
+    );
+    if (name == null || name == (status.displayName ?? '')) return;
+    try {
+      await ref.read(cloudSyncProvider).setDisplayName(name);
+      messenger.showSnackBar(SnackBar(content: Text(l10n.displayNameSaved)));
+    } on Object catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(cloudErrorText(l10n, e))));
+    }
   }
 
   @override
@@ -75,23 +117,39 @@ class CloudCard extends ConsumerWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
         leading: Icon(icon, color: color),
-        title: Text(status.email ?? l10n.cloudBackup),
+        title: Text(status.displayName ?? status.email ?? l10n.cloudBackup),
         subtitle: Text(
-          '$text\n${last == null ? l10n.neverSynced : l10n.lastSync(_when(last))}',
+          [
+            if (status.displayName != null) ?status.email,
+            text,
+            last == null ? l10n.neverSynced : l10n.lastSync(_when(last)),
+          ].join('\n'),
         ),
         isThreeLine: true,
-        trailing: TextButton(
-          onPressed: () async {
-            final ok = await confirmDialog(
-              context,
-              title: l10n.signOutTitle,
-              body: l10n.signOutBody,
-              confirmLabel: l10n.signOut,
-              cancelLabel: l10n.cancel,
-            );
-            if (ok) await ref.read(cloudSyncProvider).signOut();
-          },
-          child: Text(l10n.signOut),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: status.displayName == null
+                  ? l10n.setDisplayName
+                  : l10n.editDisplayName,
+              icon: const Icon(Icons.badge_outlined),
+              onPressed: () => _editDisplayName(context, ref, status),
+            ),
+            TextButton(
+              onPressed: () async {
+                final ok = await confirmDialog(
+                  context,
+                  title: l10n.signOutTitle,
+                  body: l10n.signOutBody,
+                  confirmLabel: l10n.signOut,
+                  cancelLabel: l10n.cancel,
+                );
+                if (ok) await ref.read(cloudSyncProvider).signOut();
+              },
+              child: Text(l10n.signOut),
+            ),
+          ],
         ),
       ),
     );

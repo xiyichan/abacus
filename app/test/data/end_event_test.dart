@@ -145,10 +145,14 @@ void main() {
       await db.customStatement('DROP TRIGGER "${t.read<String>('name')}"');
     }
     await db.customStatement('ALTER TABLE events DROP COLUMN ended_at');
+    await db.customStatement('ALTER TABLE events DROP COLUMN ends_on');
     await db.customStatement('ALTER TABLE order_payments DROP COLUMN pending');
     await db.customStatement(
       'ALTER TABLE order_payments DROP COLUMN confirmed_at',
     );
+    await db.customStatement('DROP TABLE expenses');
+    await db.customStatement('DROP TABLE categories');
+    await db.customStatement('ALTER TABLE products DROP COLUMN category_ids');
     await db.customStatement('PRAGMA user_version = 3');
     await db.close();
 
@@ -168,5 +172,6 @@ void main() {
         .getSingle();
     expect(last.read<String>('payload'), contains('"ended_at"'));
     expect(last.read<String>('payload'), isNot(contains('"ended_at":null')));
+    expect(last.read<String>('payload'), contains('"ends_on"'));
   });
 }

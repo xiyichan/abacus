@@ -11,7 +11,7 @@ void main() {
     final app = await pumpApp(tester);
     await tester.tap(find.text('商品'));
     await settle(tester);
-    await tester.tap(find.text('添加商品'));
+    await tester.tap(find.byTooltip('添加商品'));
     await settle(tester);
 
     await tester.enterText(find.widgetWithText(TextFormField, '名称'), '小企鹅亚克力板');
@@ -55,7 +55,17 @@ void main() {
     await tester.tap(find.text('徽章').first);
     await settle(tester);
     expect(find.text('剩 3'), findsOneWidget);
+    // 平板默认收起侧边购物车，底部购物车条显示件数和合计。
+    expect(find.text('2 件 · ¥30.00'), findsOneWidget);
+
+    // 展开侧边购物车看明细，再收起。
+    await tester.tap(find.byTooltip('展开购物车'));
+    await settle(tester);
     expect(find.text('¥30.00'), findsWidgets);
+    expect(find.text('购物车'), findsOneWidget);
+    await tester.tap(find.byTooltip('收起购物车'));
+    await settle(tester);
+    expect(find.text('购物车'), findsNothing);
 
     await tester.tap(find.widgetWithText(FilledButton, '结账'));
     await settle(tester);

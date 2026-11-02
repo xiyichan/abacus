@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,9 @@ import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../sync/cloud_api.dart';
 import '../../sync/cloud_sync_service.dart';
+import '../../ui/layout.dart';
 import '../../ui/empty_state.dart';
+import 'cloud_card.dart';
 
 String cloudErrorText(AppLocalizations l10n, Object error) {
   final code = error is CloudApiException ? error.code : '$error';
@@ -19,6 +22,7 @@ String cloudErrorText(AppLocalizations l10n, Object error) {
     'code_expired' => l10n.errCodeExpired,
     'too_many_attempts' => l10n.errTooManyAttempts,
     'network' => l10n.errNetwork,
+    'invalid_name' => l10n.errInvalidName,
     _ => l10n.errGeneric(code),
   };
 }
@@ -43,6 +47,7 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
 
   /// 恢复模式：登录后拿到的令牌和团队列表。
   String? _token;
+  String? _displayName;
   List<CloudTeam>? _teams;
 
   @override
@@ -84,7 +89,16 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
   Future<void> _signIn() => _run(() async {
     final email = _email.text.trim().toLowerCase();
     final api = ref.read(cloudApiProvider);
-    final token = await api.verifyLogin(email, _code.text.trim());
+    final login = await api.verifyLogin(email, _code.text.trim());
+    final token = login.token;
+    _displayName = login.displayName;
+    // 第一次登录：顺便起个用户名（可以跳过，之后在云端卡片里改）。
+    if (_displayName == null && mounted) {
+      final name = await askDisplayName(context, firstLogin: true);
+      if (name != null && name.isNotEmpty) {
+        _displayName = await api.setDisplayName(token, name);
+      }
+    }
     if (widget.restore) {
       final teams = await api.listTeams(token);
       setState(() {
@@ -93,7 +107,9 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
       });
       return;
     }
-    await ref.read(cloudSyncProvider).signIn(email: email, token: token);
+    await ref
+        .read(cloudSyncProvider)
+        .signIn(email: email, token: token, displayName: _displayName);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).cloudSignedIn)),
@@ -120,6 +136,7 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
         token: _token!,
         email: _email.text.trim().toLowerCase(),
         team: team,
+        displayName: _displayName,
       );
       ref.read(restartAppProvider)();
     });
@@ -139,7 +156,7 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
           constraints: const BoxConstraints(maxWidth: 480),
           child: ListView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.all(24),
+            padding: withBottomBar(context, const EdgeInsets.all(24)),
             children: teams != null
                 ? _teamPicker(l10n, teams)
                 : _loginForm(l10n),
@@ -200,7 +217,7 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
       child: _busy
           ? const SizedBox.square(
               dimension: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator.adaptive(strokeWidth: 2),
             )
           : Text(_codeSent ? l10n.signIn : l10n.sendCode),
     ),
@@ -229,14 +246,19 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
         child: ListTile(
           leading: const Icon(Icons.groups_outlined),
           title: Text(team.name.isEmpty ? team.id.substring(0, 8) : team.name),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: Icon(
+            CupertinoIcons.chevron_forward,
+            size: 18,
+            color: Theme.of(context).colorScheme.onSurface
+                .withValues(alpha: 0.3),
+          ),
           enabled: !_busy,
           onTap: () => _restore(team),
         ),
       ),
     if (_busy) ...[
       const SizedBox(height: 24),
-      const Center(child: CircularProgressIndicator()),
+      const Center(child: CircularProgressIndicator.adaptive()),
       const SizedBox(height: 12),
       Center(child: Text(l10n.restoring)),
     ],

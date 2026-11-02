@@ -1,6 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// 空状态：图标、标题、说明和一个可选按钮。
+import 'design.dart';
+
+/// 空状态（iOS 的 ContentUnavailableView）：大号灰色图标、粗体标题、说明和一个可选按钮。
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
@@ -20,35 +23,31 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final secondary = theme.colorScheme.onSurfaceVariant;
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(Gap.xl + Gap.sm),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: theme.colorScheme.outline),
-            const SizedBox(height: 16),
+            Icon(icon, size: 56, color: secondary.withValues(alpha: 0.6)),
+            const SizedBox(height: Gap.lg),
             Text(
               title,
-              style: theme.textTheme.titleMedium,
+              style: theme.textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
             if (body != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Gap.sm),
               Text(
                 body!,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                style: theme.textTheme.bodyLarge?.copyWith(color: secondary),
                 textAlign: TextAlign.center,
               ),
             ],
             if (actionLabel != null) ...[
-              const SizedBox(height: 16),
-              FilledButton.tonal(
-                onPressed: onAction,
-                child: Text(actionLabel!),
-              ),
+              const SizedBox(height: Gap.xl),
+              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
             ],
           ],
         ),
@@ -62,8 +61,9 @@ Widget asyncError(Object error, StackTrace _) => Center(
   child: Padding(padding: const EdgeInsets.all(24), child: Text('$error')),
 );
 
-const asyncLoading = Center(child: CircularProgressIndicator());
+const asyncLoading = Center(child: CircularProgressIndicator.adaptive());
 
+/// iOS 原生样式的确认框：取消在左，确认在右；危险操作的确认是红字。
 Future<bool> confirmDialog(
   BuildContext context, {
   required String title,
@@ -72,23 +72,19 @@ Future<bool> confirmDialog(
   required String cancelLabel,
   bool destructive = false,
 }) async {
-  final result = await showDialog<bool>(
+  final result = await showCupertinoDialog<bool>(
     context: context,
-    builder: (context) => AlertDialog(
+    builder: (context) => CupertinoAlertDialog(
       title: Text(title),
       content: body == null ? null : Text(body),
       actions: [
-        TextButton(
+        CupertinoDialogAction(
           onPressed: () => Navigator.pop(context, false),
           child: Text(cancelLabel),
         ),
-        FilledButton(
-          style: destructive
-              ? FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                  foregroundColor: Theme.of(context).colorScheme.onError,
-                )
-              : null,
+        CupertinoDialogAction(
+          isDefaultAction: !destructive,
+          isDestructiveAction: destructive,
           onPressed: () => Navigator.pop(context, true),
           child: Text(confirmLabel),
         ),

@@ -8,9 +8,12 @@ import 'package:path_provider/path_provider.dart';
 
 import 'data/database.dart';
 import 'data/session.dart';
+import 'features/lock/cashier_lock.dart';
 import 'l10n/app_localizations.dart';
 import 'providers.dart';
 import 'router.dart';
+import 'ui/design.dart';
+import 'ui/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +49,7 @@ class _AppRootState extends State<AppRoot> {
       builder: (context, snapshot) {
         final session = snapshot.data;
         if (session == null) {
-          return const ColoredBox(color: Color(0xFFFFF8F5));
+          return const ColoredBox(color: Brand.grouped);
         }
         return ProviderScope(
           key: ValueKey(_generation),
@@ -63,34 +66,49 @@ class _AppRootState extends State<AppRoot> {
   }
 }
 
-class AbacusApp extends StatefulWidget {
+class AbacusApp extends ConsumerStatefulWidget {
   const AbacusApp({super.key});
 
   @override
-  State<AbacusApp> createState() => _AbacusAppState();
+  ConsumerState<AbacusApp> createState() => _AbacusAppState();
 }
 
-class _AbacusAppState extends State<AbacusApp> {
-  final GoRouter _router = createRouter();
+class _AbacusAppState extends ConsumerState<AbacusApp> {
+  final _locked = ValueNotifier(false);
+  late final GoRouter _router = createRouter(locked: _locked);
+
+  @override
+  void initState() {
+    super.initState();
+    // 收银锁状态交给路由：锁着时只能停在收银台。
+    ref.listenManual(
+      cashierLockedProvider,
+      (_, next) => _locked.value = next.value ?? false,
+      fireImmediately: true,
+    );
+  }
 
   @override
   void dispose() {
     _router.dispose();
+    _locked.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    const seed = Color(0xFF8C5A3C);
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-      theme: ThemeData(colorSchemeSeed: seed),
-      darkTheme: ThemeData(colorSchemeSeed: seed, brightness: Brightness.dark),
+      theme: buildTheme(Brightness.light),
+      darkTheme: buildTheme(Brightness.dark),
       // 先只开放中文；英文翻译已就绪，海外版时去掉这一行即可跟随系统语言。
       locale: const Locale('zh'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _router,
+      // 跟随系统的大字体设置，最大放大到 2 倍（再大收银台的网格和购物车就放不下了）。
+      builder: (context, child) =>
+          MediaQuery.withClampedTextScaling(maxScaleFactor: 2, child: child!),
     );
   }
 }

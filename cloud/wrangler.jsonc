@@ -1,5 +1,5 @@
 {
-  // 摊位助手云端同步：Cloudflare Worker + Durable Objects（每个团队一个，内置 SQLite）+ D1（账号）
+  // 小算盘云端同步：Cloudflare Worker + Durable Objects（每个团队一个，内置 SQLite）+ D1（账号）
   // 两个环境：
   //   生产 abacus.naturoeye.com      npm run deploy
   //   开发 abacus.dev.naturoeye.com  npm run deploy:dev
@@ -24,11 +24,13 @@
   "durable_objects": {
     "bindings": [{ "name": "TEAM", "class_name": "TeamSync" }]
   },
+  // 图片（设备加密后的密文），按 <团队id>/<文件名> 存放。
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "abacus-media" }],
   "vars": {
     // resend：通过 Resend 发验证码邮件。
     // 本地开发在 .dev.vars 里覆盖为 log：验证码直接返回给客户端，绝不能用于正式环境。
     "EMAIL_MODE": "resend",
-    "EMAIL_FROM": "摊位助手 <noreply@mail.naturoeye.com>"
+    "EMAIL_FROM": "小算盘 <noreply@mail.naturoeye.com>"
   },
 
   "env": {
@@ -47,9 +49,10 @@
       "durable_objects": {
         "bindings": [{ "name": "TEAM", "class_name": "TeamSync" }]
       },
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "abacus-media-dev" }],
       "vars": {
         "EMAIL_MODE": "resend",
-        "EMAIL_FROM": "摊位助手（开发） <noreply@mail.naturoeye.com>",
+        "EMAIL_FROM": "小算盘（开发） <noreply@mail.naturoeye.com>",
         // 以这个后缀结尾的测试邮箱不发邮件，验证码直接返回（方便模拟器和自动测试）。
         // 只在开发环境设置；真实邮箱照常收邮件。
         "DEV_CODE_SUFFIX": "@test.local"

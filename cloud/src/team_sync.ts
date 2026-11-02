@@ -7,6 +7,8 @@ import { DurableObject } from 'cloudflare:workers';
  * 加密过的密文，服务器解不开。协议和设备之间的局域网同步一致：
  *   设备 → hello { vv }        服务器 → hello { vv }，随后把设备缺的记录分批发过去
  *   设备 → ops [{ o, s, c }]   服务器存下连续的部分，并实时转发给同团队其他在线设备
+ * 有设备传上新图片时（Worker 调 POST /media-ready），通知所有在线设备 media-ready，
+ * 缺图的设备马上去取，不用等下一次重试。
  */
 
 type Op = { o: string; s: number; c: string };
@@ -24,6 +26,10 @@ export class TeamSync extends DurableObject<Env> {
   }
 
   async fetch(request: Request): Promise<Response> {
+    if (request.method === 'POST' && new URL(request.url).pathname === '/media-ready') {
+      this.notifyAll({ type: 'media-ready' });
+      return new Response(null, { status: 204 });
+    }
     if (request.headers.get('Upgrade') !== 'websocket') {
       return new Response('expected websocket', { status: 426 });
     }
@@ -110,6 +116,19 @@ export class TeamSync extends DurableObject<Env> {
       att.vv[origin] = Math.max(att.vv[origin] ?? 0, from);
     }
     ws.serializeAttachment(att);
+  }
+
+  private notifyAll(message: unknown): void {
+    const text = JSON.stringify(message);
+    for (const ws of this.ctx.getWebSockets()) {
+      const att = ws.deserializeAttachment() as Attachment | null;
+      if (!att?.ready) continue;
+      try {
+        ws.send(text);
+      } catch {
+        // 连接已断开，重连后会自己检查缺哪些图片。
+      }
+    }
   }
 
   /** 新存下的记录实时推给同团队其他在线设备。 */

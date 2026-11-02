@@ -9,11 +9,14 @@ import '../data/database.dart';
 import '../data/session.dart';
 import 'cloud_api.dart';
 import 'cloud_crypto.dart';
+import 'cloud_media_sync.dart';
+import 'media_store.dart';
 import 'op_store.dart';
 import 'team_invite.dart';
 
 const _tokenKey = 'cloudToken';
 const _emailKey = 'cloudEmail';
+const _displayNameKey = 'cloudDisplayName';
 const _linkedKey = 'cloudLinkedTeam';
 const _lastSyncKey = 'cloudLastSync';
 
@@ -36,11 +39,15 @@ class CloudStatus {
   const CloudStatus({
     this.state = CloudState.signedOut,
     this.email,
+    this.displayName,
     this.lastSync,
   });
 
   final CloudState state;
   final String? email;
+
+  /// 账号的用户名（只用来显示，登录仍用邮箱）。
+  final String? displayName;
 
   /// 最近一次和云端交换数据的时间。
   final DateTime? lastSync;
@@ -55,6 +62,7 @@ class CloudPeer {
     required this.keys,
     this.onReceived,
     this.onActivity,
+    this.onMediaReady,
   }) : _store = OpStore(db);
 
   final WebSocket socket;
@@ -66,6 +74,9 @@ class CloudPeer {
 
   /// 有数据往来（用于更新“上次同步”时间）。
   final VoidCallback? onActivity;
+
+  /// 同团队有设备传上了新图片。
+  final VoidCallback? onMediaReady;
 
   final OpStore _store;
   final _ready = Completer<VersionVector>();
@@ -128,6 +139,8 @@ class CloudPeer {
         }
         if (applied.isNotEmpty) onReceived?.call(applied);
         onActivity?.call();
+      case 'media-ready':
+        onMediaReady?.call();
     }
   }
 
@@ -179,12 +192,14 @@ Future<WebSocket> _connect(
 ).timeout(const Duration(seconds: 15));
 
 /// 云端同步：登录后把本团队登记到云端，并保持一条连接实时同步；断网时自动重试。
+/// 给了 [media] 时，连着云端期间也同步图片。
 class CloudSyncService {
-  CloudSyncService(this._db, this._session, this._api);
+  CloudSyncService(this._db, this._session, this._api, {this._media});
 
   final AppDatabase _db;
   final Session _session;
   final CloudApi _api;
+  final MediaStore? _media;
 
   final _statusController = StreamController<CloudStatus>.broadcast();
   CloudStatus _status = const CloudStatus();
@@ -205,6 +220,7 @@ class CloudSyncService {
     _publish(
       CloudStatus(
         email: email,
+        displayName: await _db.getSetting(_displayNameKey),
         lastSync: last == null
             ? null
             : DateTime.fromMillisecondsSinceEpoch(last),
@@ -225,14 +241,20 @@ class CloudSyncService {
   }
 
   /// 用邮箱验证码登录成功后调用：保存令牌，把本团队登记到云端，开始同步。
-  Future<void> signIn({required String email, required String token}) async {
+  Future<void> signIn({
+    required String email,
+    required String token,
+    String? displayName,
+  }) async {
     await _db.setSetting(_tokenKey, token);
     await _db.setSetting(_emailKey, email);
+    await _saveDisplayName(displayName);
     await _link(token);
     _publish(
       CloudStatus(
         state: CloudState.connecting,
         email: email,
+        displayName: displayName,
         lastSync: _status.lastSync,
       ),
     );
@@ -241,6 +263,51 @@ class CloudSyncService {
       unawaited(_loop());
     } else {
       _wakeUp();
+    }
+  }
+
+  /// 修改账号的用户名（需要联网）。
+  Future<void> setDisplayName(String name) async {
+    final token = await _db.getSetting(_tokenKey);
+    if (token == null) return;
+    final saved = await _api.setDisplayName(token, name);
+    await _saveDisplayName(saved);
+    _publish(
+      CloudStatus(
+        state: _status.state,
+        email: _status.email,
+        displayName: saved,
+        lastSync: _status.lastSync,
+      ),
+    );
+  }
+
+  /// 连上云端时顺便取一次用户名：别的设备上改过的名字也能同步过来。
+  Future<void> _refreshDisplayName(String token) async {
+    try {
+      final name = await _api.fetchDisplayName(token);
+      if (name == _status.displayName) return;
+      await _saveDisplayName(name);
+      _publish(
+        CloudStatus(
+          state: _status.state,
+          email: _status.email,
+          displayName: name,
+          lastSync: _status.lastSync,
+        ),
+      );
+    } on CloudApiException {
+      // 取不到就沿用本机记的名字。
+    }
+  }
+
+  Future<void> _saveDisplayName(String? name) async {
+    if (name == null) {
+      await (_db.delete(
+        _db.localSettings,
+      )..where((t) => t.key.equals(_displayNameKey))).go();
+    } else {
+      await _db.setSetting(_displayNameKey, name);
     }
   }
 
@@ -260,7 +327,7 @@ class CloudSyncService {
   }
 
   Future<void> _signOutLocally() async {
-    for (final key in [_tokenKey, _emailKey, _linkedKey]) {
+    for (final key in [_tokenKey, _emailKey, _displayNameKey, _linkedKey]) {
       await (_db.delete(
         _db.localSettings,
       )..where((t) => t.key.equals(key))).go();
@@ -293,9 +360,11 @@ class CloudSyncService {
         CloudStatus(
           state: CloudState.connecting,
           email: _status.email,
+          displayName: _status.displayName,
           lastSync: _status.lastSync,
         ),
       );
+      CloudMediaSync? mediaSync;
       try {
         if (await _db.getSetting(_linkedKey) != _session.teamId) {
           await _link(token);
@@ -312,15 +381,29 @@ class CloudSyncService {
             }
           },
           onActivity: _markSynced,
+          onMediaReady: () => mediaSync?.refresh(),
         );
         _peer = peer;
         await peer.start();
         await peer.ready.timeout(const Duration(seconds: 15));
         _failures = 0;
+        unawaited(_refreshDisplayName(token));
+        final media = _media;
+        if (media != null) {
+          mediaSync = CloudMediaSync(
+            db: _db,
+            media: media,
+            api: _api,
+            keys: keys,
+            teamId: _session.teamId,
+            token: token,
+          )..start();
+        }
         _publish(
           CloudStatus(
             state: CloudState.connected,
             email: _status.email,
+            displayName: _status.displayName,
             lastSync: _status.lastSync,
           ),
         );
@@ -342,6 +425,7 @@ class CloudSyncService {
           }
         }
       } finally {
+        await mediaSync?.stop();
         await _peer?.close();
         _peer = null;
       }
@@ -350,6 +434,7 @@ class CloudSyncService {
         CloudStatus(
           state: CloudState.offline,
           email: _status.email,
+          displayName: _status.displayName,
           lastSync: _status.lastSync,
         ),
       );
@@ -385,7 +470,12 @@ class CloudSyncService {
   void _markSynced() {
     final now = DateTime.now();
     _publish(
-      CloudStatus(state: _status.state, email: _status.email, lastSync: now),
+      CloudStatus(
+        state: _status.state,
+        email: _status.email,
+        displayName: _status.displayName,
+        lastSync: now,
+      ),
     );
     final saved = _lastSavedSync;
     if (saved == null || now.difference(saved) > const Duration(seconds: 10)) {
@@ -415,6 +505,7 @@ Future<void> restoreTeamFromCloud({
   required String token,
   required String email,
   required CloudTeam team,
+  String? displayName,
   String? deviceName,
 }) async {
   final remote = await api.fetchTeamKey(token, team.id);
@@ -450,6 +541,7 @@ Future<void> restoreTeamFromCloud({
   );
   await db.setSetting(_tokenKey, token);
   await db.setSetting(_emailKey, email);
+  if (displayName != null) await db.setSetting(_displayNameKey, displayName);
   await db.setSetting(_linkedKey, team.id);
   await db.setSetting(_lastSyncKey, '${DateTime.now().millisecondsSinceEpoch}');
 }

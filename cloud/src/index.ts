@@ -15,6 +15,8 @@ declare global {
   interface Env {
     DB: D1Database;
     TEAM: DurableObjectNamespace;
+    /** 商品图片、收款码图片（设备加密后的密文）。 */
+    MEDIA: R2Bucket;
     EMAIL_MODE: 'log' | 'resend';
     EMAIL_FROM: string;
     KEY_WRAP_SECRET: string;
@@ -29,6 +31,8 @@ const SESSION_TTL_MS = 180 * 24 * 60 * 60 * 1000;
 const MAX_CODE_ATTEMPTS = 5;
 const MAX_CODES_PER_DAY = 10;
 const RESEND_INTERVAL_MS = 60 * 1000;
+/** 单张图片密文的上限（设备端限制原图 8 MB，加密只多几十字节）。 */
+const MAX_MEDIA_BYTES = 8 * 1024 * 1024 + 1024;
 
 class HttpError extends Error {
   constructor(
@@ -60,6 +64,8 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (path === '/auth/start' && method === 'POST') return startLogin(request, env);
   if (path === '/auth/verify' && method === 'POST') return verifyLogin(request, env);
   if (path === '/auth/logout' && method === 'POST') return logout(request, env);
+  if (path === '/me' && method === 'GET') return getProfile(request, env);
+  if (path === '/me' && method === 'PUT') return updateProfile(request, env);
   if (path === '/teams' && method === 'GET') return listTeams(request, env);
 
   const team = path.match(/^\/teams\/([0-9a-f-]{36})\/(link|key|sync)$/);
@@ -68,6 +74,13 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (action === 'link' && method === 'POST') return linkTeam(request, env, teamId);
     if (action === 'key' && method === 'GET') return teamKey(request, env, teamId);
     if (action === 'sync' && method === 'GET') return openSync(request, env, teamId);
+  }
+  // 文件名由设备生成（UUID + 扩展名），同名文件内容不会变。
+  const media = path.match(/^\/teams\/([0-9a-f-]{36})\/media\/([0-9A-Za-z-]{1,64}\.[a-z0-9]{1,5})$/);
+  if (media) {
+    const [, teamId, name] = media;
+    if (method === 'GET') return getMedia(request, env, teamId, name);
+    if (method === 'PUT') return putMedia(request, env, teamId, name);
   }
   throw new HttpError(404, 'not_found');
 }
@@ -139,7 +152,7 @@ async function sendEmail(env: Env, to: string, code: string): Promise<void> {
     body: JSON.stringify({
       from: env.EMAIL_FROM,
       to,
-      subject: `摊位助手登录验证码 ${code}`,
+      subject: `小算盘登录验证码 ${code}`,
       text: `你的验证码是 ${code}，10 分钟内有效。\n如果不是你本人操作，请忽略这封邮件。`,
     }),
   });
@@ -165,9 +178,11 @@ async function verifyLogin(request: Request, env: Env): Promise<Response> {
   await env.DB.prepare('DELETE FROM login_codes WHERE email = ?').bind(email).run();
 
   const now = Date.now();
-  let account = await env.DB.prepare('SELECT id FROM accounts WHERE email = ?').bind(email).first<{ id: string }>();
+  let account = await env.DB.prepare('SELECT id, display_name FROM accounts WHERE email = ?')
+    .bind(email)
+    .first<{ id: string; display_name: string | null }>();
   if (!account) {
-    account = { id: crypto.randomUUID() };
+    account = { id: crypto.randomUUID(), display_name: null };
     await env.DB.prepare('INSERT INTO accounts (id, email, created_at) VALUES (?, ?, ?)')
       .bind(account.id, email, now)
       .run();
@@ -176,7 +191,7 @@ async function verifyLogin(request: Request, env: Env): Promise<Response> {
   await env.DB.prepare('INSERT INTO sessions (token_hash, account_id, created_at, expires_at) VALUES (?, ?, ?, ?)')
     .bind(await sha256Hex(token), account.id, now, now + SESSION_TTL_MS)
     .run();
-  return json({ token, email });
+  return json({ token, email, displayName: account.display_name });
 }
 
 async function requireAccount(request: Request, env: Env): Promise<string> {
@@ -196,6 +211,32 @@ async function logout(request: Request, env: Env): Promise<Response> {
     await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await sha256Hex(header.slice(7))).run();
   }
   return json({ ok: true });
+}
+
+// ---------- 用户名（显示名） ----------
+
+const MAX_DISPLAY_NAME = 30;
+
+async function getProfile(request: Request, env: Env): Promise<Response> {
+  const accountId = await requireAccount(request, env);
+  const row = await env.DB.prepare('SELECT email, display_name FROM accounts WHERE id = ?')
+    .bind(accountId)
+    .first<{ email: string; display_name: string | null }>();
+  if (!row) throw new HttpError(401, 'unauthorized');
+  return json({ email: row.email, displayName: row.display_name });
+}
+
+async function updateProfile(request: Request, env: Env): Promise<Response> {
+  const accountId = await requireAccount(request, env);
+  const value = (await readJson(request)).displayName;
+  if (value !== null && typeof value !== 'string') throw new HttpError(400, 'invalid_name');
+  // 去掉首尾空白和控制字符；空字符串表示清除。
+  const name = typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f]/g, '').trim() : '';
+  if ([...name].length > MAX_DISPLAY_NAME) throw new HttpError(400, 'invalid_name');
+  await env.DB.prepare('UPDATE accounts SET display_name = ? WHERE id = ?')
+    .bind(name || null, accountId)
+    .run();
+  return json({ displayName: name || null });
 }
 
 // ---------- 团队 ----------
@@ -267,14 +308,46 @@ async function teamKey(request: Request, env: Env, teamId: string): Promise<Resp
   return json({ teamKey: toBase64(key), name: team.name, currency: team.currency });
 }
 
-/** 打开同步连接：需要登录且是成员，并再次出示团队令牌。 */
-async function openSync(request: Request, env: Env, teamId: string): Promise<Response> {
-  if (request.headers.get('Upgrade') !== 'websocket') throw new HttpError(426, 'expected_websocket');
+/** 同步和图片接口：需要登录且是成员，并再次出示团队令牌。 */
+async function requireTeamDevice(request: Request, env: Env, teamId: string): Promise<void> {
   const team = await requireMember(env, teamId, await requireAccount(request, env));
   const token = request.headers.get('X-Team-Token') ?? '';
   if (!safeEqual(team.token_hash, await sha256Hex(token))) throw new HttpError(403, 'wrong_team_key');
+}
+
+/** 打开同步连接。 */
+async function openSync(request: Request, env: Env, teamId: string): Promise<Response> {
+  if (request.headers.get('Upgrade') !== 'websocket') throw new HttpError(426, 'expected_websocket');
+  await requireTeamDevice(request, env, teamId);
   const stub = env.TEAM.get(env.TEAM.idFromName(teamId));
   return stub.fetch(request);
+}
+
+// ---------- 图片 ----------
+// 设备用团队密钥加密后上传，服务器只保管密文。同名文件已存在时不覆盖。
+
+async function putMedia(request: Request, env: Env, teamId: string, name: string): Promise<Response> {
+  await requireTeamDevice(request, env, teamId);
+  const declared = Number(request.headers.get('Content-Length') ?? '0');
+  if (declared > MAX_MEDIA_BYTES) throw new HttpError(413, 'too_large');
+  const key = `${teamId}/${name}`;
+  if (await env.MEDIA.head(key)) return json({ ok: true });
+  const body = await request.arrayBuffer();
+  if (body.byteLength === 0) throw new HttpError(400, 'empty');
+  if (body.byteLength > MAX_MEDIA_BYTES) throw new HttpError(413, 'too_large');
+  await env.MEDIA.put(key, body);
+  const stub = env.TEAM.get(env.TEAM.idFromName(teamId));
+  await stub.fetch(new Request('https://team/media-ready', { method: 'POST' }));
+  return json({ ok: true });
+}
+
+async function getMedia(request: Request, env: Env, teamId: string, name: string): Promise<Response> {
+  await requireTeamDevice(request, env, teamId);
+  const object = await env.MEDIA.get(`${teamId}/${name}`);
+  if (!object) throw new HttpError(404, 'not_found');
+  return new Response(object.body, {
+    headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': `${object.size}` },
+  });
 }
 
 function json(data: unknown, status = 200): Response {

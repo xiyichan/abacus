@@ -6,10 +6,14 @@ import '../../data/sales_repository.dart';
 import '../../domain/checkout.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
+import '../../ui/grouped_list.dart';
+import '../../ui/design.dart';
+import '../../ui/layout.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/input_dialog.dart';
 import '../../ui/money.dart';
 
+const _sectionMargin = EdgeInsets.symmetric(vertical: Gap.sm);
 final _dateTimeFormat = DateFormat('yyyy-MM-dd HH:mm');
 
 class OrderDetailPage extends ConsumerWidget {
@@ -56,7 +60,7 @@ class OrderDetailPage extends ConsumerWidget {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 640),
                   child: ListView(
-                    padding: const EdgeInsets.all(16),
+                    padding: withBottomBar(context, const EdgeInsets.all(16)),
                     children: [
                       Text(
                         _dateTimeFormat.format(o.createdAt),
@@ -123,48 +127,84 @@ class OrderDetailPage extends ConsumerWidget {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 12),
-                      for (final item in detail.items)
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(item.nameSnapshot),
-                          subtitle: Text(
-                            '${money(item.unitPrice)} × ${item.quantity}',
-                          ),
-                          trailing: Text(money(item.unitPrice * item.quantity)),
-                        ),
-                      const Divider(),
-                      _row(l10n.subtotal, money(o.subtotal)),
-                      if (o.discount > 0)
-                        _row(l10n.discount, '−${money(o.discount)}'),
-                      _row(
-                        l10n.total,
-                        money(o.total),
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      const Divider(),
-                      _row(l10n.paymentCode, paymentCodeOf(o.number)),
-                      for (final p in detail.payments) ...[
-                        _row(l10n.paymentMethod, p.methodNameSnapshot),
-                        // 事后才确认收款的，显示确认时间。
-                        if (!p.pending &&
-                            p.confirmedAt != null &&
-                            p.confirmedAt!.difference(o.createdAt).inMinutes >=
-                                1)
-                          _row(
-                            l10n.pendingPayment,
-                            l10n.paymentConfirmedAt(
-                              _dateTimeFormat.format(p.confirmedAt!),
+                      const SizedBox(height: Gap.sm),
+                      GroupedSection(
+                        margin: _sectionMargin,
+                        children: [
+                          for (final item in detail.items)
+                            ListTile(
+                              title: Text(item.nameSnapshot),
+                              subtitle: Text(
+                                '${money(item.unitPrice)} × ${item.quantity}',
+                              ),
+                              trailing: Text(
+                                money(item.unitPrice * item.quantity),
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
+                        ],
+                      ),
+                      GroupedSection(
+                        margin: _sectionMargin,
+                        children: [
+                          LabeledRow(
+                            label: l10n.subtotal,
+                            value: money(o.subtotal),
                           ),
-                        if (p.tendered case final t?) ...[
-                          _row(l10n.cashTendered, money(t)),
-                          _row(
-                            l10n.change,
-                            money(changeDue(total: p.amount, tendered: t) ?? 0),
+                          if (o.discount > 0)
+                            LabeledRow(
+                              label: l10n.discount,
+                              value: '−${money(o.discount)}',
+                            ),
+                          LabeledRow(
+                            label: l10n.total,
+                            value: money(o.total),
+                            emphasis: true,
                           ),
                         ],
-                      ],
+                      ),
+                      GroupedSection(
+                        margin: _sectionMargin,
+                        children: [
+                          LabeledRow(
+                            label: l10n.paymentCode,
+                            value: paymentCodeOf(o.number),
+                          ),
+                          for (final p in detail.payments) ...[
+                            LabeledRow(
+                              label: l10n.paymentMethod,
+                              value: p.methodNameSnapshot,
+                            ),
+                            // 事后才确认收款的，显示确认时间。
+                            if (!p.pending &&
+                                p.confirmedAt != null &&
+                                p.confirmedAt!
+                                        .difference(o.createdAt)
+                                        .inMinutes >=
+                                    1)
+                              LabeledRow(
+                                label: l10n.pendingPayment,
+                                value: l10n.paymentConfirmedAt(
+                                  _dateTimeFormat.format(p.confirmedAt!),
+                                ),
+                              ),
+                            if (p.tendered case final t?) ...[
+                              LabeledRow(
+                                label: l10n.cashTendered,
+                                value: money(t),
+                              ),
+                              LabeledRow(
+                                label: l10n.change,
+                                value: money(
+                                  changeDue(total: p.amount, tendered: t) ?? 0,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ],
+                      ),
                       const SizedBox(height: 24),
                       if (detail.refund == null)
                         OutlinedButton.icon(
@@ -184,15 +224,4 @@ class OrderDetailPage extends ConsumerWidget {
           },
         );
   }
-
-  Widget _row(String label, String value, {TextStyle? style}) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
-      children: [
-        Text(label, style: style),
-        const Spacer(),
-        Text(value, style: style),
-      ],
-    ),
-  );
 }

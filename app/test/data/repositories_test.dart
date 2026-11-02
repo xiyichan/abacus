@@ -39,6 +39,30 @@ void main() {
     expect(session.deviceShortCode, hasLength(6));
   });
 
+  test('场次可以是多天，单日场次不存结束日期', () async {
+    final twoDays = await inventory.createEvent(
+      name: 'CP31',
+      startsOn: DateTime(2026, 11, 7),
+      endsOn: DateTime(2026, 11, 8),
+    );
+    final oneDay = await inventory.createEvent(
+      name: 'Only',
+      startsOn: DateTime(2026, 11, 7),
+      endsOn: DateTime(2026, 11, 7),
+    );
+    Future<Event> load(String id) =>
+        (db.select(db.events)..where((t) => t.id.equals(id))).getSingle();
+    expect((await load(twoDays)).endsOn, DateTime(2026, 11, 8));
+    expect((await load(oneDay)).endsOn, isNull);
+
+    await inventory.updateEvent(
+      twoDays,
+      name: 'CP31',
+      startsOn: DateTime(2026, 11, 7),
+    );
+    expect((await load(twoDays)).endsOn, isNull);
+  });
+
   test('早期单字母设备号启动时升级为随机设备号，之前的单号不变', () async {
     final eventId = await inventory.createEvent(name: 'CP30');
     await db.customStatement(

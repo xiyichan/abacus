@@ -1,6 +1,6 @@
 {
   "@@locale": "zh",
-  "appTitle": "摊位助手",
+  "appTitle": "小算盘",
   "navPos": "收银",
   "navOrders": "订单",
   "navProducts": "商品",
@@ -18,7 +18,7 @@
   "invalidNumber": "请输入整数",
   "none": "无",
   "cart": "购物车",
-  "cartEmpty": "点商品加入购物车",
+  "cartEmpty": "点左边的商品加入购物车",
   "checkout": "结账",
   "clearCart": "清空",
   "itemCount": "{count} 件",
@@ -72,7 +72,7 @@
   "noPaymentMethods": "没有可用的支付方式，请在设置里启用",
   "addProduct": "添加商品",
   "editProduct": "编辑商品",
-  "noProducts": "还没有商品，点右下角添加",
+  "noProducts": "还没有商品",
   "productName": "名称",
   "creator": "作者",
   "newCreator": "新建作者…",
@@ -127,6 +127,7 @@
   "eventName": "展会名称",
   "eventNameHint": "如：CP30",
   "eventDate": "日期",
+  "eventDateHint": "多天的展可以选一个日期范围",
   "eventBooth": "摊位号",
   "noEvents": "还没有场次，点右下角新建",
   "currentEvent": "当前场次",
@@ -255,7 +256,7 @@
   "discountTotal": "优惠合计",
   "refunds": "退款",
   "orderCount": "{count} 单",
-  "exportCsv": "导出订单 CSV",
+  "exportCsv": "导出 CSV（订单和支出）",
   "@orderCount": {
     "placeholders": {
       "count": {
@@ -509,5 +510,128 @@
         "type": "int"
       }
     }
-  }
+  },
+  "displayName": "用户名",
+  "setDisplayName": "设置用户名",
+  "editDisplayName": "修改用户名",
+  "displayNameHint": "显示在云端账号上，方便认出是谁的账号。登录仍用邮箱验证码。",
+  "skip": "跳过",
+  "errInvalidName": "用户名最多 30 个字",
+  "displayNameSaved": "用户名已保存",
+  "cashierLock": "收银锁",
+  "cashierLockHint": "锁上后只显示收银台，客人看不到订单、商品、统计和设置。解锁需要输入 PIN。",
+  "changeLockPin": "修改收银锁 PIN",
+  "setLockPin": "设置收银锁 PIN",
+  "confirmLockPin": "再输一遍 PIN",
+  "pinMismatch": "两次输入的 PIN 不一样",
+  "unlockTitle": "输入 PIN 解锁",
+  "wrongPin": "PIN 不对",
+  "pinHint": "{count} 位数字",
+  "unlock": "解锁",
+  "lockedTooltip": "已锁定，点此解锁",
+  "@pinHint": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "expenses": "支出",
+  "addExpense": "记支出",
+  "newExpense": "记一笔支出",
+  "editExpense": "修改支出",
+  "expenseCategory": "分类",
+  "expenseAmount": "金额",
+  "expenseNote": "备注（可选）",
+  "expenseNoteHint": "如：高铁往返、两晚酒店",
+  "expenseDate": "日期",
+  "expenseEvent": "场次",
+  "expenseNoEvent": "不属于某个场次",
+  "noExpenses": "还没有记支出",
+  "deleteExpenseTitle": "删除这笔支出？",
+  "netIncome": "净收入",
+  "netShort": "净 {amount}",
+  "expenseSaved": "已记下支出 {amount}",
+  "expenseCat_travel": "差旅交通",
+  "expenseCat_booth": "摊位费",
+  "expenseCat_lodging": "住宿",
+  "expenseCat_food": "餐饮",
+  "expenseCat_supplies": "物料制作",
+  "expenseCat_shipping": "快递运费",
+  "expenseCat_other": "其他",
+  "@netShort": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "@expenseSaved": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "nothingToExport": "没有可导出的订单或支出",
+  "otherCategory": "其他",
+  "addOne": "加一件",
+  "removeOne": "减一件",
+  "categories": "分类",
+  "manageCategories": "管理分类",
+  "newCategory": "新建分类",
+  "categoryName": "分类名称",
+  "deleteCategoryTitle": "删除分类「{name}」？",
+  "@deleteCategoryTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteCategoryBody": "商品不会被删除，只是不再属于这个分类。",
+  "noCategories": "还没有分类",
+  "noCategoriesBody": "建几个分类（如 吧唧、立牌、色纸），再在商品里勾上，收银台左边就按分类显示。",
+  "categoriesHint": "按住右边的把手拖动排序，收银台左边按这个顺序显示。点一行改名。",
+  "categoryProductCount": "{count} 个商品",
+  "@categoryProductCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveHandle": "拖动排序",
+  "orderedCount": "已点 {count} 件",
+  "collapseCart": "收起已点",
+  "expandCart": "展开已点",
+  "@orderedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "collapseCartPanel": "收起购物车",
+  "expandCartPanel": "展开购物车",
+  "categorySize": "{count} 款",
+  "@categorySize": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchProductsHint": "搜索商品、作者或标签",
+  "productTotal": "共 {count} 款",
+  "@productTotal": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "noMatchingProducts": "没有符合条件的商品",
+  "optional": "选填",
+  "productKindAndPrice": "类型与价格",
+  "deleteProduct": "删除商品",
+  "changeImage": "更换图片"
 }

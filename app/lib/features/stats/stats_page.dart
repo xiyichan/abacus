@@ -1,15 +1,21 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../data/database.dart';
+import '../../data/expense_repository.dart';
 import '../../domain/creator_split.dart';
 import '../../domain/sales_stats.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
+import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
+import '../../ui/large_title_page.dart';
 import '../../ui/money.dart';
+import '../events/event_dates.dart';
+import '../expenses/expense_editor.dart';
 import '../orders/export_orders.dart';
 
 /// key 为 null 时汇总所有场次。
@@ -48,35 +54,38 @@ class _StatsPageState extends ConsumerState<StatsPage> {
         : fallback;
     final event = events.where((e) => e.id == selected).firstOrNull;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.navStats),
-        actions: [if (events.isNotEmpty) ExportOrdersButton(event: event)],
-      ),
-      body: events.isEmpty
-          ? EmptyState(
-              icon: Icons.insights_outlined,
-              title: l10n.noEvents,
-              actionLabel: l10n.newEvent,
-              onAction: () => context.go('/pos/events'),
-            )
-          : Column(
-              children: [
-                SizedBox(
-                  height: 56,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+    return LargeTitlePage(
+      title: l10n.navStats,
+      actions: [if (events.isNotEmpty) ExportOrdersButton(event: event)],
+      slivers: events.isEmpty
+          ? [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: EmptyState(
+                  icon: CupertinoIcons.chart_bar,
+                  title: l10n.noEvents,
+                  actionLabel: l10n.newEvent,
+                  onAction: () => context.go('/pos/events'),
+                ),
+              ),
+            ]
+          : [
+              // 场次标签不固定高度，大字体时会跟着变高。
+              SliverToBoxAdapter(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Gap.lg,
+                    vertical: Gap.sm,
+                  ),
+                  child: Row(
                     children: [
                       for (final (id, label) in [
                         (_all, l10n.allEvents),
                         for (final e in events) (e.id, e.name),
                       ])
                         Padding(
-                          padding: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.only(right: Gap.sm),
                           child: ChoiceChip(
                             label: Text(label),
                             selected: selected == id,
@@ -86,25 +95,28 @@ class _StatsPageState extends ConsumerState<StatsPage> {
                     ],
                   ),
                 ),
-                Expanded(
-                  child: ref
-                      .watch(_statsProvider(event?.id))
-                      .when(
-                        loading: () => asyncLoading,
-                        error: asyncError,
-                        data: (stats) => _StatsBody(
-                          stats: stats,
-                          header: event == null
-                              ? _Comparison(
-                                  onSelect: (id) =>
-                                      setState(() => _selected = id),
-                                )
-                              : null,
-                        ),
-                      ),
-                ),
-              ],
-            ),
+              ),
+              ref
+                  .watch(_statsProvider(event?.id))
+                  .when(
+                    loading: () =>
+                        const SliverFillRemaining(child: asyncLoading),
+                    error: (e, s) =>
+                        SliverFillRemaining(child: asyncError(e, s)),
+                    data: (stats) => _StatsBody(
+                      stats: stats,
+                      eventId: event?.id,
+                      expenses:
+                          ref.watch(expensesProvider(event?.id)).value ??
+                          const [],
+                      header: event == null
+                          ? _Comparison(
+                              onSelect: (id) => setState(() => _selected = id),
+                            )
+                          : null,
+                    ),
+                  ),
+            ],
     );
   }
 }
@@ -130,7 +142,7 @@ class _Comparison extends ConsumerWidget {
         children: [
           for (final r in rows)
             InkWell(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               onTap: () => onSelect(r.event.id),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -147,9 +159,8 @@ class _Comparison extends ConsumerWidget {
                           ),
                           Text(
                             [
-                              r.event.startsOn == null
-                                  ? l10n.noEventDate
-                                  : _dateFormat.format(r.event.startsOn!),
+                              r.event.dateLabel(withYear: false) ??
+                                  l10n.noEventDate,
                               if (r.event.endedAt != null) l10n.eventEnded,
                               l10n.comparisonOrders(r.orderCount),
                               l10n.itemCount(r.itemCount),
@@ -162,13 +173,25 @@ class _Comparison extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Text(
-                      money(r.revenue),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          money(r.revenue),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        if (r.expenses > 0)
+                          Text(l10n.netShort(money(r.net)), style: muted),
+                      ],
                     ),
-                    const Icon(Icons.chevron_right),
+                    Icon(
+                      CupertinoIcons.chevron_forward,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.onSurface
+                          .withValues(alpha: 0.3),
+                    ),
                   ],
                 ),
               ),
@@ -180,9 +203,18 @@ class _Comparison extends ConsumerWidget {
 }
 
 class _StatsBody extends ConsumerWidget {
-  const _StatsBody({required this.stats, this.header});
+  const _StatsBody({
+    required this.stats,
+    required this.eventId,
+    required this.expenses,
+    this.header,
+  });
 
   final SalesStats stats;
+
+  /// 选中的场次；null 为全部场次。
+  final String? eventId;
+  final List<Expense> expenses;
 
   /// 显示在汇总下面的额外内容（全部场次时为各场对比）。
   final Widget? header;
@@ -196,11 +228,27 @@ class _StatsBody extends ConsumerWidget {
         c.id: c.name,
     };
 
-    if (stats.orderCount == 0 && stats.refundCount == 0) {
-      return EmptyState(icon: Icons.insights_outlined, title: l10n.noOrders);
+    final noSales = stats.orderCount == 0 && stats.refundCount == 0;
+    final expenseSection = _ExpensesSection(
+      eventId: eventId,
+      expenses: expenses,
+    );
+    if (noSales && expenses.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: EmptyState(
+          icon: CupertinoIcons.chart_bar,
+          title: l10n.noOrders,
+          actionLabel: l10n.newExpense,
+          onAction: () => showExpenseEditor(
+            context,
+            eventId: eventId ?? ref.read(currentEventIdProvider).value,
+          ),
+        ),
+      );
     }
 
-    final summary = _Summary(stats: stats);
+    final summary = _Summary(stats: stats, expenses: ExpenseSummary(expenses));
     final topSellers = _Section(
       title: l10n.topSellers,
       child: _RankedBars(
@@ -243,42 +291,44 @@ class _StatsBody extends ConsumerWidget {
       ),
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 900;
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-          children: [
-            summary,
-            const SizedBox(height: 16),
-            if (header != null) ...[header!, const SizedBox(height: 16)],
-            if (wide)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: topSellers),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        byCreator,
-                        const SizedBox(height: 16),
-                        byPayment,
-                      ],
-                    ),
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(Gap.lg, Gap.sm, Gap.lg, 0),
+      sliver: SliverList.list(
+        children: [
+          summary,
+          const SizedBox(height: 16),
+          if (header != null) ...[header!, const SizedBox(height: 16)],
+          expenseSection,
+          const SizedBox(height: 16),
+          if (noSales)
+            const SizedBox.shrink()
+          else if (wide)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: topSellers),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    children: [
+                      byCreator,
+                      const SizedBox(height: 16),
+                      byPayment,
+                    ],
                   ),
-                ],
-              )
-            else ...[
-              topSellers,
-              const SizedBox(height: 16),
-              byCreator,
-              const SizedBox(height: 16),
-              byPayment,
-            ],
+                ),
+              ],
+            )
+          else ...[
+            topSellers,
+            const SizedBox(height: 16),
+            byCreator,
+            const SizedBox(height: 16),
+            byPayment,
           ],
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -289,9 +339,10 @@ class _StatsBody extends ConsumerWidget {
 
 /// 顶部：实收大数字 + 几个指标。
 class _Summary extends ConsumerWidget {
-  const _Summary({required this.stats});
+  const _Summary({required this.stats, required this.expenses});
 
   final SalesStats stats;
+  final ExpenseSummary expenses;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -299,6 +350,10 @@ class _Summary extends ConsumerWidget {
     final money = ref.watch(moneyProvider);
     final theme = Theme.of(context);
     final tiles = [
+      if (expenses.total > 0) ...[
+        (l10n.expenses, money(expenses.total)),
+        (l10n.netIncome, money(stats.revenue - expenses.total)),
+      ],
       (l10n.orders, '${stats.orderCount}'),
       (l10n.itemsSold, '${stats.itemCount}'),
       (l10n.averageOrder, money(stats.averageOrder)),
@@ -351,6 +406,97 @@ class _Summary extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 支出明细：按日期列出，点一条可修改；底部记新的一笔。
+class _ExpensesSection extends ConsumerWidget {
+  const _ExpensesSection({required this.eventId, required this.expenses});
+
+  final String? eventId;
+  final List<Expense> expenses;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final money = ref.watch(moneyProvider);
+    final eventNames = {
+      for (final e in ref.watch(eventsProvider).value ?? const <Event>[])
+        e.id: e.name,
+    };
+    final muted = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    return _Section(
+      title: l10n.expenses,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (expenses.isEmpty)
+            Text(l10n.noExpenses, style: muted)
+          else
+            for (final x in expenses)
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => showExpenseEditor(context, existing: x),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Icon(
+                        expenseCategoryIcon(x.category),
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(expenseCategoryName(l10n, x.category)),
+                            Text(
+                              [
+                                _dateFormat.format(x.spentOn),
+                                // 全部场次里注明是哪一场的。
+                                if (eventId == null)
+                                  x.eventId == null
+                                      ? l10n.expenseNoEvent
+                                      : eventNames[x.eventId] ?? '',
+                                if (x.note.isNotEmpty) x.note,
+                              ].join(' · '),
+                              style: muted,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        money(x.amount),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => showExpenseEditor(
+                context,
+                eventId: eventId ?? ref.read(currentEventIdProvider).value,
+              ),
+              icon: const Icon(Icons.add),
+              label: Text(l10n.newExpense),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -420,17 +566,22 @@ class _RankedBars extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
+                // iOS 风格的进度条：浅色胶囊轨道，主色胶囊填充。
                 LayoutBuilder(
-                  builder: (context, constraints) => Align(
+                  builder: (context, constraints) => Container(
+                    height: 8,
                     alignment: Alignment.centerLeft,
+                    decoration: ShapeDecoration(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.07,
+                      ),
+                      shape: const StadiumBorder(),
+                    ),
                     child: Container(
-                      height: 8,
                       width: max <= 0 ? 0 : constraints.maxWidth * value / max,
-                      decoration: BoxDecoration(
+                      decoration: ShapeDecoration(
                         color: theme.colorScheme.primary,
-                        borderRadius: const BorderRadius.horizontal(
-                          right: Radius.circular(4),
-                        ),
+                        shape: const StadiumBorder(),
                       ),
                     ),
                   ),

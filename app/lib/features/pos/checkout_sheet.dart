@@ -6,6 +6,7 @@ import '../../data/sales_repository.dart';
 import '../../domain/checkout.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
+import '../../ui/grouped_list.dart';
 import '../../ui/layout.dart';
 import '../../ui/media.dart';
 import '../../ui/money.dart';
@@ -202,17 +203,15 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
               ),
               if (change != null) ...[
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Text(l10n.change, style: theme.textTheme.titleMedium),
-                    const Spacer(),
-                    Text(
-                      money(change),
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                      ),
+                LabelValueRow(
+                  label: Text(l10n.change, style: theme.textTheme.titleMedium),
+                  value: Text(
+                    money(change),
+                    textAlign: TextAlign.end,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: theme.colorScheme.primary,
                     ),
-                  ],
+                  ),
                 ),
               ],
             ] else if (method != null && method.kind == PaymentKind.qr)

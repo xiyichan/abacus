@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In zh, this message translates to:
-  /// **'摊位助手'**
+  /// **'小算盘'**
   String get appTitle;
 
   /// No description provided for @navPos.
@@ -209,7 +209,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartEmpty.
   ///
   /// In zh, this message translates to:
-  /// **'点商品加入购物车'**
+  /// **'点左边的商品加入购物车'**
   String get cartEmpty;
 
   /// No description provided for @checkout.
@@ -407,7 +407,7 @@ abstract class AppLocalizations {
   /// No description provided for @noProducts.
   ///
   /// In zh, this message translates to:
-  /// **'还没有商品，点右下角添加'**
+  /// **'还没有商品'**
   String get noProducts;
 
   /// No description provided for @productName.
@@ -607,6 +607,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'日期'**
   String get eventDate;
+
+  /// No description provided for @eventDateHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'多天的展可以选一个日期范围'**
+  String get eventDateHint;
 
   /// No description provided for @eventBooth.
   ///
@@ -1007,7 +1013,7 @@ abstract class AppLocalizations {
   /// No description provided for @exportCsv.
   ///
   /// In zh, this message translates to:
-  /// **'导出订单 CSV'**
+  /// **'导出 CSV（订单和支出）'**
   String get exportCsv;
 
   /// No description provided for @cloudBackup.
@@ -1477,6 +1483,420 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'之前的场次没有剩余的货'**
   String get noLeftover;
+
+  /// No description provided for @displayName.
+  ///
+  /// In zh, this message translates to:
+  /// **'用户名'**
+  String get displayName;
+
+  /// No description provided for @setDisplayName.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置用户名'**
+  String get setDisplayName;
+
+  /// No description provided for @editDisplayName.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改用户名'**
+  String get editDisplayName;
+
+  /// No description provided for @displayNameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示在云端账号上，方便认出是谁的账号。登录仍用邮箱验证码。'**
+  String get displayNameHint;
+
+  /// No description provided for @skip.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过'**
+  String get skip;
+
+  /// No description provided for @errInvalidName.
+  ///
+  /// In zh, this message translates to:
+  /// **'用户名最多 30 个字'**
+  String get errInvalidName;
+
+  /// No description provided for @displayNameSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'用户名已保存'**
+  String get displayNameSaved;
+
+  /// No description provided for @cashierLock.
+  ///
+  /// In zh, this message translates to:
+  /// **'收银锁'**
+  String get cashierLock;
+
+  /// No description provided for @cashierLockHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'锁上后只显示收银台，客人看不到订单、商品、统计和设置。解锁需要输入 PIN。'**
+  String get cashierLockHint;
+
+  /// No description provided for @changeLockPin.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改收银锁 PIN'**
+  String get changeLockPin;
+
+  /// No description provided for @setLockPin.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置收银锁 PIN'**
+  String get setLockPin;
+
+  /// No description provided for @confirmLockPin.
+  ///
+  /// In zh, this message translates to:
+  /// **'再输一遍 PIN'**
+  String get confirmLockPin;
+
+  /// No description provided for @pinMismatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'两次输入的 PIN 不一样'**
+  String get pinMismatch;
+
+  /// No description provided for @unlockTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入 PIN 解锁'**
+  String get unlockTitle;
+
+  /// No description provided for @wrongPin.
+  ///
+  /// In zh, this message translates to:
+  /// **'PIN 不对'**
+  String get wrongPin;
+
+  /// No description provided for @pinHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 位数字'**
+  String pinHint(int count);
+
+  /// No description provided for @unlock.
+  ///
+  /// In zh, this message translates to:
+  /// **'解锁'**
+  String get unlock;
+
+  /// No description provided for @lockedTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'已锁定，点此解锁'**
+  String get lockedTooltip;
+
+  /// No description provided for @expenses.
+  ///
+  /// In zh, this message translates to:
+  /// **'支出'**
+  String get expenses;
+
+  /// No description provided for @addExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'记支出'**
+  String get addExpense;
+
+  /// No description provided for @newExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'记一笔支出'**
+  String get newExpense;
+
+  /// No description provided for @editExpense.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改支出'**
+  String get editExpense;
+
+  /// No description provided for @expenseCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类'**
+  String get expenseCategory;
+
+  /// No description provided for @expenseAmount.
+  ///
+  /// In zh, this message translates to:
+  /// **'金额'**
+  String get expenseAmount;
+
+  /// No description provided for @expenseNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'备注（可选）'**
+  String get expenseNote;
+
+  /// No description provided for @expenseNoteHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'如：高铁往返、两晚酒店'**
+  String get expenseNoteHint;
+
+  /// No description provided for @expenseDate.
+  ///
+  /// In zh, this message translates to:
+  /// **'日期'**
+  String get expenseDate;
+
+  /// No description provided for @expenseEvent.
+  ///
+  /// In zh, this message translates to:
+  /// **'场次'**
+  String get expenseEvent;
+
+  /// No description provided for @expenseNoEvent.
+  ///
+  /// In zh, this message translates to:
+  /// **'不属于某个场次'**
+  String get expenseNoEvent;
+
+  /// No description provided for @noExpenses.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有记支出'**
+  String get noExpenses;
+
+  /// No description provided for @deleteExpenseTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除这笔支出？'**
+  String get deleteExpenseTitle;
+
+  /// No description provided for @netIncome.
+  ///
+  /// In zh, this message translates to:
+  /// **'净收入'**
+  String get netIncome;
+
+  /// No description provided for @netShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'净 {amount}'**
+  String netShort(String amount);
+
+  /// No description provided for @expenseSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'已记下支出 {amount}'**
+  String expenseSaved(String amount);
+
+  /// No description provided for @expenseCat_travel.
+  ///
+  /// In zh, this message translates to:
+  /// **'差旅交通'**
+  String get expenseCat_travel;
+
+  /// No description provided for @expenseCat_booth.
+  ///
+  /// In zh, this message translates to:
+  /// **'摊位费'**
+  String get expenseCat_booth;
+
+  /// No description provided for @expenseCat_lodging.
+  ///
+  /// In zh, this message translates to:
+  /// **'住宿'**
+  String get expenseCat_lodging;
+
+  /// No description provided for @expenseCat_food.
+  ///
+  /// In zh, this message translates to:
+  /// **'餐饮'**
+  String get expenseCat_food;
+
+  /// No description provided for @expenseCat_supplies.
+  ///
+  /// In zh, this message translates to:
+  /// **'物料制作'**
+  String get expenseCat_supplies;
+
+  /// No description provided for @expenseCat_shipping.
+  ///
+  /// In zh, this message translates to:
+  /// **'快递运费'**
+  String get expenseCat_shipping;
+
+  /// No description provided for @expenseCat_other.
+  ///
+  /// In zh, this message translates to:
+  /// **'其他'**
+  String get expenseCat_other;
+
+  /// No description provided for @nothingToExport.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可导出的订单或支出'**
+  String get nothingToExport;
+
+  /// No description provided for @otherCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'其他'**
+  String get otherCategory;
+
+  /// No description provided for @addOne.
+  ///
+  /// In zh, this message translates to:
+  /// **'加一件'**
+  String get addOne;
+
+  /// No description provided for @removeOne.
+  ///
+  /// In zh, this message translates to:
+  /// **'减一件'**
+  String get removeOne;
+
+  /// No description provided for @categories.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类'**
+  String get categories;
+
+  /// No description provided for @manageCategories.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理分类'**
+  String get manageCategories;
+
+  /// No description provided for @newCategory.
+  ///
+  /// In zh, this message translates to:
+  /// **'新建分类'**
+  String get newCategory;
+
+  /// No description provided for @categoryName.
+  ///
+  /// In zh, this message translates to:
+  /// **'分类名称'**
+  String get categoryName;
+
+  /// No description provided for @deleteCategoryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除分类「{name}」？'**
+  String deleteCategoryTitle(String name);
+
+  /// No description provided for @deleteCategoryBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'商品不会被删除，只是不再属于这个分类。'**
+  String get deleteCategoryBody;
+
+  /// No description provided for @noCategories.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有分类'**
+  String get noCategories;
+
+  /// No description provided for @noCategoriesBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'建几个分类（如 吧唧、立牌、色纸），再在商品里勾上，收银台左边就按分类显示。'**
+  String get noCategoriesBody;
+
+  /// No description provided for @categoriesHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'按住右边的把手拖动排序，收银台左边按这个顺序显示。点一行改名。'**
+  String get categoriesHint;
+
+  /// No description provided for @categoryProductCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个商品'**
+  String categoryProductCount(int count);
+
+  /// No description provided for @moveHandle.
+  ///
+  /// In zh, this message translates to:
+  /// **'拖动排序'**
+  String get moveHandle;
+
+  /// No description provided for @orderedCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'已点 {count} 件'**
+  String orderedCount(int count);
+
+  /// No description provided for @collapseCart.
+  ///
+  /// In zh, this message translates to:
+  /// **'收起已点'**
+  String get collapseCart;
+
+  /// No description provided for @expandCart.
+  ///
+  /// In zh, this message translates to:
+  /// **'展开已点'**
+  String get expandCart;
+
+  /// No description provided for @collapseCartPanel.
+  ///
+  /// In zh, this message translates to:
+  /// **'收起购物车'**
+  String get collapseCartPanel;
+
+  /// No description provided for @expandCartPanel.
+  ///
+  /// In zh, this message translates to:
+  /// **'展开购物车'**
+  String get expandCartPanel;
+
+  /// No description provided for @categorySize.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 款'**
+  String categorySize(int count);
+
+  /// No description provided for @searchProductsHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索商品、作者或标签'**
+  String get searchProductsHint;
+
+  /// No description provided for @productTotal.
+  ///
+  /// In zh, this message translates to:
+  /// **'共 {count} 款'**
+  String productTotal(int count);
+
+  /// No description provided for @noMatchingProducts.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有符合条件的商品'**
+  String get noMatchingProducts;
+
+  /// No description provided for @optional.
+  ///
+  /// In zh, this message translates to:
+  /// **'选填'**
+  String get optional;
+
+  /// No description provided for @productKindAndPrice.
+  ///
+  /// In zh, this message translates to:
+  /// **'类型与价格'**
+  String get productKindAndPrice;
+
+  /// No description provided for @deleteProduct.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除商品'**
+  String get deleteProduct;
+
+  /// No description provided for @changeImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'更换图片'**
+  String get changeImage;
 }
 
 class _AppLocalizationsDelegate
