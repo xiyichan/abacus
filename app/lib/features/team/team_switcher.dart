@@ -14,7 +14,6 @@ import '../../sync/cloud_api.dart';
 import '../../sync/cloud_sync_service.dart';
 import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
-import '../../ui/glass.dart';
 import '../../ui/layout.dart';
 import 'cloud_login_page.dart' show cloudErrorText;
 
@@ -42,8 +41,8 @@ Future<void> changeTeam(
 String teamLabel(AppLocalizations l10n, String name) =>
     name.trim().isEmpty ? l10n.unnamedTeam : name;
 
-/// 各主页面左上角常驻的团队按钮：一眼看出现在记在哪个团队，点开切换。
-/// 手机上是团队名第一个字的圆形头像；平板上是头像加团队名。
+/// 各主页面左上角常驻的团队名：一眼看出现在记在哪个团队，点开切换。
+/// 和 iOS 导航栏左边的文字按钮一样：小一号的灰字加 ⌄，不抢页面标题（收银台是场次名）。
 class TeamSwitcherButton extends ConsumerWidget {
   const TeamSwitcherButton({super.key});
 
@@ -63,73 +62,44 @@ class TeamSwitcherButton extends ConsumerWidget {
     });
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final rawName = ref.watch(teamProvider).value?.name.trim() ?? '';
-    final name = teamLabel(l10n, rawName);
-    final tablet = context.isTablet;
-    final avatar = CircleAvatar(
-      radius: 15,
-      backgroundColor: scheme.primary,
-      foregroundColor: scheme.onPrimary,
-      child: rawName.isEmpty
-          ? const Icon(CupertinoIcons.person_2_fill, size: 16)
-          : Text(
-              rawName.characters.first.toUpperCase(),
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: scheme.onPrimary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+    final color = theme.colorScheme.onSurfaceVariant;
+    // 还在读库时先用切换列表里记的名字，免得闪一下“未命名团队”。
+    final name = teamLabel(
+      l10n,
+      ref.watch(teamProvider).value?.name ?? switcher.library.current.name,
     );
     return Semantics(
       button: true,
       label: '${l10n.switchTeam} · $name',
       excludeSemantics: true,
       child: Tooltip(
-        message: '${l10n.switchTeam} · $name',
-        child: Glass(
-          raised: false,
-          child: Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-              customBorder: const StadiumBorder(),
-              onTap: () => showTeamSwitcher(context),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minWidth: minTapSize,
-                  minHeight: minTapSize,
-                ),
-                child: Padding(
-                  padding: EdgeInsetsDirectional.only(
-                    start: 7,
-                    end: tablet ? 10 : 7,
+        message: l10n.switchTeam,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(Gap.sm),
+          onTap: () => showTeamSwitcher(context),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: minTapSize,
+              minHeight: minTapSize,
+              // 名字很长时省略，给场次名和右边的按钮留地方。
+              maxWidth: context.isTablet ? 240 : 120,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Gap.sm),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(color: color),
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      avatar,
-                      if (tablet) ...[
-                        const SizedBox(width: Gap.sm),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 180),
-                          child: Text(
-                            name,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: scheme.onSurface,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                        Icon(
-                          CupertinoIcons.chevron_down,
-                          size: 14,
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+                  const SizedBox(width: 2),
+                  Icon(CupertinoIcons.chevron_down, size: 13, color: color),
+                ],
               ),
             ),
           ),

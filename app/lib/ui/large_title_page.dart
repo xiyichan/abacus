@@ -33,6 +33,10 @@ class LargeTitlePage extends StatelessWidget {
           CupertinoSliverNavigationBar(
             largeTitle: Text(title),
             leading: leading,
+            // 左边的文字按钮自带 8 的内边距，往左挪一点，让文字和大标题左对齐。
+            padding: leading == null
+                ? null
+                : const EdgeInsetsDirectional.only(start: Gap.sm, end: Gap.lg),
             trailing: actions.isEmpty
                 ? null
                 : Row(mainAxisSize: MainAxisSize.min, children: actions),

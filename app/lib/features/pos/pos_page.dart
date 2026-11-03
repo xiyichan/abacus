@@ -41,18 +41,26 @@ class PosPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: Gap.sm,
-        // 左上角：团队 › 场次。收银锁时不显示团队（不能切走）。
+        // 左上角：团队（小灰字）+ 场次（标题）。收银锁时不显示团队（不能切走）。
         title: Row(
           children: [
             if (!locked) ...[
               const TeamSwitcherButton(),
-              const SizedBox(width: Gap.xs),
+              // 像面包屑一样分开两级，免得两个 ⌄ 看着像并列的两个菜单。
+              Text(
+                '/',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+              ),
             ],
             Flexible(
               child: TextButton.icon(
                 onPressed: locked ? null : chooseEvent,
                 iconAlignment: IconAlignment.end,
-                icon: locked ? null : const Icon(Icons.arrow_drop_down),
+                icon: locked
+                    ? null
+                    : const Icon(CupertinoIcons.chevron_down, size: 16),
                 label: Text(
                   current?.name ?? l10n.chooseEvent,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
