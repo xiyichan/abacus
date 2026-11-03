@@ -33,7 +33,7 @@ final _createdFormat = DateFormat('yyyy-MM-dd HH:mm');
 enum _AfterLogin { restore, backup }
 
 /// 邮箱验证码登录。[restore] 为 true 时登录后选择团队恢复到本机，否则为本团队开启云端备份。
-/// 备份时如果这个邮箱在云端已有别的团队，先问一下是不是想恢复，避免新装的 App 又建一个空团队。
+/// 备份时如果这个邮箱在云端还有别的团队，先问一下是不是想恢复，避免新装的 App 又建一个空团队。
 class CloudLoginPage extends ConsumerStatefulWidget {
   const CloudLoginPage({super.key, this.restore = false});
 
@@ -110,8 +110,8 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
     if (!_restoreMode) {
       final teamId = ref.read(sessionProvider).teamId;
       final others = teams.where((t) => t.id != teamId).length;
-      // 本机团队还没备份过，邮箱下却已有别的团队：多半是新装的 App 想找回数据。
-      if (others > 0 && !teams.any((t) => t.id == teamId) && mounted) {
+      // 邮箱下还有别的团队：可能是新装的 App 想找回数据，问一下要不要换过去。
+      if (others > 0 && mounted) {
         final choice = await _askRestoreOrBackup(others);
         if (choice == null) return;
         if (choice == _AfterLogin.restore) _restoreMode = true;
@@ -172,15 +172,27 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
     );
     if (!ok) return;
     await _run(() async {
-      await ref.read(syncServiceProvider).stop();
-      await restoreTeamFromCloud(
-        db: ref.read(databaseProvider),
-        api: ref.read(cloudApiProvider),
-        token: _token!,
-        email: _email.text.trim().toLowerCase(),
-        team: team,
-        displayName: _displayName,
-      );
+      // 先停掉局域网和云端同步（已登录时云端还连着原来的团队），
+      // 不然旧团队的记录会混进正在恢复的数据里。
+      final lan = ref.read(syncServiceProvider);
+      final cloud = ref.read(cloudSyncProvider);
+      await lan.stop();
+      await cloud.stop();
+      try {
+        await restoreTeamFromCloud(
+          db: ref.read(databaseProvider),
+          api: ref.read(cloudApiProvider),
+          token: _token!,
+          email: _email.text.trim().toLowerCase(),
+          team: team,
+          displayName: _displayName,
+        );
+      } on Object {
+        // 没恢复成：恢复同步，错误显示在页面上。
+        await lan.start();
+        await cloud.start();
+        rethrow;
+      }
       ref.read(restartAppProvider)();
     });
   }

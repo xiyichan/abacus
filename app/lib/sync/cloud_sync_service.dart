@@ -210,6 +210,9 @@ class CloudSyncService {
   DateTime? _lastSavedSync;
   Completer<void>? _wake;
 
+  /// 正在运行的重连循环（[stop] 要等它退出，免得再 [start] 时两个循环同时跑）。
+  Future<void>? _loopTask;
+
   Stream<CloudStatus> get status => _statusController.stream;
   CloudStatus get current => _status;
   CloudApi get api => _api;
@@ -237,7 +240,7 @@ class CloudSyncService {
       }
     }
     _running = true;
-    unawaited(_loop());
+    unawaited(_loopTask = _loop());
   }
 
   /// 用邮箱验证码登录成功后调用：保存令牌，把本团队登记到云端，开始同步。
@@ -260,7 +263,7 @@ class CloudSyncService {
     );
     if (!_running) {
       _running = true;
-      unawaited(_loop());
+      unawaited(_loopTask = _loop());
     } else {
       _wakeUp();
     }
@@ -489,10 +492,16 @@ class CloudSyncService {
     if (!_statusController.isClosed) _statusController.add(status);
   }
 
-  Future<void> dispose() async {
+  /// 断开并停止重连（之后可以再 [start]），比如恢复别的团队期间。
+  Future<void> stop() async {
     _running = false;
     _wakeUp();
     await _peer?.close();
+    await _loopTask;
+  }
+
+  Future<void> dispose() async {
+    await stop();
     await _statusController.close();
   }
 }

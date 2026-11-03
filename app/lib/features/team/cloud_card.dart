@@ -129,6 +129,12 @@ class CloudCard extends ConsumerWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 换成这个邮箱在云端的另一个团队（重新登录后选团队恢复）。
+            IconButton(
+              tooltip: l10n.switchCloudTeam,
+              icon: const Icon(Icons.swap_horiz),
+              onPressed: () => context.go('/settings/team/cloud?restore=1'),
+            ),
             IconButton(
               tooltip: status.displayName == null
                   ? l10n.setDisplayName

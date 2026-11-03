@@ -1151,25 +1151,25 @@ abstract class AppLocalizations {
   /// No description provided for @cloudHasTeamsTitle.
   ///
   /// In zh, this message translates to:
-  /// **'这个邮箱在云端已有 {count} 个团队'**
+  /// **'这个邮箱在云端还有 {count} 个其他团队'**
   String cloudHasTeamsTitle(int count);
 
   /// No description provided for @cloudHasTeamsBody.
   ///
   /// In zh, this message translates to:
-  /// **'要用已有的商品和订单，选「恢复已有团队」，本机现在的数据会被替换。选「备份本机」会把本机当前的数据作为一个新团队传到云端。'**
+  /// **'要用其他团队的商品和订单，选「恢复其他团队」，本机现在的数据会被替换。选「继续用本机团队」就把本机现在这个团队同步到云端。'**
   String get cloudHasTeamsBody;
 
   /// No description provided for @restoreExistingTeam.
   ///
   /// In zh, this message translates to:
-  /// **'恢复已有团队'**
+  /// **'恢复其他团队'**
   String get restoreExistingTeam;
 
   /// No description provided for @backupThisDevice.
   ///
   /// In zh, this message translates to:
-  /// **'备份本机'**
+  /// **'继续用本机团队'**
   String get backupThisDevice;
 
   /// No description provided for @teamCreatedOn.
@@ -1195,6 +1195,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'本机当前团队'**
   String get currentTeamTag;
+
+  /// No description provided for @switchCloudTeam.
+  ///
+  /// In zh, this message translates to:
+  /// **'换成云端的其他团队'**
+  String get switchCloudTeam;
 
   /// No description provided for @chooseTeamHint.
   ///

@@ -584,18 +584,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String cloudHasTeamsTitle(int count) {
-    return 'This email already has $count teams in the cloud';
+    return 'This email has $count other teams in the cloud';
   }
 
   @override
   String get cloudHasTeamsBody =>
-      'To use your existing goods and orders, choose Restore a team; data on this device will be replaced. Back up this device uploads this device\'s data as a new team.';
+      'To use another team\'s goods and orders, choose Restore another team; data on this device will be replaced. Keep this team syncs this device\'s current team to the cloud.';
 
   @override
-  String get restoreExistingTeam => 'Restore a team';
+  String get restoreExistingTeam => 'Restore another team';
 
   @override
-  String get backupThisDevice => 'Back up this device';
+  String get backupThisDevice => 'Keep this team';
 
   @override
   String teamCreatedOn(String date) {
@@ -614,6 +614,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currentTeamTag => 'This device\'s team';
+
+  @override
+  String get switchCloudTeam => 'Switch to another cloud team';
 
   @override
   String get chooseTeamHint =>

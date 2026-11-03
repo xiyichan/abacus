@@ -95,6 +95,13 @@ void main() async {
         () async => cloudA.current.state == CloudState.connected,
       );
 
+      // 暂停（恢复别的团队期间）后可以再连上。
+      await cloudA.stop();
+      await cloudA.start();
+      await eventually(
+        () async => cloudA.current.state == CloudState.connected,
+      );
+
       await cloudA.setDisplayName('小企鹅摊主');
       expect(cloudA.current.displayName, '小企鹅摊主');
 

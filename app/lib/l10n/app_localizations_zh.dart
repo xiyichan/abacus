@@ -570,18 +570,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String cloudHasTeamsTitle(int count) {
-    return '这个邮箱在云端已有 $count 个团队';
+    return '这个邮箱在云端还有 $count 个其他团队';
   }
 
   @override
   String get cloudHasTeamsBody =>
-      '要用已有的商品和订单，选「恢复已有团队」，本机现在的数据会被替换。选「备份本机」会把本机当前的数据作为一个新团队传到云端。';
+      '要用其他团队的商品和订单，选「恢复其他团队」，本机现在的数据会被替换。选「继续用本机团队」就把本机现在这个团队同步到云端。';
 
   @override
-  String get restoreExistingTeam => '恢复已有团队';
+  String get restoreExistingTeam => '恢复其他团队';
 
   @override
-  String get backupThisDevice => '备份本机';
+  String get backupThisDevice => '继续用本机团队';
 
   @override
   String teamCreatedOn(String date) {
@@ -600,6 +600,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get currentTeamTag => '本机当前团队';
+
+  @override
+  String get switchCloudTeam => '换成云端的其他团队';
 
   @override
   String get chooseTeamHint => '同名的团队可以看创建时间和记录数来区分，记录多的那个通常就是有商品的。';
