@@ -40,17 +40,29 @@ class PosPage extends ConsumerWidget {
     void chooseEvent() => context.go('/pos/events');
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 8,
-        title: TextButton.icon(
-          onPressed: locked ? null : chooseEvent,
-          iconAlignment: IconAlignment.end,
-          icon: locked ? null : const Icon(Icons.arrow_drop_down),
-          label: Text(
-            current?.name ?? l10n.chooseEvent,
-            style: Theme.of(context).textTheme.titleLarge
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
-            overflow: TextOverflow.ellipsis,
-          ),
+        titleSpacing: Gap.sm,
+        // 左上角：团队 › 场次。收银锁时不显示团队（不能切走）。
+        title: Row(
+          children: [
+            if (!locked) ...[
+              const TeamSwitcherButton(),
+              const SizedBox(width: Gap.xs),
+            ],
+            Flexible(
+              child: TextButton.icon(
+                onPressed: locked ? null : chooseEvent,
+                iconAlignment: IconAlignment.end,
+                icon: locked ? null : const Icon(Icons.arrow_drop_down),
+                label: Text(
+                  current?.name ?? l10n.chooseEvent,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           // 手机上按钮只显示图标（文字在 tooltip 里，也是读屏标签），避免挤爆导航栏。
@@ -74,10 +86,7 @@ class PosPage extends ConsumerWidget {
               onPressed: () => context.go('/pos/events/${current.id}/stock'),
             ),
           ],
-          if (!locked) ...[
-            TeamSwitcherButton(compact: !context.isTablet),
-            SyncStatusChip(compact: !context.isTablet),
-          ],
+          if (!locked) SyncStatusChip(compact: !context.isTablet),
           const SizedBox(width: Gap.sm),
         ],
       ),

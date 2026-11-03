@@ -10,11 +10,15 @@ class LargeTitlePage extends StatelessWidget {
   const LargeTitlePage({
     super.key,
     required this.title,
+    this.leading,
     this.actions = const [],
     required this.slivers,
   });
 
   final String title;
+
+  /// 左上角，主页面放团队按钮。
+  final Widget? leading;
 
   /// 右上角按钮，一般用 [BarButton]。
   final List<Widget> actions;
@@ -28,6 +32,7 @@ class LargeTitlePage extends StatelessWidget {
         slivers: [
           CupertinoSliverNavigationBar(
             largeTitle: Text(title),
+            leading: leading,
             trailing: actions.isEmpty
                 ? null
                 : Row(mainAxisSize: MainAxisSize.min, children: actions),

@@ -9,6 +9,7 @@ import '../../ui/design.dart';
 import '../../ui/grouped_list.dart';
 import '../../ui/large_title_page.dart';
 import '../lock/cashier_lock.dart';
+import '../team/team_switcher.dart';
 
 /// 设置：iOS 设置那样的分组列表。
 class SettingsPage extends ConsumerWidget {
@@ -20,6 +21,7 @@ class SettingsPage extends ConsumerWidget {
     final session = ref.watch(sessionProvider);
     return LargeTitlePage(
       title: l10n.navSettings,
+      leading: const TeamSwitcherButton(),
       slivers: [
         SliverList.list(
           children: [

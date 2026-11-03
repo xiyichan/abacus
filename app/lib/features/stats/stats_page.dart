@@ -17,6 +17,7 @@ import '../../ui/money.dart';
 import '../events/event_dates.dart';
 import '../expenses/expense_editor.dart';
 import '../orders/export_orders.dart';
+import '../team/team_switcher.dart';
 
 /// key 为 null 时汇总所有场次。
 final _statsProvider = StreamProvider.family<SalesStats, String?>(
@@ -56,6 +57,7 @@ class _StatsPageState extends ConsumerState<StatsPage> {
 
     return LargeTitlePage(
       title: l10n.navStats,
+      leading: const TeamSwitcherButton(),
       actions: [if (events.isNotEmpty) ExportOrdersButton(event: event)],
       slivers: events.isEmpty
           ? [

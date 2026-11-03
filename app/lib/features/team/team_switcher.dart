@@ -12,8 +12,10 @@ import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../sync/cloud_api.dart';
 import '../../sync/cloud_sync_service.dart';
+import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
-import '../../ui/large_title_page.dart';
+import '../../ui/glass.dart';
+import '../../ui/layout.dart';
 import 'cloud_login_page.dart' show cloudErrorText;
 
 /// 换团队或新增团队：先停掉当前团队的局域网和云端同步，再交给 [TeamSwitcher]。
@@ -40,12 +42,10 @@ Future<void> changeTeam(
 String teamLabel(AppLocalizations l10n, String name) =>
     name.trim().isEmpty ? l10n.unnamedTeam : name;
 
-/// 收银台右上角的团队按钮：显示当前团队，点开切换。
+/// 各主页面左上角常驻的团队按钮：一眼看出现在记在哪个团队，点开切换。
+/// 手机上是团队名第一个字的圆形头像；平板上是头像加团队名。
 class TeamSwitcherButton extends ConsumerWidget {
-  const TeamSwitcherButton({super.key, this.compact = false});
-
-  /// 手机上只显示图标。
-  final bool compact;
+  const TeamSwitcherButton({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -62,12 +62,79 @@ class TeamSwitcherButton extends ConsumerWidget {
       );
     });
     final l10n = AppLocalizations.of(context);
-    final name = teamLabel(l10n, ref.watch(teamProvider).value?.name ?? '');
-    return BarButton(
-      icon: CupertinoIcons.person_2,
-      tooltip: '${l10n.switchTeam} · $name',
-      label: compact ? null : name,
-      onPressed: () => showTeamSwitcher(context),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final rawName = ref.watch(teamProvider).value?.name.trim() ?? '';
+    final name = teamLabel(l10n, rawName);
+    final tablet = context.isTablet;
+    final avatar = CircleAvatar(
+      radius: 15,
+      backgroundColor: scheme.primary,
+      foregroundColor: scheme.onPrimary,
+      child: rawName.isEmpty
+          ? const Icon(CupertinoIcons.person_2_fill, size: 16)
+          : Text(
+              rawName.characters.first.toUpperCase(),
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: scheme.onPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+    );
+    return Semantics(
+      button: true,
+      label: '${l10n.switchTeam} · $name',
+      excludeSemantics: true,
+      child: Tooltip(
+        message: '${l10n.switchTeam} · $name',
+        child: Glass(
+          raised: false,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              customBorder: const StadiumBorder(),
+              onTap: () => showTeamSwitcher(context),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: minTapSize,
+                  minHeight: minTapSize,
+                ),
+                child: Padding(
+                  padding: EdgeInsetsDirectional.only(
+                    start: 7,
+                    end: tablet ? 10 : 7,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      avatar,
+                      if (tablet) ...[
+                        const SizedBox(width: Gap.sm),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 180),
+                          child: Text(
+                            name,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: scheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          CupertinoIcons.chevron_down,
+                          size: 14,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

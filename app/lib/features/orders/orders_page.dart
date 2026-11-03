@@ -12,6 +12,7 @@ import '../../ui/empty_state.dart';
 import '../../ui/large_title_page.dart';
 import '../../ui/money.dart';
 import 'export_orders.dart';
+import '../team/team_switcher.dart';
 
 final _timeFormat = DateFormat('HH:mm');
 
@@ -33,6 +34,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
     final event = ref.watch(currentEventProvider).value;
     return LargeTitlePage(
       title: l10n.navOrders,
+      leading: const TeamSwitcherButton(),
       actions: [if (event != null) ExportOrdersButton(event: event)],
       slivers: event == null
           ? [

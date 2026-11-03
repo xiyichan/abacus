@@ -15,6 +15,7 @@ import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/media.dart';
 import '../../ui/money.dart';
+import '../team/team_switcher.dart';
 
 class ProductsPage extends ConsumerStatefulWidget {
   const ProductsPage({super.key});
@@ -60,6 +61,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
     final categoryId = categories.containsKey(_categoryId) ? _categoryId : null;
     return LargeTitlePage(
       title: l10n.navProducts,
+      leading: const TeamSwitcherButton(),
       actions: [
         BarButton(
           icon: CupertinoIcons.square_grid_2x2,
