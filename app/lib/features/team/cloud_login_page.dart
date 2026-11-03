@@ -211,7 +211,13 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
     // 本机已经有这个团队：直接切过去，不用下载。
     final local = switcher?.library.byTeamId(team.id);
     if (local != null) {
-      await _run(() => changeTeam(ref, (s) => s.switchTo(local.key)));
+      await _run(
+        () => changeTeam(
+          ref,
+          l10n.switchingToTeam(teamLabel(l10n, local.name)),
+          (s) => s.switchTo(local.key),
+        ),
+      );
       return;
     }
     final ok = await confirmDialog(
@@ -236,6 +242,7 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
         );
         await changeTeam(
           ref,
+          l10n.downloadingTeamNamed(teamLabel(l10n, team.name)),
           (s) => s.add(
             (db) => restoreTeamFromCloud(
               db: db,

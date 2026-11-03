@@ -323,6 +323,25 @@
   "teamOnDeviceTag": "已在本机",
   "cloudOtherTeams": "这个邮箱的其他团队",
   "signInToSwitchTeamsHint": "登录后，这个邮箱下的团队都能直接切换",
+  "switchingToTeam": "正在切换到「{name}」…",
+  "@switchingToTeam": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "downloadingTeamNamed": "正在下载「{name}」…",
+  "@downloadingTeamNamed": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "joiningTeam": "正在加入「{name}」…",
+  "@joiningTeam": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "creatingTeam": "正在新建团队…",
   "downloadingTeam": "正在下载到本机…",
   "noOtherCloudTeams": "这个邮箱下没有其他团队",
   "addTeamConfirmBody": "会把这个团队下载到本机并切换过去，现在的团队和数据都保留。",

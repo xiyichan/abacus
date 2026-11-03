@@ -161,6 +161,10 @@ abstract interface class TeamSwitcher {
   /// 在本机新增一个团队：新建一个数据库，用 [setup] 写入数据（新建、扫码加入、
   /// 从云端下载），然后切换过去。[setup] 失败时删掉这个数据库，当前团队不受影响。
   Future<void> add(Future<void> Function(AppDatabase db) setup);
+
+  /// 换团队期间盖一层全屏的“正在切换…”（[message]），等新团队打开后才撤掉；
+  /// [task] 失败时撤掉并把错误抛给调用方。
+  Future<void> busy(String message, Future<void> Function() task);
 }
 
 final teamSwitcherProvider = Provider<TeamSwitcher?>((ref) => null);

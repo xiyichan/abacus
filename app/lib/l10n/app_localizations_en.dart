@@ -666,6 +666,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'After signing in, you can switch to any team under this email';
 
   @override
+  String switchingToTeam(String name) {
+    return 'Switching to $name…';
+  }
+
+  @override
+  String downloadingTeamNamed(String name) {
+    return 'Downloading $name…';
+  }
+
+  @override
+  String joiningTeam(String name) {
+    return 'Joining $name…';
+  }
+
+  @override
+  String get creatingTeam => 'Creating a team…';
+
+  @override
   String get downloadingTeam => 'Downloading to this device…';
 
   @override

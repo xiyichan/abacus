@@ -650,6 +650,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get signInToSwitchTeamsHint => '登录后，这个邮箱下的团队都能直接切换';
 
   @override
+  String switchingToTeam(String name) {
+    return '正在切换到「$name」…';
+  }
+
+  @override
+  String downloadingTeamNamed(String name) {
+    return '正在下载「$name」…';
+  }
+
+  @override
+  String joiningTeam(String name) {
+    return '正在加入「$name」…';
+  }
+
+  @override
+  String get creatingTeam => '正在新建团队…';
+
+  @override
   String get downloadingTeam => '正在下载到本机…';
 
   @override

@@ -17,25 +17,28 @@ import '../../ui/empty_state.dart';
 import '../../ui/layout.dart';
 import 'cloud_login_page.dart' show cloudErrorText;
 
-/// 换团队或新增团队：先停掉当前团队的局域网和云端同步，再交给 [TeamSwitcher]。
-/// 没成功（比如下载失败）时恢复同步并把错误抛给调用方显示。
+/// 换团队或新增团队：全屏显示 [message]，停掉当前团队的局域网和云端同步，
+/// 再交给 [TeamSwitcher]。没成功（比如下载失败）时恢复同步并把错误抛给调用方显示。
 Future<void> changeTeam(
   WidgetRef ref,
+  String message,
   Future<void> Function(TeamSwitcher switcher) action,
 ) async {
   final switcher = ref.read(teamSwitcherProvider);
   if (switcher == null) return;
   final lan = ref.read(syncServiceProvider);
   final cloud = ref.read(cloudSyncProvider);
-  await lan.stop();
-  await cloud.stop();
-  try {
-    await action(switcher);
-  } on Object {
-    await lan.start();
-    await cloud.start();
-    rethrow;
-  }
+  await switcher.busy(message, () async {
+    // 云端要等重连循环退出，可能要一会儿：两个一起停。
+    await Future.wait([lan.stop(), cloud.stop()]);
+    try {
+      await action(switcher);
+    } on Object {
+      await lan.start();
+      await cloud.start();
+      rethrow;
+    }
+  });
 }
 
 String teamLabel(AppLocalizations l10n, String name) =>
@@ -177,9 +180,14 @@ class _TeamSheetState extends ConsumerState<_TeamSheet> {
     }
   }
 
-  Future<void> _switch(String key) async {
+  Future<void> _switch(LocalTeam team) async {
+    final l10n = AppLocalizations.of(context);
     Navigator.pop(context);
-    await changeTeam(ref, (s) => s.switchTo(key));
+    await changeTeam(
+      ref,
+      l10n.switchingToTeam(teamLabel(l10n, team.name)),
+      (s) => s.switchTo(team.key),
+    );
   }
 
   /// 下载云端的团队并切过去。成功后整个界面重建，这个面板随之关闭。
@@ -191,9 +199,11 @@ class _TeamSheetState extends ConsumerState<_TeamSheet> {
       _downloading = team.id;
       _error = null;
     });
+    final l10n = AppLocalizations.of(context);
     try {
       await changeTeam(
         ref,
+        l10n.downloadingTeamNamed(teamLabel(l10n, team.name)),
         (s) => s.add(
           (db) => restoreTeamFromCloud(
             db: db,
@@ -225,7 +235,7 @@ class _TeamSheetState extends ConsumerState<_TeamSheet> {
     );
     if (!ok || !mounted) return;
     Navigator.pop(context);
-    await changeTeam(ref, (s) => s.add(ensureSession));
+    await changeTeam(ref, l10n.creatingTeam, (s) => s.add(ensureSession));
   }
 
   Future<void> _remove(LocalTeam team) async {
@@ -290,7 +300,7 @@ class _TeamSheetState extends ConsumerState<_TeamSheet> {
                   leading: const Icon(CupertinoIcons.person_2),
                   title: Text(teamLabel(l10n, team.name)),
                   enabled: !busy,
-                  onTap: () => _switch(team.key),
+                  onTap: () => _switch(team),
                   trailing: PopupMenuButton<_TeamAction>(
                     enabled: !busy,
                     onSelected: (_) => _remove(team),

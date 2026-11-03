@@ -1286,6 +1286,30 @@ abstract class AppLocalizations {
   /// **'登录后，这个邮箱下的团队都能直接切换'**
   String get signInToSwitchTeamsHint;
 
+  /// No description provided for @switchingToTeam.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在切换到「{name}」…'**
+  String switchingToTeam(String name);
+
+  /// No description provided for @downloadingTeamNamed.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在下载「{name}」…'**
+  String downloadingTeamNamed(String name);
+
+  /// No description provided for @joiningTeam.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在加入「{name}」…'**
+  String joiningTeam(String name);
+
+  /// No description provided for @creatingTeam.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在新建团队…'**
+  String get creatingTeam;
+
   /// No description provided for @downloadingTeam.
   ///
   /// In zh, this message translates to:

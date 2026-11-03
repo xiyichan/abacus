@@ -45,7 +45,11 @@ class _JoinTeamPageState extends ConsumerState<JoinTeamPage> {
     // 本机已经有这个团队：直接切过去。
     final local = switcher?.library.byTeamId(invite.teamId);
     if (local != null) {
-      await changeTeam(ref, (s) => s.switchTo(local.key));
+      await changeTeam(
+        ref,
+        l10n.switchingToTeam(teamLabel(l10n, local.name)),
+        (s) => s.switchTo(local.key),
+      );
       return;
     }
     setState(() {
@@ -66,7 +70,11 @@ class _JoinTeamPageState extends ConsumerState<JoinTeamPage> {
       return;
     }
     if (switcher != null) {
-      await changeTeam(ref, (s) => s.add((db) => joinTeam(db, invite)));
+      await changeTeam(
+        ref,
+        l10n.joiningTeam(teamLabel(l10n, invite.teamName)),
+        (s) => s.add((db) => joinTeam(db, invite)),
+      );
       return;
     }
     // 先停掉旧团队的同步，再清空数据加入新团队。

@@ -104,6 +104,10 @@ void main() {
     await settle(tester);
     expect(find.text('本机的团队'), findsOneWidget);
     await tester.tap(find.text('一号摊'));
+    // 点下去马上盖上加载画面，不是停在原来的界面上等。
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('正在切换到「一号摊」…'), findsOneWidget);
     // 关旧库最多等 2 秒（假时钟里要多推几轮）。
     for (var i = 0; i < 4; i++) {
       await settle(tester);

@@ -61,6 +61,9 @@ class _AppRootState extends State<AppRoot> implements TeamSwitcher {
   /// 正在换团队（期间再点切换不理会）。
   bool _switching = false;
 
+  /// 换团队时全屏显示的提示；null 表示没在换。
+  String? _busyMessage;
+
   /// 打开一个团队：写入共用的云端登录，读本机身份，顺便记下团队名字给切换列表用。
   Future<Session> _load(AppDatabase db, String key) async {
     // 从旧版本升级：沿用原来数据库里的登录，而不是把它清掉。
@@ -133,8 +136,21 @@ class _AppRootState extends State<AppRoot> implements TeamSwitcher {
   }
 
   @override
+  Future<void> busy(String message, Future<void> Function() task) async {
+    setState(() => _busyMessage = message);
+    // 先把加载画面画出来，再开始停同步、关库这些耗时的事。
+    await WidgetsBinding.instance.endOfFrame;
+    try {
+      await task();
+      await _session; // 新团队打开了再撤掉
+    } finally {
+      if (mounted) setState(() => _busyMessage = null);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
+    final app = FutureBuilder(
       future: _session,
       builder: (context, snapshot) {
         final session = snapshot.data;
@@ -154,6 +170,64 @@ class _AppRootState extends State<AppRoot> implements TeamSwitcher {
           child: const AbacusApp(),
         );
       },
+    );
+    final message = _busyMessage;
+    // 加载画面盖在整个 App 上面（下面的界面不卸掉：下载失败时还要回到原来的面板显示错误）。
+    // 结构始终不变，免得加上盖层时整个 App 被拆掉重建。
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          app,
+          if (message != null) _SwitchingScreen(message: message),
+        ],
+      ),
+    );
+  }
+}
+
+/// 换团队时的全屏加载画面。在 MaterialApp 外面，所以字体颜色都自己给。
+class _SwitchingScreen extends StatelessWidget {
+  const _SwitchingScreen({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark =
+        MediaQuery.maybePlatformBrightnessOf(context) == Brightness.dark;
+    final theme = buildTheme(dark ? Brightness.dark : Brightness.light);
+    return AbsorbPointer(
+      child: Semantics(
+        liveRegion: true,
+        label: message,
+        child: ColoredBox(
+          color: theme.colorScheme.surface,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator.adaptive(
+                  valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
+                ),
+                const SizedBox(height: Gap.lg),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Gap.xl),
+                  child: Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium!.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
