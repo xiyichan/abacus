@@ -82,9 +82,7 @@ class OrderDetailPage extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  l10n.paymentPendingBody(
-                                    paymentCodeOf(o.number),
-                                  ),
+                                  l10n.paymentPendingBody(orderPaymentCode(o)),
                                 ),
                                 const SizedBox(height: 12),
                                 FilledButton.icon(
@@ -170,7 +168,7 @@ class OrderDetailPage extends ConsumerWidget {
                         children: [
                           LabeledRow(
                             label: l10n.paymentCode,
-                            value: paymentCodeOf(o.number),
+                            value: orderPaymentCode(o),
                           ),
                           for (final p in detail.payments) ...[
                             LabeledRow(

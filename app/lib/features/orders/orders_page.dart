@@ -88,7 +88,10 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
     final q = normalizeOrderCode(_query);
     final shown = [
       for (final o in _pendingOnly ? pending : orders)
-        if (q.isEmpty || normalizeOrderCode(o.order.number).contains(q)) o,
+        if (q.isEmpty ||
+            normalizeOrderCode(o.order.number).contains(q) ||
+            normalizeOrderCode(orderPaymentCode(o.order)).contains(q))
+          o,
     ];
     return [
       SliverPadding(

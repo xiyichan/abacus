@@ -46,7 +46,7 @@ String buildOrdersCsv(
       plainAmount(o.discount),
       plainAmount(o.total),
       d.payments.map((p) => p.methodNameSnapshot).join('、'),
-      paymentCodeOf(o.number),
+      orderPaymentCode(o),
       d.payments.any((p) => p.pending) ? '待确认' : '已收款',
       cash == null ? '' : plainAmount(cash.tendered!),
       cash == null

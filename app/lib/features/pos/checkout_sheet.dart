@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database.dart';
@@ -7,6 +9,7 @@ import '../../domain/checkout.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../ui/grouped_list.dart';
+import '../../ui/input_dialog.dart';
 import '../../ui/layout.dart';
 import '../../ui/media.dart';
 import '../../ui/money.dart';
@@ -68,6 +71,30 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
   /// 预先确定的单号，去掉横杠后作为付款备注码给客人看。
   String? _number;
 
+  /// 收银员手动改过的付款备注码；为空时用单号生成的。
+  String? _customCode;
+
+  String? get _paymentCode =>
+      _customCode ?? (_number == null ? null : paymentCodeOf(_number!));
+
+  Future<void> _editPaymentCode() async {
+    final l10n = AppLocalizations.of(context);
+    final value = await showInputDialog(
+      context,
+      title: l10n.editPaymentCode,
+      label: l10n.paymentCode,
+      body: l10n.editPaymentCodeBody,
+      initialValue: _paymentCode ?? '',
+      inputFormatters: [LengthLimitingTextInputFormatter(20)],
+      confirmLabel: l10n.save,
+      cancelLabel: l10n.cancel,
+    );
+    if (value == null || !mounted) return;
+    final code = value.trim();
+    // 留空就恢复成单号生成的。
+    setState(() => _customCode = code.isEmpty ? null : code);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -110,6 +137,7 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
             discount: cart.discount,
             tendered: tendered,
             number: _number,
+            paymentCode: _customCode,
             paymentPending: pending,
           );
       ref.read(cartProvider.notifier).clear();
@@ -229,9 +257,9 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                         ),
                       ),
               ),
-            if (method != null && !isCash && _number != null) ...[
+            if (method != null && !isCash && _paymentCode != null) ...[
               const SizedBox(height: 16),
-              _PaymentCode(code: paymentCodeOf(_number!)),
+              _PaymentCode(code: _paymentCode!, onEdit: _editPaymentCode),
             ],
             const SizedBox(height: 24),
             FilledButton(
@@ -263,38 +291,63 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
 }
 
 /// 付款备注码：大字显示，请客人付款时填进备注，事后好对上是哪一单。
+/// 右上角的铅笔可以改成别的（比如客人习惯写的名字）。
 class _PaymentCode extends StatelessWidget {
-  const _PaymentCode({required this.code});
+  const _PaymentCode({required this.code, required this.onEdit});
 
   final String code;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Text(
-            AppLocalizations.of(context).paymentRemarkHint,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSecondaryContainer,
+    final color = theme.colorScheme.onSecondaryContainer;
+    return Material(
+      color: theme.colorScheme.secondaryContainer,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onEdit,
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(48, 12, 48, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    l10n.paymentRemarkHint,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(color: color),
+                  ),
+                  const SizedBox(height: 4),
+                  // 改成较长的备注码时缩小显示，不换行。
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      code,
+                      style: theme.textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 4,
+                        color: color,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            code,
-            style: theme.textTheme.displaySmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: 4,
-              color: theme.colorScheme.onSecondaryContainer,
+            PositionedDirectional(
+              top: 0,
+              end: 0,
+              child: IconButton(
+                tooltip: l10n.editPaymentCode,
+                icon: Icon(CupertinoIcons.pencil, color: color),
+                onPressed: onEdit,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

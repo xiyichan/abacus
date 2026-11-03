@@ -26,6 +26,13 @@ export class TeamSync extends DurableObject<Env> {
   }
 
   async fetch(request: Request): Promise<Response> {
+    if (request.method === 'GET' && new URL(request.url).pathname === '/stats') {
+      // 有多少台设备写过记录、一共多少条（不看内容）。
+      const row = this.ctx.storage.sql
+        .exec<{ devices: number; ops: number }>('SELECT COUNT(DISTINCT origin) AS devices, COUNT(*) AS ops FROM ops')
+        .one();
+      return Response.json(row);
+    }
     if (request.method === 'POST' && new URL(request.url).pathname === '/media-ready') {
       this.notifyAll({ type: 'media-ready' });
       return new Response(null, { status: 204 });

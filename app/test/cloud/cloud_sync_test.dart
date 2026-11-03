@@ -102,6 +102,10 @@ void main() async {
       final tokenC = await _login(api, email);
       final teams = await api.listTeams(tokenC);
       expect(teams.single.id, a.session.teamId);
+      // 附带创建时间、设备数和记录数，用来区分同名团队。
+      expect(teams.single.createdAt, isNotNull);
+      expect(teams.single.devices, 1);
+      expect(teams.single.records, greaterThan(0));
 
       // 全新设备 C：恢复团队。
       final dbC = AppDatabase(NativeDatabase.memory());

@@ -583,6 +583,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chooseTeamToRestore => 'Choose a team to restore';
 
   @override
+  String cloudHasTeamsTitle(int count) {
+    return 'This email already has $count teams in the cloud';
+  }
+
+  @override
+  String get cloudHasTeamsBody =>
+      'To use your existing goods and orders, choose Restore a team; data on this device will be replaced. Back up this device uploads this device\'s data as a new team.';
+
+  @override
+  String get restoreExistingTeam => 'Restore a team';
+
+  @override
+  String get backupThisDevice => 'Back up this device';
+
+  @override
+  String teamCreatedOn(String date) {
+    return 'Created $date';
+  }
+
+  @override
+  String teamDeviceCount(int count) {
+    return '$count devices';
+  }
+
+  @override
+  String teamRecordCount(int count) {
+    return '$count records';
+  }
+
+  @override
+  String get currentTeamTag => 'This device\'s team';
+
+  @override
+  String get chooseTeamHint =>
+      'Teams with the same name can be told apart by creation time and record count; the one with more records usually has your goods.';
+
+  @override
   String get noCloudTeams => 'No teams are backed up under this email yet';
 
   @override
@@ -1023,4 +1060,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get changeImage => 'Change image';
+
+  @override
+  String get editPaymentCode => 'Edit payment note';
+
+  @override
+  String get editPaymentCodeBody =>
+      'Change it to something the customer can type easily, like a name or the last digits of a phone number. Leave it empty to use the order number.';
 }

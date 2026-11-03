@@ -241,16 +241,36 @@ async function updateProfile(request: Request, env: Env): Promise<Response> {
 
 // ---------- 团队 ----------
 
+/**
+ * 账号下的团队。附带创建时间和同步节点里的设备数、记录数（只是计数，内容是密文），
+ * 方便在同名团队里认出哪个有数据。
+ */
 async function listTeams(request: Request, env: Env): Promise<Response> {
   const accountId = await requireAccount(request, env);
   const { results } = await env.DB.prepare(
-    `SELECT t.id, t.name, t.currency FROM teams t
+    `SELECT t.id, t.name, t.currency, t.created_at FROM teams t
      JOIN team_members m ON m.team_id = t.id
      WHERE m.account_id = ? ORDER BY m.joined_at DESC`,
   )
     .bind(accountId)
-    .all<{ id: string; name: string; currency: string }>();
-  return json({ teams: results });
+    .all<{ id: string; name: string; currency: string; created_at: number }>();
+  const teams = await Promise.all(
+    results.map(async (t) => {
+      const stats = await env.TEAM.get(env.TEAM.idFromName(t.id))
+        .fetch('https://team/stats')
+        .then((r) => r.json<{ devices: number; ops: number }>())
+        .catch(() => null);
+      return {
+        id: t.id,
+        name: t.name,
+        currency: t.currency,
+        createdAt: t.created_at,
+        devices: stats?.devices ?? null,
+        ops: stats?.ops ?? null,
+      };
+    }),
+  );
+  return json({ teams });
 }
 
 /**

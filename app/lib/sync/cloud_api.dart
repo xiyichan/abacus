@@ -31,11 +31,21 @@ class CloudTeam {
     required this.id,
     required this.name,
     required this.currency,
+    this.createdAt,
+    this.devices,
+    this.records,
   });
 
   final String id;
   final String name;
   final String currency;
+
+  /// 第一次备份到云端的时间。
+  final DateTime? createdAt;
+
+  /// 往云端写过记录的设备数、同步记录数（只是计数，用来认出同名团队里哪个有数据）。
+  final int? devices;
+  final int? records;
 }
 
 /// 云端的 HTTP 接口：邮箱验证码登录、团队登记、取回团队密钥、图片上传下载。
@@ -103,6 +113,12 @@ class CloudApi {
           id: t['id'] as String,
           name: t['name'] as String,
           currency: t['currency'] as String,
+          createdAt: switch (t['createdAt']) {
+            final int ms => DateTime.fromMillisecondsSinceEpoch(ms),
+            _ => null,
+          },
+          devices: t['devices'] as int?,
+          records: t['ops'] as int?,
         ),
     ];
   }

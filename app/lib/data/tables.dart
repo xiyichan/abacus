@@ -127,6 +127,9 @@ class Orders extends Table with SyncColumns {
 
   /// 现场展示用单号，如 B-048。
   TextColumn get number => text()();
+
+  /// 结账时手动改过的付款备注码；为空时用单号去掉横杠（见 `paymentCodeOf`）。
+  TextColumn get paymentCode => text().nullable()();
   TextColumn get currency => text()();
   IntColumn get subtotal => integer()();
   IntColumn get discount => integer()();

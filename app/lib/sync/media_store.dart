@@ -64,20 +64,23 @@ Set<TableInfo> mediaTables(AppDatabase db) => {db.products, db.paymentMethods};
 
 /// 本团队（未删除的）商品和支付方式引用到的全部图片文件名。
 Future<Set<String>> referencedMedia(AppDatabase db) async {
-  final products = await (db.selectOnly(db.products)
-        ..addColumns([db.products.imagePath])
-        ..where(
-          db.products.deleted.equals(false) & db.products.imagePath.isNotNull(),
-        ))
-      .map((r) => r.read(db.products.imagePath)!)
-      .get();
-  final methods = await (db.selectOnly(db.paymentMethods)
-        ..addColumns([db.paymentMethods.qrImagePath])
-        ..where(
-          db.paymentMethods.deleted.equals(false) &
-              db.paymentMethods.qrImagePath.isNotNull(),
-        ))
-      .map((r) => r.read(db.paymentMethods.qrImagePath)!)
-      .get();
+  final products =
+      await (db.selectOnly(db.products)
+            ..addColumns([db.products.imagePath])
+            ..where(
+              db.products.deleted.equals(false) &
+                  db.products.imagePath.isNotNull(),
+            ))
+          .map((r) => r.read(db.products.imagePath)!)
+          .get();
+  final methods =
+      await (db.selectOnly(db.paymentMethods)
+            ..addColumns([db.paymentMethods.qrImagePath])
+            ..where(
+              db.paymentMethods.deleted.equals(false) &
+                  db.paymentMethods.qrImagePath.isNotNull(),
+            ))
+          .map((r) => r.read(db.paymentMethods.qrImagePath)!)
+          .get();
   return {...products, ...methods}.where(MediaStore.isValidName).toSet();
 }

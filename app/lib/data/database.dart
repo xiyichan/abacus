@@ -32,7 +32,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'abacus'));
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -55,6 +55,7 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(categories);
         await m.addColumn(products, products.categoryIds);
       }
+      if (from < 9) await m.addColumn(orders, orders.paymentCode);
       if (from < 3) {
         await installOpLogTriggers(this);
         // 旧数据补记操作日志：空更新会触发触发器，把每一行记成本机的一条操作。

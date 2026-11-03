@@ -105,6 +105,10 @@ class EventComparisonRow {
 /// 付款备注码：订单号去掉横杠，如 A-007 → A007，方便客人在付款备注里输入。
 String paymentCodeOf(String orderNumber) => orderNumber.replaceAll('-', '');
 
+/// 订单实际用的付款备注码：结账时改过就用改过的，否则由单号生成。
+String orderPaymentCode(Order order) =>
+    order.paymentCode ?? paymentCodeOf(order.number);
+
 /// 搜索时统一格式：只保留字母数字并转大写，A-007、a007、A007 都算同一个。
 String normalizeOrderCode(String text) =>
     text.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
@@ -137,6 +141,7 @@ class SalesRepository {
     Discount discount = const NoDiscount(),
     int? tendered,
     String? number,
+    String? paymentCode,
     bool paymentPending = false,
   }) {
     if (lines.isEmpty) throw ArgumentError.value(lines, 'lines', 'empty');
@@ -151,12 +156,18 @@ class SalesRepository {
       ], discount);
       final now = DateTime.now();
       final orderId = newId();
+      final orderNumber = await _numberToUse(eventId, number);
+      final code = paymentCode?.trim() ?? '';
       final order = OrdersCompanion.insert(
         id: orderId,
         updatedAt: _session.clock.tick(),
         eventId: eventId,
         deviceId: _session.deviceId,
-        number: await _numberToUse(eventId, number),
+        number: orderNumber,
+        // 和单号生成的一样就不另存，免得单号变了备注码还是旧的。
+        paymentCode: Value(
+          code.isEmpty || code == paymentCodeOf(orderNumber) ? null : code,
+        ),
         currency: _session.currency,
         subtotal: summary.subtotal,
         discount: summary.discount,

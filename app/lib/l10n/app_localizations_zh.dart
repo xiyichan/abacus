@@ -569,6 +569,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chooseTeamToRestore => '选择要恢复的团队';
 
   @override
+  String cloudHasTeamsTitle(int count) {
+    return '这个邮箱在云端已有 $count 个团队';
+  }
+
+  @override
+  String get cloudHasTeamsBody =>
+      '要用已有的商品和订单，选「恢复已有团队」，本机现在的数据会被替换。选「备份本机」会把本机当前的数据作为一个新团队传到云端。';
+
+  @override
+  String get restoreExistingTeam => '恢复已有团队';
+
+  @override
+  String get backupThisDevice => '备份本机';
+
+  @override
+  String teamCreatedOn(String date) {
+    return '创建于 $date';
+  }
+
+  @override
+  String teamDeviceCount(int count) {
+    return '$count 台设备';
+  }
+
+  @override
+  String teamRecordCount(int count) {
+    return '$count 条记录';
+  }
+
+  @override
+  String get currentTeamTag => '本机当前团队';
+
+  @override
+  String get chooseTeamHint => '同名的团队可以看创建时间和记录数来区分，记录多的那个通常就是有商品的。';
+
+  @override
   String get noCloudTeams => '这个邮箱下还没有备份过的团队';
 
   @override
@@ -998,4 +1034,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get changeImage => '更换图片';
+
+  @override
+  String get editPaymentCode => '修改备注码';
+
+  @override
+  String get editPaymentCodeBody => '可以改成客人方便填写的内容，比如名字或手机尾号。留空就用单号。';
 }

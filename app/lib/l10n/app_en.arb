@@ -300,6 +300,43 @@
   "restoreFromCloud": "Restore from the cloud",
   "restoreHint": "After signing in, choose a team to restore. Its goods, events and orders will download to this device.",
   "chooseTeamToRestore": "Choose a team to restore",
+  "cloudHasTeamsTitle": "This email already has {count} teams in the cloud",
+  "cloudHasTeamsBody": "To use your existing goods and orders, choose Restore a team; data on this device will be replaced. Back up this device uploads this device's data as a new team.",
+  "restoreExistingTeam": "Restore a team",
+  "backupThisDevice": "Back up this device",
+  "teamCreatedOn": "Created {date}",
+  "teamDeviceCount": "{count} devices",
+  "teamRecordCount": "{count} records",
+  "currentTeamTag": "This device's team",
+  "chooseTeamHint": "Teams with the same name can be told apart by creation time and record count; the one with more records usually has your goods.",
+  "@cloudHasTeamsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@teamCreatedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "@teamDeviceCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@teamRecordCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noCloudTeams": "No teams are backed up under this email yet",
   "restoreConfirmTitle": "Restore “{team}”?",
   "@restoreConfirmTitle": {
@@ -605,5 +642,7 @@
   "optional": "Optional",
   "productKindAndPrice": "Type & price",
   "deleteProduct": "Delete product",
-  "changeImage": "Change image"
+  "changeImage": "Change image",
+  "editPaymentCode": "Edit payment note",
+  "editPaymentCodeBody": "Change it to something the customer can type easily, like a name or the last digits of a phone number. Leave it empty to use the order number."
 }

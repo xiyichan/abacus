@@ -1148,6 +1148,60 @@ abstract class AppLocalizations {
   /// **'选择要恢复的团队'**
   String get chooseTeamToRestore;
 
+  /// No description provided for @cloudHasTeamsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'这个邮箱在云端已有 {count} 个团队'**
+  String cloudHasTeamsTitle(int count);
+
+  /// No description provided for @cloudHasTeamsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'要用已有的商品和订单，选「恢复已有团队」，本机现在的数据会被替换。选「备份本机」会把本机当前的数据作为一个新团队传到云端。'**
+  String get cloudHasTeamsBody;
+
+  /// No description provided for @restoreExistingTeam.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复已有团队'**
+  String get restoreExistingTeam;
+
+  /// No description provided for @backupThisDevice.
+  ///
+  /// In zh, this message translates to:
+  /// **'备份本机'**
+  String get backupThisDevice;
+
+  /// No description provided for @teamCreatedOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'创建于 {date}'**
+  String teamCreatedOn(String date);
+
+  /// No description provided for @teamDeviceCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 台设备'**
+  String teamDeviceCount(int count);
+
+  /// No description provided for @teamRecordCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 条记录'**
+  String teamRecordCount(int count);
+
+  /// No description provided for @currentTeamTag.
+  ///
+  /// In zh, this message translates to:
+  /// **'本机当前团队'**
+  String get currentTeamTag;
+
+  /// No description provided for @chooseTeamHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'同名的团队可以看创建时间和记录数来区分，记录多的那个通常就是有商品的。'**
+  String get chooseTeamHint;
+
   /// No description provided for @noCloudTeams.
   ///
   /// In zh, this message translates to:
@@ -1897,6 +1951,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'更换图片'**
   String get changeImage;
+
+  /// No description provided for @editPaymentCode.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改备注码'**
+  String get editPaymentCode;
+
+  /// No description provided for @editPaymentCodeBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'可以改成客人方便填写的内容，比如名字或手机尾号。留空就用单号。'**
+  String get editPaymentCodeBody;
 }
 
 class _AppLocalizationsDelegate

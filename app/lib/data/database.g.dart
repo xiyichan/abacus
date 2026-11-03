@@ -5003,6 +5003,17 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _paymentCodeMeta = const VerificationMeta(
+    'paymentCode',
+  );
+  @override
+  late final GeneratedColumn<String> paymentCode = GeneratedColumn<String>(
+    'payment_code',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _currencyMeta = const VerificationMeta(
     'currency',
   );
@@ -5073,6 +5084,7 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
     eventId,
     deviceId,
     number,
+    paymentCode,
     currency,
     subtotal,
     discount,
@@ -5134,6 +5146,15 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
       );
     } else if (isInserting) {
       context.missing(_numberMeta);
+    }
+    if (data.containsKey('payment_code')) {
+      context.handle(
+        _paymentCodeMeta,
+        paymentCode.isAcceptableOrUnknown(
+          data['payment_code']!,
+          _paymentCodeMeta,
+        ),
+      );
     }
     if (data.containsKey('currency')) {
       context.handle(
@@ -5214,6 +5235,10 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
         DriftSqlType.string,
         data['${effectivePrefix}number'],
       )!,
+      paymentCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payment_code'],
+      ),
       currency: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}currency'],
@@ -5256,6 +5281,9 @@ class Order extends DataClass implements Insertable<Order> {
 
   /// 现场展示用单号，如 B-048。
   final String number;
+
+  /// 结账时手动改过的付款备注码；为空时用单号去掉横杠（见 `paymentCodeOf`）。
+  final String? paymentCode;
   final String currency;
   final int subtotal;
   final int discount;
@@ -5269,6 +5297,7 @@ class Order extends DataClass implements Insertable<Order> {
     required this.eventId,
     required this.deviceId,
     required this.number,
+    this.paymentCode,
     required this.currency,
     required this.subtotal,
     required this.discount,
@@ -5285,6 +5314,9 @@ class Order extends DataClass implements Insertable<Order> {
     map['event_id'] = Variable<String>(eventId);
     map['device_id'] = Variable<String>(deviceId);
     map['number'] = Variable<String>(number);
+    if (!nullToAbsent || paymentCode != null) {
+      map['payment_code'] = Variable<String>(paymentCode);
+    }
     map['currency'] = Variable<String>(currency);
     map['subtotal'] = Variable<int>(subtotal);
     map['discount'] = Variable<int>(discount);
@@ -5304,6 +5336,9 @@ class Order extends DataClass implements Insertable<Order> {
       eventId: Value(eventId),
       deviceId: Value(deviceId),
       number: Value(number),
+      paymentCode: paymentCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(paymentCode),
       currency: Value(currency),
       subtotal: Value(subtotal),
       discount: Value(discount),
@@ -5325,6 +5360,7 @@ class Order extends DataClass implements Insertable<Order> {
       eventId: serializer.fromJson<String>(json['eventId']),
       deviceId: serializer.fromJson<String>(json['deviceId']),
       number: serializer.fromJson<String>(json['number']),
+      paymentCode: serializer.fromJson<String?>(json['paymentCode']),
       currency: serializer.fromJson<String>(json['currency']),
       subtotal: serializer.fromJson<int>(json['subtotal']),
       discount: serializer.fromJson<int>(json['discount']),
@@ -5343,6 +5379,7 @@ class Order extends DataClass implements Insertable<Order> {
       'eventId': serializer.toJson<String>(eventId),
       'deviceId': serializer.toJson<String>(deviceId),
       'number': serializer.toJson<String>(number),
+      'paymentCode': serializer.toJson<String?>(paymentCode),
       'currency': serializer.toJson<String>(currency),
       'subtotal': serializer.toJson<int>(subtotal),
       'discount': serializer.toJson<int>(discount),
@@ -5359,6 +5396,7 @@ class Order extends DataClass implements Insertable<Order> {
     String? eventId,
     String? deviceId,
     String? number,
+    Value<String?> paymentCode = const Value.absent(),
     String? currency,
     int? subtotal,
     int? discount,
@@ -5372,6 +5410,7 @@ class Order extends DataClass implements Insertable<Order> {
     eventId: eventId ?? this.eventId,
     deviceId: deviceId ?? this.deviceId,
     number: number ?? this.number,
+    paymentCode: paymentCode.present ? paymentCode.value : this.paymentCode,
     currency: currency ?? this.currency,
     subtotal: subtotal ?? this.subtotal,
     discount: discount ?? this.discount,
@@ -5387,6 +5426,9 @@ class Order extends DataClass implements Insertable<Order> {
       eventId: data.eventId.present ? data.eventId.value : this.eventId,
       deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
       number: data.number.present ? data.number.value : this.number,
+      paymentCode: data.paymentCode.present
+          ? data.paymentCode.value
+          : this.paymentCode,
       currency: data.currency.present ? data.currency.value : this.currency,
       subtotal: data.subtotal.present ? data.subtotal.value : this.subtotal,
       discount: data.discount.present ? data.discount.value : this.discount,
@@ -5405,6 +5447,7 @@ class Order extends DataClass implements Insertable<Order> {
           ..write('eventId: $eventId, ')
           ..write('deviceId: $deviceId, ')
           ..write('number: $number, ')
+          ..write('paymentCode: $paymentCode, ')
           ..write('currency: $currency, ')
           ..write('subtotal: $subtotal, ')
           ..write('discount: $discount, ')
@@ -5423,6 +5466,7 @@ class Order extends DataClass implements Insertable<Order> {
     eventId,
     deviceId,
     number,
+    paymentCode,
     currency,
     subtotal,
     discount,
@@ -5440,6 +5484,7 @@ class Order extends DataClass implements Insertable<Order> {
           other.eventId == this.eventId &&
           other.deviceId == this.deviceId &&
           other.number == this.number &&
+          other.paymentCode == this.paymentCode &&
           other.currency == this.currency &&
           other.subtotal == this.subtotal &&
           other.discount == this.discount &&
@@ -5455,6 +5500,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
   final Value<String> eventId;
   final Value<String> deviceId;
   final Value<String> number;
+  final Value<String?> paymentCode;
   final Value<String> currency;
   final Value<int> subtotal;
   final Value<int> discount;
@@ -5469,6 +5515,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     this.eventId = const Value.absent(),
     this.deviceId = const Value.absent(),
     this.number = const Value.absent(),
+    this.paymentCode = const Value.absent(),
     this.currency = const Value.absent(),
     this.subtotal = const Value.absent(),
     this.discount = const Value.absent(),
@@ -5484,6 +5531,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     required String eventId,
     required String deviceId,
     required String number,
+    this.paymentCode = const Value.absent(),
     required String currency,
     required int subtotal,
     required int discount,
@@ -5508,6 +5556,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     Expression<String>? eventId,
     Expression<String>? deviceId,
     Expression<String>? number,
+    Expression<String>? paymentCode,
     Expression<String>? currency,
     Expression<int>? subtotal,
     Expression<int>? discount,
@@ -5523,6 +5572,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
       if (eventId != null) 'event_id': eventId,
       if (deviceId != null) 'device_id': deviceId,
       if (number != null) 'number': number,
+      if (paymentCode != null) 'payment_code': paymentCode,
       if (currency != null) 'currency': currency,
       if (subtotal != null) 'subtotal': subtotal,
       if (discount != null) 'discount': discount,
@@ -5540,6 +5590,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     Value<String>? eventId,
     Value<String>? deviceId,
     Value<String>? number,
+    Value<String?>? paymentCode,
     Value<String>? currency,
     Value<int>? subtotal,
     Value<int>? discount,
@@ -5555,6 +5606,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
       eventId: eventId ?? this.eventId,
       deviceId: deviceId ?? this.deviceId,
       number: number ?? this.number,
+      paymentCode: paymentCode ?? this.paymentCode,
       currency: currency ?? this.currency,
       subtotal: subtotal ?? this.subtotal,
       discount: discount ?? this.discount,
@@ -5585,6 +5637,9 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     }
     if (number.present) {
       map['number'] = Variable<String>(number.value);
+    }
+    if (paymentCode.present) {
+      map['payment_code'] = Variable<String>(paymentCode.value);
     }
     if (currency.present) {
       map['currency'] = Variable<String>(currency.value);
@@ -5619,6 +5674,7 @@ class OrdersCompanion extends UpdateCompanion<Order> {
           ..write('eventId: $eventId, ')
           ..write('deviceId: $deviceId, ')
           ..write('number: $number, ')
+          ..write('paymentCode: $paymentCode, ')
           ..write('currency: $currency, ')
           ..write('subtotal: $subtotal, ')
           ..write('discount: $discount, ')
@@ -11182,6 +11238,7 @@ typedef $$OrdersTableCreateCompanionBuilder = OrdersCompanion Function({
   required String eventId,
   required String deviceId,
   required String number,
+  Value<String?> paymentCode,
   required String currency,
   required int subtotal,
   required int discount,
@@ -11197,6 +11254,7 @@ typedef $$OrdersTableUpdateCompanionBuilder = OrdersCompanion Function({
   Value<String> eventId,
   Value<String> deviceId,
   Value<String> number,
+  Value<String?> paymentCode,
   Value<String> currency,
   Value<int> subtotal,
   Value<int> discount,
@@ -11242,6 +11300,11 @@ class $$OrdersTableFilterComposer
 
   ColumnFilters<String> get number => $composableBuilder(
     column: $table.number,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paymentCode => $composableBuilder(
+    column: $table.paymentCode,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11315,6 +11378,11 @@ class $$OrdersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get paymentCode => $composableBuilder(
+    column: $table.paymentCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get currency => $composableBuilder(
     column: $table.currency,
     builder: (column) => ColumnOrderings(column),
@@ -11373,6 +11441,11 @@ class $$OrdersTableAnnotationComposer
   GeneratedColumn<String> get number =>
       $composableBuilder(column: $table.number, builder: (column) => column);
 
+  GeneratedColumn<String> get paymentCode => $composableBuilder(
+    column: $table.paymentCode,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get currency =>
       $composableBuilder(column: $table.currency, builder: (column) => column);
 
@@ -11426,6 +11499,7 @@ class $$OrdersTableTableManager
                 Value<String> eventId = const Value.absent(),
                 Value<String> deviceId = const Value.absent(),
                 Value<String> number = const Value.absent(),
+                Value<String?> paymentCode = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<int> subtotal = const Value.absent(),
                 Value<int> discount = const Value.absent(),
@@ -11440,6 +11514,7 @@ class $$OrdersTableTableManager
                 eventId: eventId,
                 deviceId: deviceId,
                 number: number,
+                paymentCode: paymentCode,
                 currency: currency,
                 subtotal: subtotal,
                 discount: discount,
@@ -11456,6 +11531,7 @@ class $$OrdersTableTableManager
                 required String eventId,
                 required String deviceId,
                 required String number,
+                Value<String?> paymentCode = const Value.absent(),
                 required String currency,
                 required int subtotal,
                 required int discount,
@@ -11470,6 +11546,7 @@ class $$OrdersTableTableManager
                 eventId: eventId,
                 deviceId: deviceId,
                 number: number,
+                paymentCode: paymentCode,
                 currency: currency,
                 subtotal: subtotal,
                 discount: discount,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
@@ -27,7 +28,12 @@ String cloudErrorText(AppLocalizations l10n, Object error) {
   };
 }
 
+final _createdFormat = DateFormat('yyyy-MM-dd HH:mm');
+
+enum _AfterLogin { restore, backup }
+
 /// 邮箱验证码登录。[restore] 为 true 时登录后选择团队恢复到本机，否则为本团队开启云端备份。
+/// 备份时如果这个邮箱在云端已有别的团队，先问一下是不是想恢复，避免新装的 App 又建一个空团队。
 class CloudLoginPage extends ConsumerStatefulWidget {
   const CloudLoginPage({super.key, this.restore = false});
 
@@ -44,6 +50,7 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
   bool _devCode = false;
   bool _busy = false;
   String? _error;
+  late bool _restoreMode = widget.restore;
 
   /// 恢复模式：登录后拿到的令牌和团队列表。
   String? _token;
@@ -99,8 +106,18 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
         _displayName = await api.setDisplayName(token, name);
       }
     }
-    if (widget.restore) {
-      final teams = await api.listTeams(token);
+    final teams = await api.listTeams(token);
+    if (!_restoreMode) {
+      final teamId = ref.read(sessionProvider).teamId;
+      final others = teams.where((t) => t.id != teamId).length;
+      // 本机团队还没备份过，邮箱下却已有别的团队：多半是新装的 App 想找回数据。
+      if (others > 0 && !teams.any((t) => t.id == teamId) && mounted) {
+        final choice = await _askRestoreOrBackup(others);
+        if (choice == null) return;
+        if (choice == _AfterLogin.restore) _restoreMode = true;
+      }
+    }
+    if (_restoreMode) {
       setState(() {
         _token = token;
         _teams = teams;
@@ -116,6 +133,32 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
     );
     context.pop();
   });
+
+  Future<_AfterLogin?> _askRestoreOrBackup(int count) {
+    final l10n = AppLocalizations.of(context);
+    return showCupertinoDialog<_AfterLogin>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(l10n.cloudHasTeamsTitle(count)),
+        content: Text(l10n.cloudHasTeamsBody),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(context, _AfterLogin.restore),
+            child: Text(l10n.restoreExistingTeam),
+          ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context, _AfterLogin.backup),
+            child: Text(l10n.backupThisDevice),
+          ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _restore(CloudTeam team) async {
     final l10n = AppLocalizations.of(context);
@@ -148,7 +191,7 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
     final teams = _teams;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.restore ? l10n.restoreFromCloud : l10n.cloudBackup),
+        title: Text(_restoreMode ? l10n.restoreFromCloud : l10n.cloudBackup),
       ),
       body: Align(
         alignment: Alignment.topCenter,
@@ -239,6 +282,10 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
       l10n.chooseTeamToRestore,
       style: Theme.of(context).textTheme.titleMedium,
     ),
+    if (teams.length > 1) ...[
+      const SizedBox(height: 4),
+      Text(l10n.chooseTeamHint),
+    ],
     const SizedBox(height: 12),
     if (teams.isEmpty) Text(l10n.noCloudTeams),
     for (final team in teams)
@@ -246,6 +293,10 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
         child: ListTile(
           leading: const Icon(Icons.groups_outlined),
           title: Text(team.name.isEmpty ? team.id.substring(0, 8) : team.name),
+          subtitle: switch (_teamDetails(l10n, team)) {
+            '' => null,
+            final details => Text(details),
+          },
           trailing: Icon(
             CupertinoIcons.chevron_forward,
             size: 18,
@@ -270,4 +321,13 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
       ),
     ],
   ];
+
+  /// 创建于 2026-11-03 01:05 · 2 台设备 · 120 条记录 · 本机当前团队
+  String _teamDetails(AppLocalizations l10n, CloudTeam team) => [
+    if (team.createdAt != null)
+      l10n.teamCreatedOn(_createdFormat.format(team.createdAt!)),
+    if (team.devices != null) l10n.teamDeviceCount(team.devices!),
+    if (team.records != null) l10n.teamRecordCount(team.records!),
+    if (team.id == ref.read(sessionProvider).teamId) l10n.currentTeamTag,
+  ].join(' · ');
 }
