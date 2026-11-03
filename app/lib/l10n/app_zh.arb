@@ -309,6 +309,31 @@
   "teamRecordCount": "{count} 条记录",
   "currentTeamTag": "本机当前团队",
   "switchCloudTeam": "换成云端的其他团队",
+  "switchTeam": "切换团队",
+  "teamsOnDevice": "本机的团队",
+  "teamInUse": "正在使用",
+  "unnamedTeam": "未命名团队",
+  "addTeamFromCloud": "从云端添加团队",
+  "newTeam": "新建团队",
+  "newTeamConfirmTitle": "新建一个团队？",
+  "newTeamConfirmBody": "会在本机新建一个空的团队并切换过去。现在的团队和数据都保留，随时可以切回来。",
+  "removeFromDevice": "从本机移除",
+  "removeTeamTitle": "从本机移除「{team}」？",
+  "removeTeamBody": "这台设备上这个团队的数据会被删除。已经备份到云端或在其他设备上的数据不受影响，之后可以再添加回来。",
+  "teamOnDeviceTag": "已在本机",
+  "cloudOtherTeams": "这个邮箱的其他团队",
+  "signInToSwitchTeamsHint": "登录后，这个邮箱下的团队都能直接切换",
+  "downloadingTeam": "正在下载到本机…",
+  "noOtherCloudTeams": "这个邮箱下没有其他团队",
+  "addTeamConfirmBody": "会把这个团队下载到本机并切换过去，现在的团队和数据都保留。",
+  "joinAddConfirmBody": "会在本机新增这个团队并切换过去，然后从团队里的其他设备同步数据。现在的团队和数据都保留。",
+  "@removeTeamTitle": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "chooseTeamHint": "同名的团队可以看创建时间和记录数来区分，记录多的那个通常就是有商品的。",
   "@cloudHasTeamsTitle": {
     "placeholders": {

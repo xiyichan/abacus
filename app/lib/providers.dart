@@ -11,6 +11,7 @@ import 'data/database.dart';
 import 'data/inventory_repository.dart';
 import 'data/sales_repository.dart';
 import 'data/session.dart';
+import 'data/team_library.dart';
 import 'data/team_repository.dart';
 import 'sync/cloud_api.dart';
 import 'sync/cloud_sync_service.dart';
@@ -150,7 +151,21 @@ final syncStatusProvider = StreamProvider<SyncStatus>((ref) async* {
   yield* service.status;
 });
 
-/// 重新加载会话并重建整个界面（加入团队后调用）。在 main() 里注入。
+/// 切换团队。在 AppRoot 里注入；没有时（测试）界面不显示切换入口。
+abstract interface class TeamSwitcher {
+  TeamLibrary get library;
+
+  /// 换成本机的另一个团队（[TeamLibrary] 里的 key）。
+  Future<void> switchTo(String key);
+
+  /// 在本机新增一个团队：新建一个数据库，用 [setup] 写入数据（新建、扫码加入、
+  /// 从云端下载），然后切换过去。[setup] 失败时删掉这个数据库，当前团队不受影响。
+  Future<void> add(Future<void> Function(AppDatabase db) setup);
+}
+
+final teamSwitcherProvider = Provider<TeamSwitcher?>((ref) => null);
+
+/// 重新加载会话并重建整个界面。在 main() 里注入。
 final restartAppProvider = Provider<VoidCallback>(
   (ref) => throw UnimplementedError('override in main()'),
 );
@@ -164,6 +179,7 @@ final cloudSyncProvider = Provider<CloudSyncService>((ref) {
     ref.watch(sessionProvider),
     ref.watch(cloudApiProvider),
     media: ref.watch(mediaStoreProvider),
+    onAccountChanged: ref.watch(teamSwitcherProvider)?.library.setAccount,
   );
   unawaited(service.start());
   ref.onDispose(service.dispose);

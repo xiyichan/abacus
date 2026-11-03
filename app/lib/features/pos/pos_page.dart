@@ -20,6 +20,7 @@ import '../events/end_event.dart';
 import '../expenses/expense_editor.dart';
 import '../lock/cashier_lock.dart';
 import '../team/sync_status_chip.dart';
+import '../team/team_switcher.dart';
 import 'cart.dart';
 import 'cart_panel.dart';
 import 'checkout_sheet.dart';
@@ -73,7 +74,10 @@ class PosPage extends ConsumerWidget {
               onPressed: () => context.go('/pos/events/${current.id}/stock'),
             ),
           ],
-          if (!locked) SyncStatusChip(compact: !context.isTablet),
+          if (!locked) ...[
+            TeamSwitcherButton(compact: !context.isTablet),
+            SyncStatusChip(compact: !context.isTablet),
+          ],
           const SizedBox(width: Gap.sm),
         ],
       ),

@@ -31,6 +31,9 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'abacus'));
 
+  /// 文档目录下的 `<name>.sqlite`（每个团队一个，见 TeamLibrary）。
+  AppDatabase.named(String name) : super(driftDatabase(name: name));
+
   @override
   int get schemaVersion => 9;
 

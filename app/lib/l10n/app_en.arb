@@ -309,6 +309,31 @@
   "teamRecordCount": "{count} records",
   "currentTeamTag": "This device's team",
   "switchCloudTeam": "Switch to another cloud team",
+  "switchTeam": "Switch team",
+  "teamsOnDevice": "Teams on this device",
+  "teamInUse": "In use",
+  "unnamedTeam": "Unnamed team",
+  "addTeamFromCloud": "Add a team from the cloud",
+  "newTeam": "New team",
+  "newTeamConfirmTitle": "Create a new team?",
+  "newTeamConfirmBody": "A new empty team is created on this device and opened. Your current team and its data stay, and you can switch back any time.",
+  "removeFromDevice": "Remove from this device",
+  "removeTeamTitle": "Remove “{team}” from this device?",
+  "removeTeamBody": "This team's data on this device is deleted. Data backed up to the cloud or on other devices is not affected, and you can add the team back later.",
+  "teamOnDeviceTag": "On this device",
+  "cloudOtherTeams": "Other teams under this email",
+  "signInToSwitchTeamsHint": "After signing in, you can switch to any team under this email",
+  "downloadingTeam": "Downloading to this device…",
+  "noOtherCloudTeams": "No other teams under this email",
+  "addTeamConfirmBody": "The team is downloaded to this device and opened. Your current team and its data stay.",
+  "joinAddConfirmBody": "The team is added to this device and opened, then syncs from the team's other devices. Your current team and its data stay.",
+  "@removeTeamTitle": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "chooseTeamHint": "Teams with the same name can be told apart by creation time and record count; the one with more records usually has your goods.",
   "@cloudHasTeamsTitle": {
     "placeholders": {

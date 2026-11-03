@@ -1202,6 +1202,114 @@ abstract class AppLocalizations {
   /// **'换成云端的其他团队'**
   String get switchCloudTeam;
 
+  /// No description provided for @switchTeam.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换团队'**
+  String get switchTeam;
+
+  /// No description provided for @teamsOnDevice.
+  ///
+  /// In zh, this message translates to:
+  /// **'本机的团队'**
+  String get teamsOnDevice;
+
+  /// No description provided for @teamInUse.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在使用'**
+  String get teamInUse;
+
+  /// No description provided for @unnamedTeam.
+  ///
+  /// In zh, this message translates to:
+  /// **'未命名团队'**
+  String get unnamedTeam;
+
+  /// No description provided for @addTeamFromCloud.
+  ///
+  /// In zh, this message translates to:
+  /// **'从云端添加团队'**
+  String get addTeamFromCloud;
+
+  /// No description provided for @newTeam.
+  ///
+  /// In zh, this message translates to:
+  /// **'新建团队'**
+  String get newTeam;
+
+  /// No description provided for @newTeamConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'新建一个团队？'**
+  String get newTeamConfirmTitle;
+
+  /// No description provided for @newTeamConfirmBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'会在本机新建一个空的团队并切换过去。现在的团队和数据都保留，随时可以切回来。'**
+  String get newTeamConfirmBody;
+
+  /// No description provided for @removeFromDevice.
+  ///
+  /// In zh, this message translates to:
+  /// **'从本机移除'**
+  String get removeFromDevice;
+
+  /// No description provided for @removeTeamTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'从本机移除「{team}」？'**
+  String removeTeamTitle(String team);
+
+  /// No description provided for @removeTeamBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'这台设备上这个团队的数据会被删除。已经备份到云端或在其他设备上的数据不受影响，之后可以再添加回来。'**
+  String get removeTeamBody;
+
+  /// No description provided for @teamOnDeviceTag.
+  ///
+  /// In zh, this message translates to:
+  /// **'已在本机'**
+  String get teamOnDeviceTag;
+
+  /// No description provided for @cloudOtherTeams.
+  ///
+  /// In zh, this message translates to:
+  /// **'这个邮箱的其他团队'**
+  String get cloudOtherTeams;
+
+  /// No description provided for @signInToSwitchTeamsHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'登录后，这个邮箱下的团队都能直接切换'**
+  String get signInToSwitchTeamsHint;
+
+  /// No description provided for @downloadingTeam.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在下载到本机…'**
+  String get downloadingTeam;
+
+  /// No description provided for @noOtherCloudTeams.
+  ///
+  /// In zh, this message translates to:
+  /// **'这个邮箱下没有其他团队'**
+  String get noOtherCloudTeams;
+
+  /// No description provided for @addTeamConfirmBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'会把这个团队下载到本机并切换过去，现在的团队和数据都保留。'**
+  String get addTeamConfirmBody;
+
+  /// No description provided for @joinAddConfirmBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'会在本机新增这个团队并切换过去，然后从团队里的其他设备同步数据。现在的团队和数据都保留。'**
+  String get joinAddConfirmBody;
+
   /// No description provided for @chooseTeamHint.
   ///
   /// In zh, this message translates to:

@@ -6,6 +6,7 @@ import 'package:abacus/data/catalog_repository.dart';
 import 'package:abacus/data/database.dart';
 import 'package:abacus/data/sales_repository.dart';
 import 'package:abacus/data/session.dart';
+import 'package:abacus/data/team_repository.dart';
 import 'package:abacus/sync/cloud_api.dart';
 import 'package:abacus/sync/cloud_crypto.dart';
 import 'package:abacus/sync/cloud_sync_service.dart';
@@ -100,6 +101,13 @@ void main() async {
       await cloudA.start();
       await eventually(
         () async => cloudA.current.state == CloudState.connected,
+      );
+
+      // 改团队名后，云端的团队列表也跟着显示新名字。
+      await TeamRepository(a.db, a.session).renameTeam('一号摊');
+      final tokenCheck = await _login(api, email);
+      await eventually(
+        () async => (await api.listTeams(tokenCheck)).single.name == '一号摊',
       );
 
       await cloudA.setDisplayName('小企鹅摊主');

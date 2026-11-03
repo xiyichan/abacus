@@ -1,46 +1,136 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'data/database.dart';
 import 'data/session.dart';
+import 'data/team_library.dart';
 import 'features/lock/cashier_lock.dart';
 import 'l10n/app_localizations.dart';
 import 'providers.dart';
 import 'router.dart';
+import 'sync/cloud_sync_service.dart';
 import 'ui/design.dart';
 import 'ui/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final db = AppDatabase();
   final docs = await getApplicationDocumentsDirectory();
-  runApp(AppRoot(db: db, mediaDir: Directory(p.join(docs.path, 'media'))));
+  runApp(
+    AppRoot(
+      library: TeamLibrary.load(docs),
+      mediaDir: Directory(p.join(docs.path, 'media')),
+    ),
+  );
 }
 
-/// 加载本机身份后搭起 ProviderScope。加入新团队后整体重建（换会话、重启同步）。
+/// 打开当前团队的数据库、加载本机身份后搭起 ProviderScope。
+/// 换团队时关掉这个数据库、打开另一个，界面和同步服务整体重建。
 class AppRoot extends StatefulWidget {
-  const AppRoot({super.key, required this.db, required this.mediaDir});
+  const AppRoot({
+    super.key,
+    required this.library,
+    required this.mediaDir,
+    this.overrides = const [],
+  });
 
-  final AppDatabase db;
+  final TeamLibrary library;
   final Directory mediaDir;
+
+  /// 额外的覆盖（测试里关掉局域网同步等）。
+  final List<Override> overrides;
 
   @override
   State<AppRoot> createState() => _AppRootState();
 }
 
-class _AppRootState extends State<AppRoot> {
-  late Future<Session> _session = ensureSession(widget.db);
+class _AppRootState extends State<AppRoot> implements TeamSwitcher {
+  @override
+  TeamLibrary get library => widget.library;
+
+  late AppDatabase _db = library.open(library.currentKey);
+  late Future<Session> _session = _load(_db, library.currentKey);
   int _generation = 0;
+
+  /// 正在换团队（期间再点切换不理会）。
+  bool _switching = false;
+
+  /// 打开一个团队：写入共用的云端登录，读本机身份，顺便记下团队名字给切换列表用。
+  Future<Session> _load(AppDatabase db, String key) async {
+    // 从旧版本升级：沿用原来数据库里的登录，而不是把它清掉。
+    if (!library.accountKnown) library.setAccount(await readCloudAccount(db));
+    await applyCloudAccount(db, library.account);
+    final session = await ensureSession(db);
+    await _remember(db, key, session.teamId);
+    return session;
+  }
+
+  Future<void> _remember(AppDatabase db, String key, String teamId) async {
+    final team = await (db.select(
+      db.teams,
+    )..where((t) => t.id.equals(teamId))).getSingleOrNull();
+    library.remember(key, teamId: teamId, name: team?.name ?? '');
+  }
 
   void _restart() => setState(() {
     _generation++;
-    _session = ensureSession(widget.db);
+    _session = _load(_db, library.currentKey);
   });
+
+  /// 换成 [db]：先卸掉旧团队的界面（同步服务随 ProviderScope 销毁），再关旧数据库。
+  Future<void> _replace(AppDatabase db, String key) async {
+    _switching = true;
+    try {
+      final old = _db;
+      final oldKey = library.currentKey;
+      final oldSession = await _session;
+      await _remember(old, oldKey, oldSession.teamId); // 期间可能改过团队名
+      setState(() {
+        _session = Completer<Session>().future;
+      });
+      await WidgetsBinding.instance.endOfFrame;
+      // 关库要等它上面的查询都收尾；最多等一会儿，剩下的在后台关完，不让切换卡住。
+      if (!identical(old, db)) {
+        await old.close().timeout(const Duration(seconds: 2), onTimeout: () {});
+      }
+      library.setCurrent(key);
+      setState(() {
+        _db = db;
+        _generation++;
+        _session = _load(db, key);
+      });
+    } finally {
+      _switching = false;
+    }
+  }
+
+  @override
+  Future<void> switchTo(String key) async {
+    if (_switching || key == library.currentKey) return;
+    await _replace(library.open(key), key);
+  }
+
+  @override
+  Future<void> add(Future<void> Function(AppDatabase db) setup) async {
+    if (_switching) return;
+    final key = library.newKey();
+    final db = library.open(key);
+    try {
+      await setup(db);
+    } on Object {
+      await db.close();
+      library.deleteFiles(key);
+      rethrow;
+    }
+    library.add(LocalTeam(key: key));
+    await _replace(db, key);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,10 +144,12 @@ class _AppRootState extends State<AppRoot> {
         return ProviderScope(
           key: ValueKey(_generation),
           overrides: [
-            databaseProvider.overrideWithValue(widget.db),
+            databaseProvider.overrideWithValue(_db),
             sessionProvider.overrideWithValue(session),
             mediaDirProvider.overrideWithValue(widget.mediaDir),
             restartAppProvider.overrideWithValue(_restart),
+            teamSwitcherProvider.overrideWithValue(this),
+            ...widget.overrides,
           ],
           child: const AbacusApp(),
         );

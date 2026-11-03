@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 
 import '../data/database.dart';
 import '../data/session.dart';
+import '../data/team_library.dart';
 import 'cloud_api.dart';
 import 'cloud_crypto.dart';
 import 'cloud_media_sync.dart';
@@ -18,6 +19,9 @@ const _tokenKey = 'cloudToken';
 const _emailKey = 'cloudEmail';
 const _displayNameKey = 'cloudDisplayName';
 const _linkedKey = 'cloudLinkedTeam';
+
+/// 上次登记到云端时的团队名。改名后再登记一次，云端的团队列表才显示新名字。
+const _linkedNameKey = 'cloudLinkedName';
 const _lastSyncKey = 'cloudLastSync';
 
 enum CloudState {
@@ -191,15 +195,54 @@ Future<WebSocket> _connect(
   headers: {'Authorization': 'Bearer $token', 'X-Team-Token': keys.teamToken},
 ).timeout(const Duration(seconds: 15));
 
+/// 某个团队数据库里存的登录（没有时为 null）。
+Future<CloudAccount?> readCloudAccount(AppDatabase db) async {
+  final token = await db.getSetting(_tokenKey);
+  final email = await db.getSetting(_emailKey);
+  if (token == null || email == null) return null;
+  return CloudAccount(
+    token: token,
+    email: email,
+    displayName: await db.getSetting(_displayNameKey),
+  );
+}
+
+/// 把整个 App 共用的登录写进某个团队的数据库；没有登录时清掉这个库里留下的旧登录。
+Future<void> applyCloudAccount(AppDatabase db, CloudAccount? account) async {
+  if (account == null) {
+    for (final key in [_tokenKey, _emailKey, _displayNameKey]) {
+      await (db.delete(db.localSettings)..where((t) => t.key.equals(key))).go();
+    }
+    return;
+  }
+  await db.setSetting(_tokenKey, account.token);
+  await db.setSetting(_emailKey, account.email);
+  if (account.displayName == null) {
+    await (db.delete(
+      db.localSettings,
+    )..where((t) => t.key.equals(_displayNameKey))).go();
+  } else {
+    await db.setSetting(_displayNameKey, account.displayName!);
+  }
+}
+
 /// 云端同步：登录后把本团队登记到云端，并保持一条连接实时同步；断网时自动重试。
-/// 给了 [media] 时，连着云端期间也同步图片。
+/// 给了 [media] 时，连着云端期间也同步图片。登录状态变化时通过 [onAccountChanged]
+/// 告诉外面（多个团队共用一个登录）。
 class CloudSyncService {
-  CloudSyncService(this._db, this._session, this._api, {this._media});
+  CloudSyncService(
+    this._db,
+    this._session,
+    this._api, {
+    this._media,
+    this._onAccountChanged,
+  });
 
   final AppDatabase _db;
   final Session _session;
   final CloudApi _api;
   final MediaStore? _media;
+  final void Function(CloudAccount?)? _onAccountChanged;
 
   final _statusController = StreamController<CloudStatus>.broadcast();
   CloudStatus _status = const CloudStatus();
@@ -216,6 +259,12 @@ class CloudSyncService {
   Stream<CloudStatus> get status => _statusController.stream;
   CloudStatus get current => _status;
   CloudApi get api => _api;
+
+  /// 当前的登录（没登录时为 null），用来不重新验证邮箱就列出云端的团队。
+  Future<CloudAccount?> account() => readCloudAccount(_db);
+
+  Future<void> _publishAccount() async =>
+      _onAccountChanged?.call(await account());
 
   Future<void> start() async {
     final email = await _db.getSetting(_emailKey);
@@ -312,6 +361,7 @@ class CloudSyncService {
     } else {
       await _db.setSetting(_displayNameKey, name);
     }
+    await _publishAccount();
   }
 
   Future<void> signOut() async {
@@ -330,11 +380,18 @@ class CloudSyncService {
   }
 
   Future<void> _signOutLocally() async {
-    for (final key in [_tokenKey, _emailKey, _displayNameKey, _linkedKey]) {
+    for (final key in [
+      _tokenKey,
+      _emailKey,
+      _displayNameKey,
+      _linkedKey,
+      _linkedNameKey,
+    ]) {
       await (_db.delete(
         _db.localSettings,
       )..where((t) => t.key.equals(key))).go();
     }
+    _onAccountChanged?.call(null);
     _publish(const CloudStatus());
   }
 
@@ -352,6 +409,21 @@ class CloudSyncService {
       currency: _session.currency,
     );
     await _db.setSetting(_linkedKey, _session.teamId);
+    if (team != null) await _db.setSetting(_linkedNameKey, team.name);
+  }
+
+  /// 团队名和上次登记到云端的不一样（本机或别的设备改了名）时，重新登记一次。
+  Future<void> _syncTeamName(String token) async {
+    try {
+      final team = await (_db.select(
+        _db.teams,
+      )..where((t) => t.id.equals(_session.teamId))).getSingleOrNull();
+      if (team == null || team.name.trim().isEmpty) return;
+      if (team.name == await _db.getSetting(_linkedNameKey)) return;
+      await _link(token);
+    } on Object catch (e) {
+      debugPrint('cloud sync: team name: $e'); // 下次连上或再改名时再试
+    }
   }
 
   Future<void> _loop() async {
@@ -368,6 +440,8 @@ class CloudSyncService {
         ),
       );
       CloudMediaSync? mediaSync;
+      StreamSubscription<void>? renames;
+      Timer? renameTimer;
       try {
         if (await _db.getSetting(_linkedKey) != _session.teamId) {
           await _link(token);
@@ -391,6 +465,17 @@ class CloudSyncService {
         await peer.ready.timeout(const Duration(seconds: 15));
         _failures = 0;
         unawaited(_refreshDisplayName(token));
+        unawaited(_syncTeamName(token));
+        // 连着期间改了团队名（本机改，或从别的设备同步过来）：稍等一下再登记新名字。
+        renames = _db.tableUpdates(TableUpdateQuery.onTable(_db.teams)).listen((
+          _,
+        ) {
+          renameTimer?.cancel();
+          renameTimer = Timer(
+            const Duration(seconds: 1),
+            () => unawaited(_syncTeamName(token)),
+          );
+        });
         final media = _media;
         if (media != null) {
           mediaSync = CloudMediaSync(
@@ -428,6 +513,8 @@ class CloudSyncService {
           }
         }
       } finally {
+        renameTimer?.cancel();
+        await renames?.cancel();
         await mediaSync?.stop();
         await _peer?.close();
         _peer = null;

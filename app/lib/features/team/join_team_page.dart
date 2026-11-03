@@ -8,6 +8,7 @@ import '../../providers.dart';
 import '../../sync/team_invite.dart';
 import '../../ui/layout.dart';
 import '../../ui/empty_state.dart';
+import 'team_switcher.dart';
 
 /// 加入团队：扫邀请二维码，或粘贴邀请码（模拟器没有相机时用）。
 class JoinTeamPage extends ConsumerStatefulWidget {
@@ -40,6 +41,13 @@ class _JoinTeamPageState extends ConsumerState<JoinTeamPage> {
       Navigator.of(context).maybePop(); // 已经在这个团队里
       return;
     }
+    final switcher = ref.read(teamSwitcherProvider);
+    // 本机已经有这个团队：直接切过去。
+    final local = switcher?.library.byTeamId(invite.teamId);
+    if (local != null) {
+      await changeTeam(ref, (s) => s.switchTo(local.key));
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -47,13 +55,18 @@ class _JoinTeamPageState extends ConsumerState<JoinTeamPage> {
     final ok = await confirmDialog(
       context,
       title: l10n.joinConfirmTitle(invite.teamName),
-      body: l10n.joinConfirmBody,
+      // 能新增团队时当前团队保留；不能时（测试）沿用清空本机再加入。
+      body: switcher != null ? l10n.joinAddConfirmBody : l10n.joinConfirmBody,
       confirmLabel: l10n.join,
       cancelLabel: l10n.cancel,
-      destructive: true,
+      destructive: switcher == null,
     );
     if (!ok) {
       setState(() => _busy = false);
+      return;
+    }
+    if (switcher != null) {
+      await changeTeam(ref, (s) => s.add((db) => joinTeam(db, invite)));
       return;
     }
     // 先停掉旧团队的同步，再清空数据加入新团队。

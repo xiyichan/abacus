@@ -605,6 +605,64 @@ class AppLocalizationsZh extends AppLocalizations {
   String get switchCloudTeam => '换成云端的其他团队';
 
   @override
+  String get switchTeam => '切换团队';
+
+  @override
+  String get teamsOnDevice => '本机的团队';
+
+  @override
+  String get teamInUse => '正在使用';
+
+  @override
+  String get unnamedTeam => '未命名团队';
+
+  @override
+  String get addTeamFromCloud => '从云端添加团队';
+
+  @override
+  String get newTeam => '新建团队';
+
+  @override
+  String get newTeamConfirmTitle => '新建一个团队？';
+
+  @override
+  String get newTeamConfirmBody => '会在本机新建一个空的团队并切换过去。现在的团队和数据都保留，随时可以切回来。';
+
+  @override
+  String get removeFromDevice => '从本机移除';
+
+  @override
+  String removeTeamTitle(String team) {
+    return '从本机移除「$team」？';
+  }
+
+  @override
+  String get removeTeamBody =>
+      '这台设备上这个团队的数据会被删除。已经备份到云端或在其他设备上的数据不受影响，之后可以再添加回来。';
+
+  @override
+  String get teamOnDeviceTag => '已在本机';
+
+  @override
+  String get cloudOtherTeams => '这个邮箱的其他团队';
+
+  @override
+  String get signInToSwitchTeamsHint => '登录后，这个邮箱下的团队都能直接切换';
+
+  @override
+  String get downloadingTeam => '正在下载到本机…';
+
+  @override
+  String get noOtherCloudTeams => '这个邮箱下没有其他团队';
+
+  @override
+  String get addTeamConfirmBody => '会把这个团队下载到本机并切换过去，现在的团队和数据都保留。';
+
+  @override
+  String get joinAddConfirmBody =>
+      '会在本机新增这个团队并切换过去，然后从团队里的其他设备同步数据。现在的团队和数据都保留。';
+
+  @override
   String get chooseTeamHint => '同名的团队可以看创建时间和记录数来区分，记录多的那个通常就是有商品的。';
 
   @override

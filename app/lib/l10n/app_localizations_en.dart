@@ -619,6 +619,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get switchCloudTeam => 'Switch to another cloud team';
 
   @override
+  String get switchTeam => 'Switch team';
+
+  @override
+  String get teamsOnDevice => 'Teams on this device';
+
+  @override
+  String get teamInUse => 'In use';
+
+  @override
+  String get unnamedTeam => 'Unnamed team';
+
+  @override
+  String get addTeamFromCloud => 'Add a team from the cloud';
+
+  @override
+  String get newTeam => 'New team';
+
+  @override
+  String get newTeamConfirmTitle => 'Create a new team?';
+
+  @override
+  String get newTeamConfirmBody =>
+      'A new empty team is created on this device and opened. Your current team and its data stay, and you can switch back any time.';
+
+  @override
+  String get removeFromDevice => 'Remove from this device';
+
+  @override
+  String removeTeamTitle(String team) {
+    return 'Remove “$team” from this device?';
+  }
+
+  @override
+  String get removeTeamBody =>
+      'This team\'s data on this device is deleted. Data backed up to the cloud or on other devices is not affected, and you can add the team back later.';
+
+  @override
+  String get teamOnDeviceTag => 'On this device';
+
+  @override
+  String get cloudOtherTeams => 'Other teams under this email';
+
+  @override
+  String get signInToSwitchTeamsHint =>
+      'After signing in, you can switch to any team under this email';
+
+  @override
+  String get downloadingTeam => 'Downloading to this device…';
+
+  @override
+  String get noOtherCloudTeams => 'No other teams under this email';
+
+  @override
+  String get addTeamConfirmBody =>
+      'The team is downloaded to this device and opened. Your current team and its data stay.';
+
+  @override
+  String get joinAddConfirmBody =>
+      'The team is added to this device and opened, then syncs from the team\'s other devices. Your current team and its data stay.';
+
+  @override
   String get chooseTeamHint =>
       'Teams with the same name can be told apart by creation time and record count; the one with more records usually has your goods.';
 

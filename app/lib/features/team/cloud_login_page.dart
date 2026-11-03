@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../data/team_library.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../sync/cloud_api.dart';
@@ -12,6 +15,7 @@ import '../../sync/cloud_sync_service.dart';
 import '../../ui/layout.dart';
 import '../../ui/empty_state.dart';
 import 'cloud_card.dart';
+import 'team_switcher.dart';
 
 String cloudErrorText(AppLocalizations l10n, Object error) {
   final code = error is CloudApiException ? error.code : '$error';
@@ -56,6 +60,36 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
   String? _token;
   String? _displayName;
   List<CloudTeam>? _teams;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_restoreMode) unawaited(_listWithSavedLogin());
+  }
+
+  /// 已经登录过：不用再验证邮箱，直接列出云端的团队。登录失效时照常用邮箱登录。
+  Future<void> _listWithSavedLogin() async {
+    final library = ref.read(teamSwitcherProvider)?.library;
+    // 共用的登录优先：当前团队可能还没登录过，但别的团队登录了。
+    final account =
+        library?.account ?? await ref.read(cloudSyncProvider).account();
+    if (account == null || !mounted) return;
+    await _run(() async {
+      try {
+        final teams = await ref.read(cloudApiProvider).listTeams(account.token);
+        if (!mounted) return;
+        setState(() {
+          _email.text = account.email;
+          _displayName = account.displayName;
+          _token = account.token;
+          _teams = teams;
+        });
+      } on CloudApiException catch (e) {
+        if (!e.isAuthError) rethrow;
+        library?.setAccount(null); // 登录失效：下面用邮箱重新登录
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -118,6 +152,13 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
       }
     }
     if (_restoreMode) {
+      // 记成共用的登录：之后添加、切换团队都不用再收验证码。
+      ref
+          .read(teamSwitcherProvider)
+          ?.library
+          .setAccount(
+            CloudAccount(token: token, email: email, displayName: _displayName),
+          );
       setState(() {
         _token = token;
         _teams = teams;
@@ -162,15 +203,53 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
 
   Future<void> _restore(CloudTeam team) async {
     final l10n = AppLocalizations.of(context);
+    if (team.id == ref.read(sessionProvider).teamId) {
+      context.pop(); // 就是现在用的团队
+      return;
+    }
+    final switcher = ref.read(teamSwitcherProvider);
+    // 本机已经有这个团队：直接切过去，不用下载。
+    final local = switcher?.library.byTeamId(team.id);
+    if (local != null) {
+      await _run(() => changeTeam(ref, (s) => s.switchTo(local.key)));
+      return;
+    }
     final ok = await confirmDialog(
       context,
       title: l10n.restoreConfirmTitle(team.name),
-      body: l10n.restoreConfirmBody,
+      // 能新增团队时当前团队保留；不能时（测试）沿用清空本机再恢复。
+      body: switcher != null
+          ? l10n.addTeamConfirmBody
+          : l10n.restoreConfirmBody,
       confirmLabel: l10n.restore,
       cancelLabel: l10n.cancel,
-      destructive: true,
+      destructive: switcher == null,
     );
     if (!ok) return;
+    if (switcher != null) {
+      final api = ref.read(cloudApiProvider);
+      final token = _token!;
+      final email = _email.text.trim().toLowerCase();
+      await _run(() async {
+        switcher.library.setAccount(
+          CloudAccount(token: token, email: email, displayName: _displayName),
+        );
+        await changeTeam(
+          ref,
+          (s) => s.add(
+            (db) => restoreTeamFromCloud(
+              db: db,
+              api: api,
+              token: token,
+              email: email,
+              team: team,
+              displayName: _displayName,
+            ),
+          ),
+        );
+      });
+      return;
+    }
     await _run(() async {
       // 先停掉局域网和云端同步（已登录时云端还连着原来的团队），
       // 不然旧团队的记录会混进正在恢复的数据里。
@@ -340,6 +419,9 @@ class _CloudLoginPageState extends ConsumerState<CloudLoginPage> {
       l10n.teamCreatedOn(_createdFormat.format(team.createdAt!)),
     if (team.devices != null) l10n.teamDeviceCount(team.devices!),
     if (team.records != null) l10n.teamRecordCount(team.records!),
-    if (team.id == ref.read(sessionProvider).teamId) l10n.currentTeamTag,
+    if (team.id == ref.read(sessionProvider).teamId)
+      l10n.currentTeamTag
+    else if (ref.read(teamSwitcherProvider)?.library.byTeamId(team.id) != null)
+      l10n.teamOnDeviceTag,
   ].join(' · ');
 }
