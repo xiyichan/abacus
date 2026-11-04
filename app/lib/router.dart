@@ -10,6 +10,7 @@ import 'features/products/categories_page.dart';
 import 'features/products/product_editor_page.dart';
 import 'features/products/products_page.dart';
 import 'features/settings/payment_methods_page.dart';
+import 'features/settings/support_page.dart';
 import 'features/stats/stats_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/team/cloud_login_page.dart';
@@ -103,6 +104,10 @@ GoRouter createRouter({ValueListenable<bool>? locked}) => GoRouter(
                 GoRoute(
                   path: 'payments',
                   builder: (_, _) => const PaymentMethodsPage(),
+                ),
+                GoRoute(
+                  path: 'support',
+                  builder: (_, _) => const SupportPage(),
                 ),
                 GoRoute(
                   path: 'team',

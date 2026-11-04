@@ -1119,4 +1119,61 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get editPaymentCodeBody => '可以改成客人方便填写的内容，比如名字或手机尾号。留空就用单号。';
+
+  @override
+  String get supportAuthor => '请作者喝杯咖啡';
+
+  @override
+  String get supportTileHint => '觉得好用的话，支持一下小算盘';
+
+  @override
+  String get supportTipped => '已请过 ❤️';
+
+  @override
+  String get supportIntro =>
+      '小算盘是我业余一个人做的，免费、没有广告。如果它帮你的摊位省了事，欢迎请我喝杯咖啡，让我有动力继续把它做好。';
+
+  @override
+  String get tipSmall => '☕ 一杯咖啡';
+
+  @override
+  String get tipMedium => '🍰 咖啡加小蛋糕';
+
+  @override
+  String get tipLarge => '🍱 请吃一顿好饭';
+
+  @override
+  String get supportFootnote =>
+      '打赏不会解锁任何功能，小算盘的所有功能都免费。付款由 App Store 或 Google Play 处理。';
+
+  @override
+  String get supportUnavailable => '暂时连不上应用商店，稍后再来看看。';
+
+  @override
+  String get supportPending => '正在等待付款确认…';
+
+  @override
+  String get supportFailed => '付款没有完成，可以稍后再试。';
+
+  @override
+  String get supportThanks => '谢谢你的咖啡！';
+
+  @override
+  String get supportThanksBody => '你的支持我收到了，会继续把小算盘做好。';
+
+  @override
+  String tipPromptTitle(String event) {
+    return '「$event」辛苦啦！';
+  }
+
+  @override
+  String tipPromptBody(int count) {
+    return '这一场卖出了 $count 单。小算盘免费、没有广告，如果它帮上了忙，可以请作者喝杯咖啡。';
+  }
+
+  @override
+  String get tipPromptGo => '去看看';
+
+  @override
+  String get tipPromptLater => '下次再说';
 }

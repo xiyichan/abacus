@@ -2101,6 +2101,108 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'可以改成客人方便填写的内容，比如名字或手机尾号。留空就用单号。'**
   String get editPaymentCodeBody;
+
+  /// No description provided for @supportAuthor.
+  ///
+  /// In zh, this message translates to:
+  /// **'请作者喝杯咖啡'**
+  String get supportAuthor;
+
+  /// No description provided for @supportTileHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'觉得好用的话，支持一下小算盘'**
+  String get supportTileHint;
+
+  /// No description provided for @supportTipped.
+  ///
+  /// In zh, this message translates to:
+  /// **'已请过 ❤️'**
+  String get supportTipped;
+
+  /// No description provided for @supportIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'小算盘是我业余一个人做的，免费、没有广告。如果它帮你的摊位省了事，欢迎请我喝杯咖啡，让我有动力继续把它做好。'**
+  String get supportIntro;
+
+  /// No description provided for @tipSmall.
+  ///
+  /// In zh, this message translates to:
+  /// **'☕ 一杯咖啡'**
+  String get tipSmall;
+
+  /// No description provided for @tipMedium.
+  ///
+  /// In zh, this message translates to:
+  /// **'🍰 咖啡加小蛋糕'**
+  String get tipMedium;
+
+  /// No description provided for @tipLarge.
+  ///
+  /// In zh, this message translates to:
+  /// **'🍱 请吃一顿好饭'**
+  String get tipLarge;
+
+  /// No description provided for @supportFootnote.
+  ///
+  /// In zh, this message translates to:
+  /// **'打赏不会解锁任何功能，小算盘的所有功能都免费。付款由 App Store 或 Google Play 处理。'**
+  String get supportFootnote;
+
+  /// No description provided for @supportUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂时连不上应用商店，稍后再来看看。'**
+  String get supportUnavailable;
+
+  /// No description provided for @supportPending.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在等待付款确认…'**
+  String get supportPending;
+
+  /// No description provided for @supportFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'付款没有完成，可以稍后再试。'**
+  String get supportFailed;
+
+  /// No description provided for @supportThanks.
+  ///
+  /// In zh, this message translates to:
+  /// **'谢谢你的咖啡！'**
+  String get supportThanks;
+
+  /// No description provided for @supportThanksBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'你的支持我收到了，会继续把小算盘做好。'**
+  String get supportThanksBody;
+
+  /// No description provided for @tipPromptTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'「{event}」辛苦啦！'**
+  String tipPromptTitle(String event);
+
+  /// No description provided for @tipPromptBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'这一场卖出了 {count} 单。小算盘免费、没有广告，如果它帮上了忙，可以请作者喝杯咖啡。'**
+  String tipPromptBody(int count);
+
+  /// No description provided for @tipPromptGo.
+  ///
+  /// In zh, this message translates to:
+  /// **'去看看'**
+  String get tipPromptGo;
+
+  /// No description provided for @tipPromptLater.
+  ///
+  /// In zh, this message translates to:
+  /// **'下次再说'**
+  String get tipPromptLater;
 }
 
 class _AppLocalizationsDelegate

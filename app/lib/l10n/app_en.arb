@@ -674,5 +674,22 @@
   "deleteProduct": "Delete product",
   "changeImage": "Change image",
   "editPaymentCode": "Edit payment note",
-  "editPaymentCodeBody": "Change it to something the customer can type easily, like a name or the last digits of a phone number. Leave it empty to use the order number."
+  "editPaymentCodeBody": "Change it to something the customer can type easily, like a name or the last digits of a phone number. Leave it empty to use the order number.",
+  "supportAuthor": "Buy me a coffee",
+  "supportTileHint": "If Abacus helps, show some support",
+  "supportTipped": "Thank you ❤️",
+  "supportIntro": "Abacus is a one-person side project: free, with no ads. If it makes your booth easier to run, a coffee keeps me going.",
+  "tipSmall": "☕ A coffee",
+  "tipMedium": "🍰 Coffee and cake",
+  "tipLarge": "🍱 A proper meal",
+  "supportFootnote": "Tips don't unlock anything; every feature in Abacus is free. Payment is handled by the App Store or Google Play.",
+  "supportUnavailable": "Can't reach the store right now. Try again later.",
+  "supportPending": "Waiting for the payment to be confirmed…",
+  "supportFailed": "The payment didn't go through. You can try again later.",
+  "supportThanks": "Thanks for the coffee!",
+  "supportThanksBody": "Your support means a lot. I'll keep making Abacus better.",
+  "tipPromptTitle": "Great work at {event}!",
+  "tipPromptBody": "You made {count} sales. Abacus is free with no ads. If it helped, you can buy the author a coffee.",
+  "tipPromptGo": "Take a look",
+  "tipPromptLater": "Maybe later"
 }

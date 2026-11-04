@@ -8,6 +8,7 @@ import '../../providers.dart';
 import '../../ui/design.dart';
 import '../../ui/grouped_list.dart';
 import '../../ui/large_title_page.dart';
+import '../../support/tip_jar.dart';
 import '../lock/cashier_lock.dart';
 import '../team/team_switcher.dart';
 
@@ -68,6 +69,9 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
             GroupedSection(
+              children: [_SupportTile(prefs: ref.watch(supportPrefsProvider))],
+            ),
+            GroupedSection(
               footer: l10n.deviceCode(
                 session.deviceShortCode,
                 session.orderPrefix,
@@ -88,6 +92,39 @@ class SettingsPage extends ConsumerWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// 「请作者喝杯咖啡」：打赏过之后右边显示一颗心。
+class _SupportTile extends StatelessWidget {
+  const _SupportTile({required this.prefs});
+
+  final SupportPrefs? prefs;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final prefs = this.prefs;
+    Widget tile(bool tipped) => GroupedTile(
+      icon: CupertinoIcons.heart_fill,
+      iconColor: Brand.tiles[1],
+      title: l10n.supportAuthor,
+      subtitle: tipped ? null : l10n.supportTileHint,
+      trailing: tipped
+          ? Text(
+              l10n.supportTipped,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            )
+          : null,
+      onTap: () => context.go('/settings/support'),
+    );
+    if (prefs == null) return tile(false);
+    return ListenableBuilder(
+      listenable: prefs,
+      builder: (context, _) => tile(prefs.tipped),
     );
   }
 }

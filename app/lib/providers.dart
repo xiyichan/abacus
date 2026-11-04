@@ -17,6 +17,7 @@ import 'sync/cloud_api.dart';
 import 'sync/cloud_sync_service.dart';
 import 'sync/lan_sync_service.dart';
 import 'sync/media_store.dart';
+import 'support/tip_jar.dart';
 
 /// 以下三个在 main() 启动时初始化后通过 overrides 注入（测试里同样注入）。
 final databaseProvider = Provider<AppDatabase>(
@@ -168,6 +169,10 @@ abstract interface class TeamSwitcher {
 }
 
 final teamSwitcherProvider = Provider<TeamSwitcher?>((ref) => null);
+
+/// 打赏的本机记录和应用内购买。在 main() 里注入；测试里为 null（打赏页显示连不上商店）。
+final supportPrefsProvider = Provider<SupportPrefs?>((ref) => null);
+final tipStoreProvider = Provider<TipStore?>((ref) => null);
 
 /// 重新加载会话并重建整个界面。在 main() 里注入。
 final restartAppProvider = Provider<VoidCallback>(

@@ -15,6 +15,7 @@ import 'features/lock/cashier_lock.dart';
 import 'l10n/app_localizations.dart';
 import 'providers.dart';
 import 'router.dart';
+import 'support/tip_jar.dart';
 import 'sync/cloud_sync_service.dart';
 import 'ui/design.dart';
 import 'ui/theme.dart';
@@ -22,10 +23,16 @@ import 'ui/theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final docs = await getApplicationDocumentsDirectory();
+  final support = SupportPrefs.load(File(p.join(docs.path, 'support.json')));
+  final tips = InAppPurchaseTipStore(support)..listen();
   runApp(
     AppRoot(
       library: TeamLibrary.load(docs),
       mediaDir: Directory(p.join(docs.path, 'media')),
+      overrides: [
+        supportPrefsProvider.overrideWithValue(support),
+        tipStoreProvider.overrideWithValue(tips),
+      ],
     ),
   );
 }

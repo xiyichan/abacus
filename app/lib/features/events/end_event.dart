@@ -7,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/money.dart';
+import '../settings/support_page.dart';
 import 'event_dates.dart';
 
 /// 结束场次：先展示本场销售和剩余汇总，确认后标记结束。返回是否已结束。
@@ -122,6 +123,14 @@ Future<bool> confirmEndEvent(
   messenger.showSnackBar(
     SnackBar(content: Text(l10n.eventEndedDone(event.name, total))),
   );
+  if (context.mounted) {
+    await maybeAskForTip(
+      context,
+      ref,
+      eventName: event.name,
+      orders: stats.orderCount,
+    );
+  }
   return true;
 }
 

@@ -1149,4 +1149,64 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get editPaymentCodeBody =>
       'Change it to something the customer can type easily, like a name or the last digits of a phone number. Leave it empty to use the order number.';
+
+  @override
+  String get supportAuthor => 'Buy me a coffee';
+
+  @override
+  String get supportTileHint => 'If Abacus helps, show some support';
+
+  @override
+  String get supportTipped => 'Thank you ❤️';
+
+  @override
+  String get supportIntro =>
+      'Abacus is a one-person side project: free, with no ads. If it makes your booth easier to run, a coffee keeps me going.';
+
+  @override
+  String get tipSmall => '☕ A coffee';
+
+  @override
+  String get tipMedium => '🍰 Coffee and cake';
+
+  @override
+  String get tipLarge => '🍱 A proper meal';
+
+  @override
+  String get supportFootnote =>
+      'Tips don\'t unlock anything; every feature in Abacus is free. Payment is handled by the App Store or Google Play.';
+
+  @override
+  String get supportUnavailable =>
+      'Can\'t reach the store right now. Try again later.';
+
+  @override
+  String get supportPending => 'Waiting for the payment to be confirmed…';
+
+  @override
+  String get supportFailed =>
+      'The payment didn\'t go through. You can try again later.';
+
+  @override
+  String get supportThanks => 'Thanks for the coffee!';
+
+  @override
+  String get supportThanksBody =>
+      'Your support means a lot. I\'ll keep making Abacus better.';
+
+  @override
+  String tipPromptTitle(String event) {
+    return 'Great work at $event!';
+  }
+
+  @override
+  String tipPromptBody(int count) {
+    return 'You made $count sales. Abacus is free with no ads. If it helped, you can buy the author a coffee.';
+  }
+
+  @override
+  String get tipPromptGo => 'Take a look';
+
+  @override
+  String get tipPromptLater => 'Maybe later';
 }
