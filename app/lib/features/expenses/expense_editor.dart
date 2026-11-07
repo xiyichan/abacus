@@ -6,6 +6,7 @@ import '../../data/database.dart';
 import '../../data/expense_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
+import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/layout.dart';
 import '../../ui/money.dart';
@@ -217,6 +218,7 @@ class _ExpenseEditorState extends ConsumerState<_ExpenseEditor> {
                   ? _eventId
                   : null,
               decoration: InputDecoration(labelText: l10n.expenseEvent),
+              borderRadius: BorderRadius.circular(Radii.sm),
               items: [
                 for (final e in events)
                   DropdownMenuItem(value: e.id, child: Text(e.name)),

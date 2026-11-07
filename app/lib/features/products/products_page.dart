@@ -61,7 +61,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
     final categoryId = categories.containsKey(_categoryId) ? _categoryId : null;
     return LargeTitlePage(
       title: l10n.navProducts,
-      leading: const TeamSwitcherButton(),
+      leading: const TeamSwitcherButton(separator: true),
       actions: [
         BarButton(
           icon: CupertinoIcons.square_grid_2x2,
@@ -105,45 +105,49 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                       onChanged: (v) => setState(() => _query = v),
                     ),
                   ),
-                  if (categoryList.isNotEmpty) ...[
-                    const SizedBox(height: Gap.sm),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      clipBehavior: Clip.none,
-                      child: Row(
-                        children: [
-                          for (final (id, name) in [
-                            (null, l10n.filterAll),
-                            for (final c in categoryList) (c.id, c.name),
-                          ])
-                            Padding(
-                              padding: const EdgeInsetsDirectional.only(
-                                end: Gap.sm,
-                              ),
-                              child: ChoiceChip(
-                                label: Text(name),
-                                selected: categoryId == id,
-                                onSelected: (_) =>
-                                    setState(() => _categoryId = id),
-                              ),
-                            ),
-                        ],
+                  const SizedBox(height: Gap.sm),
+                  // 款数放在分类那一行的右边，不单独占一行。
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              for (final (id, name) in [
+                                if (categoryList.isNotEmpty) ...[
+                                  (null, l10n.filterAll),
+                                  for (final c in categoryList) (c.id, c.name),
+                                ],
+                              ])
+                                Padding(
+                                  padding: const EdgeInsetsDirectional.only(
+                                    end: Gap.sm,
+                                  ),
+                                  child: ChoiceChip(
+                                    label: Text(name),
+                                    selected: categoryId == id,
+                                    onSelected: (_) =>
+                                        setState(() => _categoryId = id),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      Gap.lg,
-                      Gap.md,
-                      Gap.lg,
-                      0,
-                    ),
-                    child: Text(
-                      l10n.productTotal(shown.length),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      Padding(
+                        padding: const EdgeInsetsDirectional.only(
+                          start: Gap.xs,
+                          end: Gap.xs,
+                        ),
+                        child: Text(
+                          l10n.productTotal(shown.length),
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),

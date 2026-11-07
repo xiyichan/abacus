@@ -85,12 +85,19 @@ class InAppPurchaseTipStore implements TipStore {
       if (response.error != null) {
         debugPrint('tip products: ${response.error}');
       }
+      if (response.notFoundIDs.isNotEmpty) {
+        debugPrint('tip products not found: ${response.notFoundIDs}');
+      }
       final byId = {for (final p in response.productDetails) p.id: p};
-      return _cached = [
+      final options = [
         for (final id in tipProductIds)
           if (byId[id] case final p?)
             TipOption(id: id, price: p.price, product: p),
       ];
+      // 商品刚在 Play 管理中心建好时可能只查到一部分；这时不记下来，
+      // 下次打开再查，免得一直只显示部分档位直到重启 App。
+      if (options.length == tipProductIds.length) _cached = options;
+      return options;
     } on Object catch (e) {
       debugPrint('tip products: $e');
       return const [];

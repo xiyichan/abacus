@@ -10,6 +10,7 @@ import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../sync/team_invite.dart';
 import '../../ui/layout.dart';
+import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/grouped_list.dart';
 import '../../ui/input_dialog.dart';
@@ -180,8 +181,11 @@ class TeamPage extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ColoredBox(
-                color: Colors.white,
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(Radii.sm),
+                ),
                 child: QrImageView(data: code, size: 260),
               ),
               const SizedBox(height: 12),

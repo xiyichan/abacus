@@ -15,6 +15,7 @@ import '../../ui/grouped_list.dart';
 import '../../ui/input_dialog.dart';
 import '../../ui/media.dart';
 import '../../ui/money.dart';
+import '../../ui/segmented.dart';
 import 'categories_page.dart';
 
 const _newCreator = '__new__';
@@ -340,25 +341,15 @@ class _ProductEditorPageState extends ConsumerState<ProductEditorPage> {
                           ),
                         ),
                       ),
-                      SegmentedButton<String>(
+                      PillSegmented<String>(
                         segments: [
-                          ButtonSegment(
-                            value: ProductKind.single,
-                            label: Text(l10n.kindSingle),
-                          ),
-                          ButtonSegment(
-                            value: ProductKind.variants,
-                            label: Text(l10n.kindVariants),
-                          ),
-                          ButtonSegment(
-                            value: ProductKind.bundle,
-                            label: Text(l10n.kindBundle),
-                          ),
+                          (ProductKind.single, l10n.kindSingle),
+                          (ProductKind.variants, l10n.kindVariants),
+                          (ProductKind.bundle, l10n.kindBundle),
                         ],
-                        selected: {_kind},
+                        selected: _kind,
                         // 已有商品不能在套装与普通商品之间切换，避免库存和订单对不上。
-                        onSelectionChanged: (s) {
-                          final next = s.single;
+                        onChanged: (next) {
                           final crossesBundle =
                               (next == ProductKind.bundle) !=
                               (_kind == ProductKind.bundle);

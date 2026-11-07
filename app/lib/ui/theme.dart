@@ -193,16 +193,6 @@ ThemeData _iosStyle(ColorScheme scheme) {
         minimumSize: const Size(minTapSize, minTapSize),
       ),
     ),
-    segmentedButtonTheme: SegmentedButtonThemeData(
-      style: SegmentedButton.styleFrom(
-        backgroundColor: fill,
-        selectedBackgroundColor: cell,
-        selectedForegroundColor: scheme.onSurface,
-        side: BorderSide.none,
-        shape: pill,
-        minimumSize: const Size(minTapSize, minTapSize),
-      ),
-    ),
     // 文字颜色不随选中变化（按状态变的文字样式会被 Chip 合并丢掉），选中靠千禧粉底色和描边区分。
     chipTheme: ChipThemeData(
       shape: pill,
@@ -264,6 +254,18 @@ ThemeData _iosStyle(ColorScheme scheme) {
       surfaceTintColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(Radii.sm)),
+      ),
+    ),
+    tooltipTheme: TooltipThemeData(
+      decoration: BoxDecoration(
+        color: scheme.inverseSurface.withValues(alpha: 0.9),
+        borderRadius: const BorderRadius.all(Radius.circular(Gap.sm)),
+      ),
+    ),
+    // 日期选择器和其他弹窗一样的圆角。
+    datePickerTheme: const DatePickerThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(Radii.dialog)),
       ),
     ),
     snackBarTheme: const SnackBarThemeData(

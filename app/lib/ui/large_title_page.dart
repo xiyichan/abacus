@@ -1,11 +1,14 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'design.dart';
 import 'glass.dart';
 
-/// iOS 大标题页面：标题大字靠左，往上滚动时缩成导航栏中间的小标题，导航栏是半透明磨砂的。
-/// 底部会自动留出悬浮标签栏的高度。
+/// 主页面（商品、订单、统计、设置）：顶上一行导航栏，左边「团队 / 页面标题」，右边按钮，
+/// 和收银台的「团队 / 场次」一样。不单独占一行放大标题，省出上面的空白。
+/// 导航栏固定在顶上，内容从它下面滚过时是半透明磨砂的。底部会自动留出悬浮标签栏的高度。
 class LargeTitlePage extends StatelessWidget {
   const LargeTitlePage({
     super.key,
@@ -17,7 +20,7 @@ class LargeTitlePage extends StatelessWidget {
 
   final String title;
 
-  /// 左上角，主页面放团队按钮。
+  /// 标题左边，主页面放团队按钮（带面包屑的「/」）。
   final Widget? leading;
 
   /// 右上角按钮，一般用 [BarButton]。
@@ -26,35 +29,110 @@ class LargeTitlePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          CupertinoSliverNavigationBar(
-            largeTitle: Text(title),
-            leading: leading,
-            // 左边的文字按钮自带 8 的内边距，往左挪一点，让文字和大标题左对齐。
-            padding: leading == null
-                ? null
-                : const EdgeInsetsDirectional.only(start: Gap.sm, end: Gap.lg),
-            trailing: actions.isEmpty
-                ? null
-                : Row(mainAxisSize: MainAxisSize.min, children: actions),
-            backgroundColor: scheme.surface.withValues(alpha: 0.85),
-            border: null,
-            // 各标签页各有一个导航栏，不做跨页面的标题动画（避免 Hero 冲突）。
-            transitionBetweenRoutes: false,
-          ),
-          ...slivers,
-          SliverPadding(
-            padding: EdgeInsets.only(
-              bottom: Gap.xl + MediaQuery.paddingOf(context).bottom,
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        body: CustomScrollView(
+          slivers: [
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _BarDelegate(
+                topPadding: MediaQuery.paddingOf(context).top,
+                background: theme.colorScheme.surface.withValues(alpha: 0.85),
+                child: Padding(
+                  // 团队按钮自带 8 的内边距，按钮自带 4 的外边距：文字和图标都对齐 16 的页边。
+                  padding: EdgeInsetsDirectional.only(
+                    start: leading == null ? Gap.lg : Gap.sm,
+                    end: Gap.lg - Gap.xs,
+                  ),
+                  child: Row(
+                    children: [
+                      ?leading,
+                      Expanded(
+                        child: Semantics(
+                          header: true,
+                          child: Padding(
+                            padding: EdgeInsetsDirectional.only(
+                              start: leading == null ? 0 : Gap.sm,
+                            ),
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontSize: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      ...actions,
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+            ...slivers,
+            SliverPadding(
+              padding: EdgeInsets.only(
+                bottom: Gap.xl + MediaQuery.paddingOf(context).bottom,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+/// 固定在顶上的导航栏：状态栏高度 + 一行 [height]，磨砂半透明底。
+class _BarDelegate extends SliverPersistentHeaderDelegate {
+  _BarDelegate({
+    required this.topPadding,
+    required this.background,
+    required this.child,
+  });
+
+  static const height = 56.0;
+
+  final double topPadding;
+  final Color background;
+  final Widget child;
+
+  @override
+  double get minExtent => topPadding + height;
+
+  @override
+  double get maxExtent => topPadding + height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlaps) {
+    // 必须撑满整个高度，否则 sliver 的绘制高度和占位高度对不上。
+    return SizedBox.expand(child: _bar());
+  }
+
+  Widget _bar() {
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: ColoredBox(
+          color: background,
+          child: Padding(
+            padding: EdgeInsets.only(top: topPadding),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(_BarDelegate old) =>
+      old.topPadding != topPadding ||
+      old.background != background ||
+      old.child != child;
 }
 
 /// 导航栏上的按钮（iOS 26 工具栏样式）：玻璃胶囊（只有图标时是圆形），至少 44pt。

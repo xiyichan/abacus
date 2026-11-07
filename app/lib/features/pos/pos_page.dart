@@ -44,16 +44,7 @@ class PosPage extends ConsumerWidget {
         // 左上角：团队（小灰字）+ 场次（标题）。收银锁时不显示团队（不能切走）。
         title: Row(
           children: [
-            if (!locked) ...[
-              const TeamSwitcherButton(),
-              // 像面包屑一样分开两级，免得两个 ⌄ 看着像并列的两个菜单。
-              Text(
-                '/',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
-            ],
+            if (!locked) const TeamSwitcherButton(separator: true),
             Flexible(
               child: TextButton.icon(
                 onPressed: locked ? null : chooseEvent,
@@ -433,7 +424,8 @@ class _TillState extends ConsumerState<_Till> {
           width: tablet ? 112 : 84,
         ),
         Expanded(
-          child: ColoredBox(
+          child: _ContentPanel(
+            rounded: !tablet,
             color: contentColor,
             // 换分类时新的列表淡入、稍微往上浮，旧的淡出。
             child: AnimatedSwitcher(
@@ -931,7 +923,13 @@ class _MenuRow extends ConsumerWidget {
     return InkWell(
       onTap: onAdd,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(Gap.md, Gap.md, Gap.xs, Gap.md),
+        // 右边留给加减按钮自己的点击区域；“选择规格”按钮另外再留一点。
+        padding: EdgeInsetsDirectional.fromSTEB(
+          Gap.md,
+          Gap.md,
+          onRemove == null ? Gap.md : Gap.xs,
+          Gap.md,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -978,6 +976,33 @@ class _MenuRow extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 分类栏右边的商品列表底色。手机上是一张圆角白卡片，不贴到屏幕右边。
+class _ContentPanel extends StatelessWidget {
+  const _ContentPanel({
+    required this.rounded,
+    required this.color,
+    required this.child,
+  });
+
+  final bool rounded;
+  final Color color;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final panel = ColoredBox(color: color, child: child);
+    if (!rounded) return panel;
+    return Padding(
+      // 右边和上面的提示卡片、下面的购物车条对齐。
+      padding: const EdgeInsetsDirectional.only(top: Gap.sm, end: Gap.lg),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(Radii.card),
+        child: panel,
       ),
     );
   }

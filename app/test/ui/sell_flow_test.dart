@@ -79,7 +79,7 @@ void main() {
 
     await tester.tap(find.text('订单'));
     await settle(tester);
-    expect(find.text('1 单 · 实收 ¥30.00'), findsOneWidget);
+    expect(find.textContaining('1 单 · 实收 ¥30.00'), findsOneWidget);
     await tester.tap(find.text('${app.session.orderPrefix}-001'));
     await settle(tester);
     await tester.tap(find.widgetWithText(OutlinedButton, '整单退款'));

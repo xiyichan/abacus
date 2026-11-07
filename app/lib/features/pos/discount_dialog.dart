@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/checkout.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/money.dart';
+import '../../ui/segmented.dart';
 
 enum _Mode { amountOff, percentOff, fixedTotal }
 
@@ -77,24 +78,15 @@ class _DiscountDialogState extends ConsumerState<_DiscountDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SegmentedButton<_Mode>(
+            PillSegmented<_Mode>(
               segments: [
-                ButtonSegment(
-                  value: _Mode.amountOff,
-                  label: Text(l10n.discountAmountOff),
-                ),
-                ButtonSegment(
-                  value: _Mode.percentOff,
-                  label: Text(l10n.discountPercentOff),
-                ),
-                ButtonSegment(
-                  value: _Mode.fixedTotal,
-                  label: Text(l10n.discountFixedTotal),
-                ),
+                (_Mode.amountOff, l10n.discountAmountOff),
+                (_Mode.percentOff, l10n.discountPercentOff),
+                (_Mode.fixedTotal, l10n.discountFixedTotal),
               ],
-              selected: {_mode},
-              onSelectionChanged: (s) => setState(() {
-                _mode = s.single;
+              selected: _mode,
+              onChanged: (mode) => setState(() {
+                _mode = mode;
                 _value.clear();
                 _error = null;
               }),

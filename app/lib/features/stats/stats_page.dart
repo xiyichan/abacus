@@ -57,7 +57,7 @@ class _StatsPageState extends ConsumerState<StatsPage> {
 
     return LargeTitlePage(
       title: l10n.navStats,
-      leading: const TeamSwitcherButton(),
+      leading: const TeamSwitcherButton(separator: true),
       actions: [if (events.isNotEmpty) ExportOrdersButton(event: event)],
       slivers: events.isEmpty
           ? [

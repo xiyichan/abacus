@@ -8,6 +8,7 @@ import '../../data/sales_repository.dart';
 import '../../domain/checkout.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
+import '../../ui/design.dart';
 import '../../ui/grouped_list.dart';
 import '../../ui/input_dialog.dart';
 import '../../ui/layout.dart';
@@ -251,9 +252,12 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                           maxWidth: 280,
                           maxHeight: 280,
                         ),
-                        child: StoredImage(
-                          method.qrImagePath,
-                          fit: BoxFit.contain,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(Radii.sm),
+                          child: StoredImage(
+                            method.qrImagePath,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
               ),

@@ -9,6 +9,7 @@ import '../../providers.dart';
 import '../../ui/large_title_page.dart';
 import '../../ui/layout.dart';
 import '../../ui/grouped_list.dart';
+import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/media.dart';
 
@@ -65,7 +66,10 @@ class PaymentMethodsPage extends ConsumerWidget {
                               PaymentKind.card => Icons.credit_card,
                               _ => Icons.account_balance_wallet_outlined,
                             })
-                          : StoredImage(m.qrImagePath),
+                          : ClipRRect(
+                              borderRadius: BorderRadius.circular(Gap.sm),
+                              child: StoredImage(m.qrImagePath),
+                            ),
                     ),
                     title: Text(m.name),
                     subtitle: Text(paymentKindLabel(l10n, m.kind)),
@@ -191,7 +195,10 @@ class _PaymentMethodDialogState extends ConsumerState<_PaymentMethodDialog> {
                 if (_qr != null)
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxHeight: 220),
-                    child: StoredImage(_qr, fit: BoxFit.contain),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      child: StoredImage(_qr, fit: BoxFit.contain),
+                    ),
                   ),
                 Row(
                   children: [

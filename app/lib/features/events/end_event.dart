@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../data/database.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
+import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/money.dart';
 import '../settings/support_page.dart';
@@ -224,7 +225,19 @@ class _EndEventReminderState extends ConsumerState<EndEventReminder> {
       return const SizedBox.shrink();
     }
     final l10n = AppLocalizations.of(context);
+    // 圆角卡片，不铺满整行。
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Gap.lg, Gap.sm, Gap.lg, 0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(Radii.card),
+        child: _banner(l10n),
+      ),
+    );
+  }
+
+  Widget _banner(AppLocalizations l10n) {
     return MaterialBanner(
+      dividerColor: Colors.transparent,
       leading: const Icon(Icons.event_available_outlined),
       content: Column(
         mainAxisSize: MainAxisSize.min,

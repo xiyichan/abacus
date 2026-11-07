@@ -34,7 +34,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
     final event = ref.watch(currentEventProvider).value;
     return LargeTitlePage(
       title: l10n.navOrders,
-      leading: const TeamSwitcherButton(),
+      leading: const TeamSwitcherButton(separator: true),
       actions: [if (event != null) ExportOrdersButton(event: event)],
       slivers: event == null
           ? [
@@ -100,15 +100,22 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
         padding: const EdgeInsets.fromLTRB(Gap.lg, 0, Gap.lg, Gap.lg),
         sliver: SliverList.list(
           children: [
-            Text(
-              eventName,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            // 场次名和汇总放一行，不各占一行。
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$eventName · ',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  TextSpan(
+                    text: l10n.ordersSummary(kept.length, money(revenue)),
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ],
               ),
-            ),
-            Text(
-              l10n.ordersSummary(kept.length, money(revenue)),
-              style: theme.textTheme.titleMedium,
             ),
             if (pending.isNotEmpty)
               Text(

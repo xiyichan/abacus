@@ -22,7 +22,7 @@ class SettingsPage extends ConsumerWidget {
     final session = ref.watch(sessionProvider);
     return LargeTitlePage(
       title: l10n.navSettings,
-      leading: const TeamSwitcherButton(),
+      leading: const TeamSwitcherButton(separator: true),
       slivers: [
         SliverList.list(
           children: [

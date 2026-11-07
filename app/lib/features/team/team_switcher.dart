@@ -47,7 +47,10 @@ String teamLabel(AppLocalizations l10n, String name) =>
 /// 各主页面左上角常驻的团队名：一眼看出现在记在哪个团队，点开切换。
 /// 和 iOS 导航栏左边的文字按钮一样：小一号的灰字加 ⌄，不抢页面标题（收银台是场次名）。
 class TeamSwitcherButton extends ConsumerWidget {
-  const TeamSwitcherButton({super.key});
+  const TeamSwitcherButton({super.key, this.separator = false});
+
+  /// 后面跟一个面包屑的「/」，接页面标题或场次名（没有团队按钮时也不显示）。
+  final bool separator;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -71,7 +74,7 @@ class TeamSwitcherButton extends ConsumerWidget {
       l10n,
       ref.watch(teamProvider).value?.name ?? switcher.library.current.name,
     );
-    return Semantics(
+    final button = Semantics(
       button: true,
       label: '${l10n.switchTeam} · $name',
       excludeSemantics: true,
@@ -108,6 +111,20 @@ class TeamSwitcherButton extends ConsumerWidget {
           ),
         ),
       ),
+    );
+    if (!separator) return button;
+    // 像面包屑一样分开两级，免得两个 ⌄ 看着像并列的两个菜单。
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        button,
+        Text(
+          '/',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ),
+      ],
     );
   }
 }
