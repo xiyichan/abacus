@@ -1208,4 +1208,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tipPromptLater => '下次再说';
+
+  @override
+  String get privacyPolicy => '隐私政策';
 }

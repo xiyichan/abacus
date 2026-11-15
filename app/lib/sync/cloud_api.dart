@@ -13,6 +13,9 @@ const cloudBaseUrl = String.fromEnvironment(
   defaultValue: kReleaseMode ? _productionUrl : _devUrl,
 );
 
+/// 隐私政策页面（由生产环境的云端服务提供，和商店里填的网址是同一个）。
+const privacyPolicyUrl = '$_productionUrl/privacy';
+
 class CloudApiException implements Exception {
   const CloudApiException(this.code, [this.status]);
 

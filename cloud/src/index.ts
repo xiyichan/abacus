@@ -9,6 +9,8 @@ import {
   toBase64Url,
 } from './crypto';
 
+import { privacyPage } from './privacy';
+
 export { TeamSync } from './team_sync';
 
 declare global {
@@ -61,6 +63,7 @@ async function route(request: Request, env: Env): Promise<Response> {
   const method = request.method;
 
   if (path === '/health') return json({ ok: true });
+  if (path === '/privacy' && method === 'GET') return privacyPage();
   if (path === '/auth/start' && method === 'POST') return startLogin(request, env);
   if (path === '/auth/verify' && method === 'POST') return verifyLogin(request, env);
   if (path === '/auth/logout' && method === 'POST') return logout(request, env);

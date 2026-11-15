@@ -783,5 +783,6 @@
     }
   },
   "tipPromptGo": "去看看",
-  "tipPromptLater": "下次再说"
+  "tipPromptLater": "下次再说",
+  "privacyPolicy": "隐私政策"
 }

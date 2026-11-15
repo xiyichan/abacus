@@ -2245,6 +2245,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'下次再说'**
   String get tipPromptLater;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐私政策'**
+  String get privacyPolicy;
 }
 
 class _AppLocalizationsDelegate

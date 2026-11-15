@@ -1241,4 +1241,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tipPromptLater => 'Maybe later';
+
+  @override
+  String get privacyPolicy => 'Privacy policy';
 }

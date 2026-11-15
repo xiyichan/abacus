@@ -730,5 +730,6 @@
   "tipPromptTitle": "Great work at {event}!",
   "tipPromptBody": "You made {count} sales. Abacus is free with no ads. If it helped, you can buy the author a coffee.",
   "tipPromptGo": "Take a look",
-  "tipPromptLater": "Maybe later"
+  "tipPromptLater": "Maybe later",
+  "privacyPolicy": "Privacy policy"
 }

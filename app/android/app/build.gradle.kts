@@ -55,7 +55,10 @@ android {
         release {
             // Without key.properties, fall back to debug keys so `flutter run --release`
             // still works locally. Play rejects debug-signed bundles.
-            signingConfig = if (keystorePropertiesFile.exists()) {
+            // ABACUS_DEBUG_SIGNING=1 forces debug keys for sideloaded test devices, which
+            // were first installed debug-signed and can't be updated across keys.
+            val forceDebug = System.getenv("ABACUS_DEBUG_SIGNING") == "1"
+            signingConfig = if (keystorePropertiesFile.exists() && !forceDebug) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")

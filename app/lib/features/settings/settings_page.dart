@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/session.dart';
 import '../../data/team_repository.dart';
@@ -13,6 +14,7 @@ import '../../ui/grouped_list.dart';
 import '../../ui/input_dialog.dart';
 import '../../ui/large_title_page.dart';
 import '../../support/tip_jar.dart';
+import '../../sync/cloud_api.dart';
 import '../lock/cashier_lock.dart';
 import '../team/team_switcher.dart';
 
@@ -81,7 +83,19 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
             GroupedSection(
-              children: [_SupportTile(prefs: ref.watch(supportPrefsProvider))],
+              dividerIndent: GroupedTile.iconIndent,
+              children: [
+                _SupportTile(prefs: ref.watch(supportPrefsProvider)),
+                GroupedTile(
+                  icon: CupertinoIcons.hand_raised_fill,
+                  iconColor: Brand.tiles[4],
+                  title: l10n.privacyPolicy,
+                  onTap: () => launchUrl(
+                    Uri.parse(privacyPolicyUrl),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+              ],
             ),
             GroupedSection(
               footer: l10n.orderPrefixFooter('$orderPrefix-001'),
