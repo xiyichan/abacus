@@ -442,6 +442,17 @@ class $DevicesTable extends Devices with TableInfo<$DevicesTable, Device> {
     requiredDuringInsert: false,
     defaultValue: const Constant('cashier'),
   );
+  static const VerificationMeta _orderPrefixMeta = const VerificationMeta(
+    'orderPrefix',
+  );
+  @override
+  late final GeneratedColumn<String> orderPrefix = GeneratedColumn<String>(
+    'order_prefix',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -451,6 +462,7 @@ class $DevicesTable extends Devices with TableInfo<$DevicesTable, Device> {
     name,
     shortCode,
     role,
+    orderPrefix,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -513,6 +525,15 @@ class $DevicesTable extends Devices with TableInfo<$DevicesTable, Device> {
         role.isAcceptableOrUnknown(data['role']!, _roleMeta),
       );
     }
+    if (data.containsKey('order_prefix')) {
+      context.handle(
+        _orderPrefixMeta,
+        orderPrefix.isAcceptableOrUnknown(
+          data['order_prefix']!,
+          _orderPrefixMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -550,6 +571,10 @@ class $DevicesTable extends Devices with TableInfo<$DevicesTable, Device> {
         DriftSqlType.string,
         data['${effectivePrefix}role'],
       )!,
+      orderPrefix: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}order_prefix'],
+      ),
     );
   }
 
@@ -569,6 +594,9 @@ class Device extends DataClass implements Insertable<Device> {
 
   /// admin / cashier / picker
   final String role;
+
+  /// 自己设的订单号前缀（字母数字，最多 4 位）；为空时用设备号前两位。
+  final String? orderPrefix;
   const Device({
     required this.id,
     required this.updatedAt,
@@ -577,6 +605,7 @@ class Device extends DataClass implements Insertable<Device> {
     required this.name,
     required this.shortCode,
     required this.role,
+    this.orderPrefix,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -588,6 +617,9 @@ class Device extends DataClass implements Insertable<Device> {
     map['name'] = Variable<String>(name);
     map['short_code'] = Variable<String>(shortCode);
     map['role'] = Variable<String>(role);
+    if (!nullToAbsent || orderPrefix != null) {
+      map['order_prefix'] = Variable<String>(orderPrefix);
+    }
     return map;
   }
 
@@ -600,6 +632,9 @@ class Device extends DataClass implements Insertable<Device> {
       name: Value(name),
       shortCode: Value(shortCode),
       role: Value(role),
+      orderPrefix: orderPrefix == null && nullToAbsent
+          ? const Value.absent()
+          : Value(orderPrefix),
     );
   }
 
@@ -616,6 +651,7 @@ class Device extends DataClass implements Insertable<Device> {
       name: serializer.fromJson<String>(json['name']),
       shortCode: serializer.fromJson<String>(json['shortCode']),
       role: serializer.fromJson<String>(json['role']),
+      orderPrefix: serializer.fromJson<String?>(json['orderPrefix']),
     );
   }
   @override
@@ -629,6 +665,7 @@ class Device extends DataClass implements Insertable<Device> {
       'name': serializer.toJson<String>(name),
       'shortCode': serializer.toJson<String>(shortCode),
       'role': serializer.toJson<String>(role),
+      'orderPrefix': serializer.toJson<String?>(orderPrefix),
     };
   }
 
@@ -640,6 +677,7 @@ class Device extends DataClass implements Insertable<Device> {
     String? name,
     String? shortCode,
     String? role,
+    Value<String?> orderPrefix = const Value.absent(),
   }) => Device(
     id: id ?? this.id,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -648,6 +686,7 @@ class Device extends DataClass implements Insertable<Device> {
     name: name ?? this.name,
     shortCode: shortCode ?? this.shortCode,
     role: role ?? this.role,
+    orderPrefix: orderPrefix.present ? orderPrefix.value : this.orderPrefix,
   );
   Device copyWithCompanion(DevicesCompanion data) {
     return Device(
@@ -658,6 +697,9 @@ class Device extends DataClass implements Insertable<Device> {
       name: data.name.present ? data.name.value : this.name,
       shortCode: data.shortCode.present ? data.shortCode.value : this.shortCode,
       role: data.role.present ? data.role.value : this.role,
+      orderPrefix: data.orderPrefix.present
+          ? data.orderPrefix.value
+          : this.orderPrefix,
     );
   }
 
@@ -670,14 +712,23 @@ class Device extends DataClass implements Insertable<Device> {
           ..write('teamId: $teamId, ')
           ..write('name: $name, ')
           ..write('shortCode: $shortCode, ')
-          ..write('role: $role')
+          ..write('role: $role, ')
+          ..write('orderPrefix: $orderPrefix')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, updatedAt, deleted, teamId, name, shortCode, role);
+  int get hashCode => Object.hash(
+    id,
+    updatedAt,
+    deleted,
+    teamId,
+    name,
+    shortCode,
+    role,
+    orderPrefix,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -688,7 +739,8 @@ class Device extends DataClass implements Insertable<Device> {
           other.teamId == this.teamId &&
           other.name == this.name &&
           other.shortCode == this.shortCode &&
-          other.role == this.role);
+          other.role == this.role &&
+          other.orderPrefix == this.orderPrefix);
 }
 
 class DevicesCompanion extends UpdateCompanion<Device> {
@@ -699,6 +751,7 @@ class DevicesCompanion extends UpdateCompanion<Device> {
   final Value<String> name;
   final Value<String> shortCode;
   final Value<String> role;
+  final Value<String?> orderPrefix;
   final Value<int> rowid;
   const DevicesCompanion({
     this.id = const Value.absent(),
@@ -708,6 +761,7 @@ class DevicesCompanion extends UpdateCompanion<Device> {
     this.name = const Value.absent(),
     this.shortCode = const Value.absent(),
     this.role = const Value.absent(),
+    this.orderPrefix = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DevicesCompanion.insert({
@@ -718,6 +772,7 @@ class DevicesCompanion extends UpdateCompanion<Device> {
     required String name,
     required String shortCode,
     this.role = const Value.absent(),
+    this.orderPrefix = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        updatedAt = Value(updatedAt),
@@ -732,6 +787,7 @@ class DevicesCompanion extends UpdateCompanion<Device> {
     Expression<String>? name,
     Expression<String>? shortCode,
     Expression<String>? role,
+    Expression<String>? orderPrefix,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -742,6 +798,7 @@ class DevicesCompanion extends UpdateCompanion<Device> {
       if (name != null) 'name': name,
       if (shortCode != null) 'short_code': shortCode,
       if (role != null) 'role': role,
+      if (orderPrefix != null) 'order_prefix': orderPrefix,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -754,6 +811,7 @@ class DevicesCompanion extends UpdateCompanion<Device> {
     Value<String>? name,
     Value<String>? shortCode,
     Value<String>? role,
+    Value<String?>? orderPrefix,
     Value<int>? rowid,
   }) {
     return DevicesCompanion(
@@ -764,6 +822,7 @@ class DevicesCompanion extends UpdateCompanion<Device> {
       name: name ?? this.name,
       shortCode: shortCode ?? this.shortCode,
       role: role ?? this.role,
+      orderPrefix: orderPrefix ?? this.orderPrefix,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -792,6 +851,9 @@ class DevicesCompanion extends UpdateCompanion<Device> {
     if (role.present) {
       map['role'] = Variable<String>(role.value);
     }
+    if (orderPrefix.present) {
+      map['order_prefix'] = Variable<String>(orderPrefix.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -808,6 +870,7 @@ class DevicesCompanion extends UpdateCompanion<Device> {
           ..write('name: $name, ')
           ..write('shortCode: $shortCode, ')
           ..write('role: $role, ')
+          ..write('orderPrefix: $orderPrefix, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8875,6 +8938,7 @@ typedef $$DevicesTableCreateCompanionBuilder = DevicesCompanion Function({
   required String name,
   required String shortCode,
   Value<String> role,
+  Value<String?> orderPrefix,
   Value<int> rowid,
 });
 typedef $$DevicesTableUpdateCompanionBuilder = DevicesCompanion Function({
@@ -8885,6 +8949,7 @@ typedef $$DevicesTableUpdateCompanionBuilder = DevicesCompanion Function({
   Value<String> name,
   Value<String> shortCode,
   Value<String> role,
+  Value<String?> orderPrefix,
   Value<int> rowid,
 });
 
@@ -8929,6 +8994,11 @@ class $$DevicesTableFilterComposer
 
   ColumnFilters<String> get role => $composableBuilder(
     column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get orderPrefix => $composableBuilder(
+    column: $table.orderPrefix,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -8976,6 +9046,11 @@ class $$DevicesTableOrderingComposer
     column: $table.role,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get orderPrefix => $composableBuilder(
+    column: $table.orderPrefix,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DevicesTableAnnotationComposer
@@ -9007,6 +9082,11 @@ class $$DevicesTableAnnotationComposer
 
   GeneratedColumn<String> get role =>
       $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<String> get orderPrefix => $composableBuilder(
+    column: $table.orderPrefix,
+    builder: (column) => column,
+  );
 }
 
 class $$DevicesTableTableManager
@@ -9044,6 +9124,7 @@ class $$DevicesTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String> shortCode = const Value.absent(),
                 Value<String> role = const Value.absent(),
+                Value<String?> orderPrefix = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DevicesCompanion(
                 id: id,
@@ -9053,6 +9134,7 @@ class $$DevicesTableTableManager
                 name: name,
                 shortCode: shortCode,
                 role: role,
+                orderPrefix: orderPrefix,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -9064,6 +9146,7 @@ class $$DevicesTableTableManager
                 required String name,
                 required String shortCode,
                 Value<String> role = const Value.absent(),
+                Value<String?> orderPrefix = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DevicesCompanion.insert(
                 id: id,
@@ -9073,6 +9156,7 @@ class $$DevicesTableTableManager
                 name: name,
                 shortCode: shortCode,
                 role: role,
+                orderPrefix: orderPrefix,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

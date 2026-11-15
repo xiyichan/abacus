@@ -171,18 +171,41 @@
   "paymentKindOther": "Other",
   "uploadQr": "Upload QR code",
   "enabled": "Enabled",
-  "thisDevice": "This device",
-  "deviceCode": "Device {code} · order prefix {prefix}",
-  "@deviceCode": {
+  "orderPrefix": "Order prefix",
+  "orderPrefixBody": "Order numbers from this device start with it, e.g. A-001. Letters and digits only, up to 4. Leave empty to use the default (first two characters of the device code).",
+  "orderPrefixTaken": "\u201c{device}\u201d already uses this prefix. Pick another one so order numbers don't clash.",
+  "@orderPrefixTaken": {
     "placeholders": {
-      "code": {
-        "type": "String"
-      },
-      "prefix": {
+      "device": {
         "type": "String"
       }
     }
   },
+  "orderPrefixFooter": "Order numbers from this device start with the prefix, e.g. {example}. Changing it only affects new orders.",
+  "@orderPrefixFooter": {
+    "placeholders": {
+      "example": {
+        "type": "String"
+      }
+    }
+  },
+  "orderLineVariant": "Variant: {label}",
+  "@orderLineVariant": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "orderLineBundle": "Includes: {items}",
+  "@orderLineBundle": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      }
+    }
+  },
+  "thisDevice": "This device",
   "priceFrom": "from {price}",
   "@priceFrom": {
     "placeholders": {

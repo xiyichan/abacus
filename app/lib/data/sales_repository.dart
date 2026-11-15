@@ -119,12 +119,38 @@ class OrderDetail {
     required this.items,
     required this.payments,
     this.refund,
+    this.lines = const [],
   });
 
   final Order order;
   final List<OrderItem> items;
   final List<OrderPayment> payments;
   final Refund? refund;
+
+  /// 明细带上商品图片、规格和套装内容；只有订单详情页（[SalesRepository.watchOrderDetail]）会查。
+  final List<OrderLine> lines;
+}
+
+/// 订单明细的一行。图片、规格、套装内容按现在的商品资料查（删掉的商品也查得到），
+/// 名字以下单时记下的为准。
+class OrderLine {
+  const OrderLine({
+    required this.item,
+    required this.productName,
+    this.variantLabel = '',
+    this.imagePath,
+    this.bundleContents = const [],
+  });
+
+  final OrderItem item;
+  final String productName;
+
+  /// 规格名；单品、套装，或下单后规格改过名时为空（下单时的名字已经在 [productName] 里）。
+  final String variantLabel;
+  final String? imagePath;
+
+  /// 套装里每套包含的商品，如「徽章 · 红 ×2」。
+  final List<String> bundleContents;
 }
 
 class SalesRepository {
@@ -262,7 +288,13 @@ class SalesRepository {
               ))
             .map((r) => r.read(count)!)
             .getSingle();
-    return '${_session.orderPrefix}-${(n + 1).toString().padLeft(3, '0')}';
+    final device = await (_db.select(
+      _db.devices,
+    )..where((t) => t.id.equals(_session.deviceId))).getSingleOrNull();
+    final prefix = device == null
+        ? _session.orderPrefix
+        : effectiveOrderPrefix(device);
+    return '$prefix-${(n + 1).toString().padLeft(3, '0')}';
   }
 
   /// 整单退款：记一条退款，并把售出时扣掉的库存加回本场。
@@ -364,16 +396,26 @@ class SalesRepository {
   }
 
   Stream<OrderDetail> watchOrderDetail(String orderId) => _db.watchTables(
-    {_db.orders, _db.orderItems, _db.orderPayments, _db.refunds},
+    {
+      _db.orders,
+      _db.orderItems,
+      _db.orderPayments,
+      _db.refunds,
+      _db.products,
+      _db.variants,
+      _db.bundleItems,
+    },
     () async {
       final order = await (_db.select(
         _db.orders,
       )..where((t) => t.id.equals(orderId))).getSingle();
+      final items = await (_db.select(
+        _db.orderItems,
+      )..where((t) => t.orderId.equals(orderId))).get();
       return OrderDetail(
         order: order,
-        items: await (_db.select(
-          _db.orderItems,
-        )..where((t) => t.orderId.equals(orderId))).get(),
+        items: items,
+        lines: await _orderLines(items),
         payments: await (_db.select(
           _db.orderPayments,
         )..where((t) => t.orderId.equals(orderId))).get(),
@@ -385,6 +427,69 @@ class SalesRepository {
       );
     },
   );
+
+  Future<List<OrderLine>> _orderLines(List<OrderItem> items) async {
+    final bundleRows =
+        await (_db.select(_db.bundleItems)..where(
+              (t) =>
+                  t.bundleVariantId.isIn([for (final i in items) i.variantId]) &
+                  t.deleted.equals(false),
+            ))
+            .get();
+    final variantIds = {
+      for (final i in items) i.variantId,
+      for (final b in bundleRows) b.componentVariantId,
+    };
+    final variants = {
+      for (final v in await (_db.select(
+        _db.variants,
+      )..where((t) => t.id.isIn(variantIds))).get())
+        v.id: v,
+    };
+    final products = {
+      for (final p
+          in await (_db.select(_db.products)..where(
+                (t) =>
+                    t.id.isIn({for (final v in variants.values) v.productId}),
+              ))
+              .get())
+        p.id: p,
+    };
+    String nameOf(String variantId) {
+      final v = variants[variantId];
+      final p = v == null ? null : products[v.productId];
+      if (v == null || p == null) return '?';
+      return v.label.isEmpty ? p.name : '${p.name} · ${v.label}';
+    }
+
+    return [
+      for (final i in items)
+        () {
+          final v = variants[i.variantId];
+          final p = v == null ? null : products[v.productId];
+          final label = v?.label ?? '';
+          // 下单时记的是「商品名 · 规格名」：拆开分两行显示。
+          final suffix = ' · $label';
+          final split = label.isNotEmpty && i.nameSnapshot.endsWith(suffix);
+          return OrderLine(
+            item: i,
+            productName: split
+                ? i.nameSnapshot.substring(
+                    0,
+                    i.nameSnapshot.length - suffix.length,
+                  )
+                : i.nameSnapshot,
+            variantLabel: split ? label : '',
+            imagePath: p?.imagePath,
+            bundleContents: [
+              for (final b in bundleRows)
+                if (b.bundleVariantId == i.variantId)
+                  '${nameOf(b.componentVariantId)} ×${b.quantity}',
+            ],
+          );
+        }(),
+    ];
+  }
 
   /// 某场次（[eventId] 为 null 时为所有场次）的全部订单（含明细、支付、退款），
   /// 按时间先后。用于导出和统计。

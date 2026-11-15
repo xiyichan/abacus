@@ -81,7 +81,7 @@ Future<TeamInvite> createInvite(AppDatabase db, Session session) async {
     teamName: team?.name ?? '',
     currency: session.currency,
     teamKey: session.teamKey,
-    deviceCode: nextDeviceCode(devices.map((d) => d.shortCode)),
+    deviceCode: nextDeviceCode(devices.map(effectiveOrderPrefix)),
   );
 }
 

@@ -9,6 +9,7 @@ import '../../providers.dart';
 import '../../ui/grouped_list.dart';
 import '../../ui/design.dart';
 import '../../ui/layout.dart';
+import '../../ui/media.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/input_dialog.dart';
 import '../../ui/money.dart';
@@ -128,20 +129,10 @@ class OrderDetailPage extends ConsumerWidget {
                       const SizedBox(height: Gap.sm),
                       GroupedSection(
                         margin: _sectionMargin,
+                        dividerIndent: _OrderLineTile.textIndent,
                         children: [
-                          for (final item in detail.items)
-                            ListTile(
-                              title: Text(item.nameSnapshot),
-                              subtitle: Text(
-                                '${money(item.unitPrice)} × ${item.quantity}',
-                              ),
-                              trailing: Text(
-                                money(item.unitPrice * item.quantity),
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
+                          for (final line in detail.lines)
+                            _OrderLineTile(line: line),
                         ],
                       ),
                       GroupedSection(
@@ -221,5 +212,74 @@ class OrderDetailPage extends ConsumerWidget {
             );
           },
         );
+  }
+}
+
+/// 订单里的一件商品：图片、名字、规格或套装内容、单价 × 数量，右边是小计。
+class _OrderLineTile extends ConsumerWidget {
+  const _OrderLineTile({required this.line});
+
+  static const _imageSize = 56.0;
+
+  /// 分隔线从文字开始画：左内边距 + 图片 + 间距。
+  static const textIndent = Gap.lg + _imageSize + Gap.md;
+
+  final OrderLine line;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final money = ref.watch(moneyProvider);
+    final theme = Theme.of(context);
+    final muted = theme.textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    final item = line.item;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Gap.lg, Gap.md, Gap.lg, Gap.md),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(Radii.sm),
+            child: SizedBox.square(
+              dimension: _imageSize,
+              child: StoredImage(
+                line.imagePath,
+                placeholder: NamePlaceholder(line.productName),
+              ),
+            ),
+          ),
+          const SizedBox(width: Gap.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(line.productName, style: theme.textTheme.titleMedium),
+                if (line.variantLabel.isNotEmpty)
+                  Text(l10n.orderLineVariant(line.variantLabel), style: muted),
+                if (line.bundleContents.isNotEmpty)
+                  Text(
+                    l10n.orderLineBundle(line.bundleContents.join('、')),
+                    style: muted,
+                  ),
+                const SizedBox(height: 2),
+                Text(
+                  '${money(item.unitPrice)} × ${item.quantity}',
+                  style: muted,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: Gap.sm),
+          Text(
+            money(item.unitPrice * item.quantity),
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

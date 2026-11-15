@@ -108,7 +108,11 @@ class TeamPage extends ConsumerWidget {
                 for (final d in devices)
                   ListTile(
                     leading: CircleAvatar(
-                      child: Text(orderPrefixOf(d.shortCode)),
+                      // 前缀最多 4 位，长的缩小放进圆里。
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: FittedBox(child: Text(effectiveOrderPrefix(d))),
+                      ),
                     ),
                     title: Text(d.name),
                     subtitle: Text(

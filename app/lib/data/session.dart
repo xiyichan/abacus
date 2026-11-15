@@ -24,7 +24,8 @@ class Session {
   /// 设备号：6 位字母数字，如 K7XQ2M（早期版本是 A、B 这样的单个字母）。
   final String deviceShortCode;
 
-  /// 订单号前缀：设备号前两位，如 K7-001 里的 K7。
+  /// 默认的订单号前缀：设备号前两位，如 K7-001 里的 K7。
+  /// 设备可以自己改（[Device.orderPrefix]），生成单号时以数据库里的为准。
   String get orderPrefix => orderPrefixOf(deviceShortCode);
   final String currency;
 
@@ -39,13 +40,20 @@ String newId() => const Uuid().v7();
 const _codeAlphabet = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 const deviceCodeLength = 6;
 
-/// 订单号前缀取设备号前两位；早期的单字母设备号原样使用。
+/// 默认的订单号前缀取设备号前两位；早期的单字母设备号原样使用。
 String orderPrefixOf(String deviceCode) =>
     deviceCode.length > 2 ? deviceCode.substring(0, 2) : deviceCode;
 
-/// 随机生成新设备号，保证订单号前缀不和团队里已有的设备重复。
-String nextDeviceCode(Iterable<String> used, {Random? random}) {
-  final taken = used.map(orderPrefixOf).toSet();
+/// 设备实际用的订单号前缀：自己设过就用设过的，否则是设备号前两位。
+String effectiveOrderPrefix(Device device) =>
+    device.orderPrefix ?? orderPrefixOf(device.shortCode);
+
+/// 自定义订单号前缀的格式：大写字母和数字，1–4 位。
+final orderPrefixPattern = RegExp(r'^[A-Z0-9]{1,4}$');
+
+/// 随机生成新设备号，保证默认订单号前缀不和团队里已有设备的前缀（[takenPrefixes]）重复。
+String nextDeviceCode(Iterable<String> takenPrefixes, {Random? random}) {
+  final taken = takenPrefixes.toSet();
   final r = random ?? Random.secure();
   while (true) {
     final code = String.fromCharCodes([
@@ -93,7 +101,7 @@ Future<Session> ensureSession(AppDatabase db) async {
                   t.deleted.equals(false),
             ))
             .get();
-    upgradedCode = nextDeviceCode(others.map((d) => d.shortCode));
+    upgradedCode = nextDeviceCode(others.map(effectiveOrderPrefix));
   }
   // 刚加入团队时，团队信息可能还没同步过来，先用邀请里带的币种。
   final team = await (db.select(

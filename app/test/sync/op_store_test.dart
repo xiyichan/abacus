@@ -92,7 +92,7 @@ void main() {
     // 随机 6 位字母数字，不含容易看错的字符；订单号前缀（前两位）不和已有设备重复。
     final used = ['A', 'K7XQ2M'];
     for (var i = 0; i < 200; i++) {
-      final code = nextDeviceCode(used);
+      final code = nextDeviceCode(used.map(orderPrefixOf));
       expect(code, matches(RegExp(r'^[2-9A-HJKMNP-Z]{6}$')));
       expect(orderPrefixOf(code), isNot('K7'));
     }

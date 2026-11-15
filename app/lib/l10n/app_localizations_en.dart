@@ -368,12 +368,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enabled => 'Enabled';
 
   @override
-  String get thisDevice => 'This device';
+  String get orderPrefix => 'Order prefix';
 
   @override
-  String deviceCode(String code, String prefix) {
-    return 'Device $code · order prefix $prefix';
+  String get orderPrefixBody =>
+      'Order numbers from this device start with it, e.g. A-001. Letters and digits only, up to 4. Leave empty to use the default (first two characters of the device code).';
+
+  @override
+  String orderPrefixTaken(String device) {
+    return '“$device” already uses this prefix. Pick another one so order numbers don\'t clash.';
   }
+
+  @override
+  String orderPrefixFooter(String example) {
+    return 'Order numbers from this device start with the prefix, e.g. $example. Changing it only affects new orders.';
+  }
+
+  @override
+  String orderLineVariant(String label) {
+    return 'Variant: $label';
+  }
+
+  @override
+  String orderLineBundle(String items) {
+    return 'Includes: $items';
+  }
+
+  @override
+  String get thisDevice => 'This device';
 
   @override
   String priceFrom(String price) {

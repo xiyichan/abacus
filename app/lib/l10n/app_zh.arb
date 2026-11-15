@@ -171,18 +171,41 @@
   "paymentKindOther": "其他",
   "uploadQr": "上传收款码",
   "enabled": "启用",
-  "thisDevice": "本机设备",
-  "deviceCode": "设备号 {code} · 单号前缀 {prefix}",
-  "@deviceCode": {
+  "orderPrefix": "单号前缀",
+  "orderPrefixBody": "这台设备的单号会以它开头，比如 A-001。只能用字母和数字，最多 4 位；留空恢复默认（设备号前两位）。",
+  "orderPrefixTaken": "「{device}」已经在用这个前缀了，换一个吧，不然两台设备的单号会重复。",
+  "@orderPrefixTaken": {
     "placeholders": {
-      "code": {
-        "type": "String"
-      },
-      "prefix": {
+      "device": {
         "type": "String"
       }
     }
   },
+  "orderPrefixFooter": "这台设备的单号以前缀开头，如 {example}。改了只影响之后的新订单。",
+  "@orderPrefixFooter": {
+    "placeholders": {
+      "example": {
+        "type": "String"
+      }
+    }
+  },
+  "orderLineVariant": "规格：{label}",
+  "@orderLineVariant": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "orderLineBundle": "含：{items}",
+  "@orderLineBundle": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      }
+    }
+  },
+  "thisDevice": "本机设备",
   "priceFrom": "{price}起",
   "@priceFrom": {
     "placeholders": {

@@ -770,17 +770,47 @@ abstract class AppLocalizations {
   /// **'启用'**
   String get enabled;
 
+  /// No description provided for @orderPrefix.
+  ///
+  /// In zh, this message translates to:
+  /// **'单号前缀'**
+  String get orderPrefix;
+
+  /// No description provided for @orderPrefixBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'这台设备的单号会以它开头，比如 A-001。只能用字母和数字，最多 4 位；留空恢复默认（设备号前两位）。'**
+  String get orderPrefixBody;
+
+  /// No description provided for @orderPrefixTaken.
+  ///
+  /// In zh, this message translates to:
+  /// **'「{device}」已经在用这个前缀了，换一个吧，不然两台设备的单号会重复。'**
+  String orderPrefixTaken(String device);
+
+  /// No description provided for @orderPrefixFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'这台设备的单号以前缀开头，如 {example}。改了只影响之后的新订单。'**
+  String orderPrefixFooter(String example);
+
+  /// No description provided for @orderLineVariant.
+  ///
+  /// In zh, this message translates to:
+  /// **'规格：{label}'**
+  String orderLineVariant(String label);
+
+  /// No description provided for @orderLineBundle.
+  ///
+  /// In zh, this message translates to:
+  /// **'含：{items}'**
+  String orderLineBundle(String items);
+
   /// No description provided for @thisDevice.
   ///
   /// In zh, this message translates to:
   /// **'本机设备'**
   String get thisDevice;
-
-  /// No description provided for @deviceCode.
-  ///
-  /// In zh, this message translates to:
-  /// **'设备号 {code} · 单号前缀 {prefix}'**
-  String deviceCode(String code, String prefix);
 
   /// No description provided for @priceFrom.
   ///

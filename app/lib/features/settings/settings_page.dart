@@ -1,12 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../data/session.dart';
+import '../../data/team_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../ui/design.dart';
 import '../../ui/grouped_list.dart';
+import '../../ui/input_dialog.dart';
 import '../../ui/large_title_page.dart';
 import '../../support/tip_jar.dart';
 import '../lock/cashier_lock.dart';
@@ -20,6 +24,14 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final session = ref.watch(sessionProvider);
+    final me = ref
+        .watch(devicesProvider)
+        .value
+        ?.where((d) => d.id == session.deviceId)
+        .firstOrNull;
+    final orderPrefix = me == null
+        ? session.orderPrefix
+        : effectiveOrderPrefix(me);
     return LargeTitlePage(
       title: l10n.navSettings,
       leading: const TeamSwitcherButton(separator: true),
@@ -72,10 +84,7 @@ class SettingsPage extends ConsumerWidget {
               children: [_SupportTile(prefs: ref.watch(supportPrefsProvider))],
             ),
             GroupedSection(
-              footer: l10n.deviceCode(
-                session.deviceShortCode,
-                session.orderPrefix,
-              ),
+              footer: l10n.orderPrefixFooter('$orderPrefix-001'),
               children: [
                 GroupedTile(
                   title: l10n.thisDevice,
@@ -87,6 +96,7 @@ class SettingsPage extends ConsumerWidget {
                     ),
                   ),
                 ),
+                _OrderPrefixTile(prefix: orderPrefix),
               ],
             ),
           ],
@@ -125,6 +135,68 @@ class _SupportTile extends StatelessWidget {
     return ListenableBuilder(
       listenable: prefs,
       builder: (context, _) => tile(prefs.tipped),
+    );
+  }
+}
+
+/// 本机的订单号前缀，点开可以改（比如改成摊位名缩写）。
+class _OrderPrefixTile extends ConsumerWidget {
+  const _OrderPrefixTile({required this.prefix});
+
+  final String prefix;
+
+  Future<void> _edit(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final value = await showInputDialog(
+      context,
+      title: l10n.orderPrefix,
+      label: l10n.orderPrefix,
+      body: l10n.orderPrefixBody,
+      initialValue: prefix,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
+        TextInputFormatter.withFunction(
+          (_, next) => next.copyWith(text: next.text.toUpperCase()),
+        ),
+        LengthLimitingTextInputFormatter(4),
+      ],
+      confirmLabel: l10n.save,
+      cancelLabel: l10n.cancel,
+    );
+    if (value == null) return;
+    try {
+      await ref.read(teamRepositoryProvider).setOrderPrefix(value);
+    } on OrderPrefixTakenException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.orderPrefixTaken(e.deviceName))),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final faint = theme.colorScheme.onSurface.withValues(alpha: 0.5);
+    return GroupedTile(
+      title: l10n.orderPrefix,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            prefix,
+            style: theme.textTheme.bodyLarge?.copyWith(color: faint),
+          ),
+          const SizedBox(width: Gap.xs),
+          Icon(
+            CupertinoIcons.chevron_forward,
+            size: 18,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+          ),
+        ],
+      ),
+      onTap: () => _edit(context, ref),
     );
   }
 }

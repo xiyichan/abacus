@@ -362,12 +362,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get enabled => '启用';
 
   @override
-  String get thisDevice => '本机设备';
+  String get orderPrefix => '单号前缀';
 
   @override
-  String deviceCode(String code, String prefix) {
-    return '设备号 $code · 单号前缀 $prefix';
+  String get orderPrefixBody =>
+      '这台设备的单号会以它开头，比如 A-001。只能用字母和数字，最多 4 位；留空恢复默认（设备号前两位）。';
+
+  @override
+  String orderPrefixTaken(String device) {
+    return '「$device」已经在用这个前缀了，换一个吧，不然两台设备的单号会重复。';
   }
+
+  @override
+  String orderPrefixFooter(String example) {
+    return '这台设备的单号以前缀开头，如 $example。改了只影响之后的新订单。';
+  }
+
+  @override
+  String orderLineVariant(String label) {
+    return '规格：$label';
+  }
+
+  @override
+  String orderLineBundle(String items) {
+    return '含：$items';
+  }
+
+  @override
+  String get thisDevice => '本机设备';
 
   @override
   String priceFrom(String price) {

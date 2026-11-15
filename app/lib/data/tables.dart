@@ -29,6 +29,9 @@ class Devices extends Table with SyncColumns {
 
   /// admin / cashier / picker
   TextColumn get role => text().withDefault(const Constant('cashier'))();
+
+  /// 自己设的订单号前缀（字母数字，最多 4 位）；为空时用设备号前两位。
+  TextColumn get orderPrefix => text().nullable()();
 }
 
 /// 作者（合摊时按作者分账）。

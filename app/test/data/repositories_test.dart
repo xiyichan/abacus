@@ -3,8 +3,10 @@ import 'package:abacus/data/database.dart';
 import 'package:abacus/data/inventory_repository.dart';
 import 'package:abacus/data/sales_repository.dart';
 import 'package:abacus/data/session.dart';
+import 'package:abacus/data/team_repository.dart';
 import 'package:abacus/domain/checkout.dart';
 import 'package:abacus/domain/stock.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -253,6 +255,126 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 50));
     await sales.refundOrder(order.id);
     await expectation;
+  });
+
+  test('订单详情的明细带图片、规格和套装内容', () async {
+    final badgeId = await catalog.saveProduct(
+      ProductDraft(
+        name: '徽章',
+        kind: ProductKind.variants,
+        imagePath: 'badge.jpg',
+        variants: [VariantDraft(label: '红', price: 1500)],
+      ),
+    );
+    final red = (await catalog.loadCatalog()).single.variants.single;
+    await catalog.saveProduct(
+      ProductDraft(
+        name: '徽章套装',
+        kind: ProductKind.bundle,
+        variants: [VariantDraft(price: 2500)],
+        components: [BundleComponent(red.id, 2)],
+      ),
+    );
+    final set = (await catalog.loadCatalog())
+        .firstWhere((p) => p.isBundle)
+        .variants
+        .single;
+    final eventId = await inventory.createEvent(name: 'CP30');
+    await inventory.setEventQuantity(
+      variantId: red.id,
+      eventId: eventId,
+      eventQuantity: 10,
+    );
+    final order = await sales.placeOrder(
+      eventId: eventId,
+      lines: [
+        SaleLine(
+          variantId: red.id,
+          name: '徽章 · 红',
+          unitPrice: 1500,
+          quantity: 1,
+        ),
+        SaleLine(
+          variantId: set.id,
+          name: '徽章套装',
+          unitPrice: 2500,
+          quantity: 1,
+          components: [BundleComponent(red.id, 2)],
+        ),
+      ],
+      paymentMethod: await cash(),
+    );
+    // 商品下单后被删掉，订单里照样能看到图片和规格。
+    await catalog.deleteProduct(badgeId);
+
+    final lines = (await sales.watchOrderDetail(order.id).first).lines;
+    final single = lines.firstWhere((l) => l.item.variantId == red.id);
+    expect(single.productName, '徽章');
+    expect(single.variantLabel, '红');
+    expect(single.imagePath, 'badge.jpg');
+    final bundle = lines.firstWhere((l) => l.item.variantId == set.id);
+    expect(bundle.productName, '徽章套装');
+    expect(bundle.variantLabel, '');
+    expect(bundle.bundleContents, ['徽章 · 红 ×2']);
+  });
+
+  test('订单号前缀可以自己改，不能和团队里其他设备重复', () async {
+    final teams = TeamRepository(db, session);
+    await catalog.saveProduct(
+      ProductDraft(name: '明信片', variants: [VariantDraft(price: 500)]),
+    );
+    final eventId = await inventory.createEvent(name: 'CP30');
+    expect(await sales.nextOrderNumber(eventId), '${session.orderPrefix}-001');
+
+    await teams.setOrderPrefix(' bear ');
+    expect(await sales.nextOrderNumber(eventId), 'BEAR-001');
+    expect(() => teams.setOrderPrefix('熊'), throwsFormatException);
+    expect(() => teams.setOrderPrefix('ABCDE'), throwsFormatException);
+
+    // 另一台设备已经在用 K7。
+    await db
+        .into(db.devices)
+        .insert(
+          DevicesCompanion.insert(
+            id: newId(),
+            updatedAt: session.clock.tick(),
+            teamId: session.teamId,
+            name: '小林的手机',
+            shortCode: 'Q9ABCD',
+            orderPrefix: const Value('K7'),
+          ),
+        );
+    await expectLater(
+      teams.setOrderPrefix('K7'),
+      throwsA(
+        isA<OrderPrefixTakenException>().having(
+          (e) => e.deviceName,
+          'deviceName',
+          '小林的手机',
+        ),
+      ),
+    );
+    // 没改过前缀的设备占着默认前缀（设备号前两位）。
+    await db
+        .into(db.devices)
+        .insert(
+          DevicesCompanion.insert(
+            id: newId(),
+            updatedAt: session.clock.tick(),
+            teamId: session.teamId,
+            name: '平板',
+            shortCode: 'M3WXYZ',
+          ),
+        );
+    await expectLater(
+      teams.setOrderPrefix('m3'),
+      throwsA(isA<OrderPrefixTakenException>()),
+    );
+    expect(await sales.nextOrderNumber(eventId), 'BEAR-001');
+
+    // 留空恢复默认。
+    await teams.setOrderPrefix('');
+    expect(await sales.nextOrderNumber(eventId), '${session.orderPrefix}-001');
   });
 
   test('扫码付款：预先确定单号作备注码，稍后确认收款', () async {

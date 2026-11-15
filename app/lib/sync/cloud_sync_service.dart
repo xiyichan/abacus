@@ -632,7 +632,7 @@ Future<void> restoreTeamFromCloud({
     db,
     deviceId: deviceId,
     teamId: team.id,
-    shortCode: nextDeviceCode(devices.map((d) => d.shortCode)),
+    shortCode: nextDeviceCode(devices.map(effectiveOrderPrefix)),
     name: deviceName,
   );
   await db.setSetting(_tokenKey, token);
