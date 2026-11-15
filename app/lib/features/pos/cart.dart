@@ -35,6 +35,15 @@ class CartState {
     return result;
   }
 
+  /// 本场库存 [stock] 扣掉购物车占用后还剩多少。
+  Map<String, int> remainingIn(Map<String, int> stock) {
+    final remaining = Map.of(stock);
+    reserved.forEach(
+      (id, q) => remaining.update(id, (v) => v - q, ifAbsent: () => -q),
+    );
+    return remaining;
+  }
+
   CartState copyWith({List<SaleLine>? lines, Discount? discount}) => CartState(
     lines: lines ?? this.lines,
     discount: discount ?? this.discount,
@@ -81,3 +90,14 @@ class CartNotifier extends Notifier<CartState> {
 final cartProvider = NotifierProvider<CartNotifier, CartState>(
   CartNotifier.new,
 );
+
+/// 剩余数量 [remaining]（已扣掉购物车占用）够不够再放进 [line]：套装看每个成分。
+/// 库存不能卖成负数。
+bool fitsInStock(SaleLine line, Map<String, int> remaining) => stockShortages(
+  remaining,
+  saleDeductions(
+    variantId: line.variantId,
+    quantity: line.quantity,
+    bundleComponents: line.components,
+  ),
+).isEmpty;

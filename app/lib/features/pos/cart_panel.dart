@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/sales_repository.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers.dart';
 import '../../ui/grouped_list.dart';
 import '../../ui/design.dart';
 import '../../ui/glass.dart';
@@ -226,6 +227,23 @@ class _CartLine extends ConsumerWidget {
     final scheme = theme.colorScheme;
     final money = ref.watch(moneyProvider);
     final notifier = ref.read(cartProvider.notifier);
+    // 本场剩余不够再加一件时，加号不能点（库存不能卖成负数）。
+    final eventId = ref.watch(currentEventProvider).value?.id;
+    final stock = eventId == null
+        ? null
+        : ref.watch(stockProvider(eventId)).value;
+    final canAddOne =
+        stock == null ||
+        fitsInStock(
+          SaleLine(
+            variantId: line.variantId,
+            name: line.name,
+            unitPrice: line.unitPrice,
+            quantity: 1,
+            components: line.components,
+          ),
+          ref.watch(cartProvider).remainingIn(stock),
+        );
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(
         Gap.lg,
@@ -263,9 +281,13 @@ class _CartLine extends ConsumerWidget {
           Text('${line.quantity}', style: theme.textTheme.titleMedium),
           IconButton(
             tooltip: l10n.addOne,
-            icon: Icon(CupertinoIcons.plus_circle_fill, color: scheme.primary),
-            onPressed: () =>
-                notifier.setQuantity(line.variantId, line.quantity + 1),
+            icon: Icon(
+              CupertinoIcons.plus_circle_fill,
+              color: canAddOne ? scheme.primary : scheme.outlineVariant,
+            ),
+            onPressed: canAddOne
+                ? () => notifier.setQuantity(line.variantId, line.quantity + 1)
+                : null,
           ),
           ConstrainedBox(
             constraints: const BoxConstraints(minWidth: 64),

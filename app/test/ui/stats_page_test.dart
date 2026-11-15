@@ -36,6 +36,18 @@ void main() {
             .variants
             .single;
         final eventId = await inventory.createEvent(name: 'CP30');
+        final earlier = await inventory.createEvent(name: 'CP29');
+        for (final (e, v) in [
+          (eventId, badge),
+          (eventId, card),
+          (earlier, badge),
+        ]) {
+          await inventory.setEventQuantity(
+            variantId: v.id,
+            eventId: e,
+            eventQuantity: 5,
+          );
+        }
         await inventory.setCurrentEvent(eventId);
         final methods = await sales.watchPaymentMethods().first;
         await sales.placeOrder(
@@ -62,7 +74,6 @@ void main() {
           ],
           paymentMethod: methods.firstWhere((m) => m.name == '微信'),
         );
-        final earlier = await inventory.createEvent(name: 'CP29');
         await sales.placeOrder(
           eventId: earlier,
           lines: [

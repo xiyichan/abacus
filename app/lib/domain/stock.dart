@@ -54,6 +54,16 @@ int bundleAvailable(List<BundleComponent> components, Map<String, int> levels) {
   return available;
 }
 
+/// 按剩余数量 [levels] 卖出这些扣减（variantId → 数量，见 [saleDeductions]）后，
+/// 会变成负数的规格。
+Set<String> stockShortages(
+  Map<String, int> levels,
+  Map<String, int> deductions,
+) => {
+  for (final MapEntry(key: id, value: qty) in deductions.entries)
+    if ((levels[id] ?? 0) < qty) id,
+};
+
 /// 售出一行商品时要扣减的库存：普通 SKU 扣自身，套装展开成成分扣减。
 ///
 /// 返回 variantId → 扣减数量（正数）。

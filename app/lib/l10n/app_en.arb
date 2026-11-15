@@ -205,6 +205,22 @@
       }
     }
   },
+  "outOfStock": "\u201c{name}\u201d has none left at this event. Change the event stock to sell more.",
+  "@outOfStock": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "checkoutOutOfStock": "Not enough stock, order not placed: {names}. Another device may have just sold them \u2014 adjust the cart.",
+  "@checkoutOutOfStock": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
   "thisDevice": "This device",
   "priceFrom": "from {price}",
   "@priceFrom": {

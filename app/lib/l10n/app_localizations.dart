@@ -806,6 +806,18 @@ abstract class AppLocalizations {
   /// **'含：{items}'**
   String orderLineBundle(String items);
 
+  /// No description provided for @outOfStock.
+  ///
+  /// In zh, this message translates to:
+  /// **'「{name}」本场没有剩余了，不能再卖。可以去备货改数量。'**
+  String outOfStock(String name);
+
+  /// No description provided for @checkoutOutOfStock.
+  ///
+  /// In zh, this message translates to:
+  /// **'库存不够，没有下单：{names}。可能刚被其他设备卖掉了，请调整购物车。'**
+  String checkoutOutOfStock(String names);
+
   /// No description provided for @thisDevice.
   ///
   /// In zh, this message translates to:

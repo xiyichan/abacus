@@ -316,6 +316,79 @@ void main() {
     expect(bundle.productName, '徽章套装');
     expect(bundle.variantLabel, '');
     expect(bundle.bundleContents, ['徽章 · 红 ×2']);
+
+    // 订单列表的缩略图：按下单顺序，每行商品一个。
+    final summary = (await sales.watchOrders(eventId).first).single;
+    expect([for (final p in summary.previews) p.name], ['徽章 · 红', '徽章套装']);
+    expect(
+      [for (final p in summary.previews) p.imagePath],
+      ['badge.jpg', null],
+    );
+  });
+
+  test('本场库存不能卖成负数：超出剩余时不下单（套装看成分）', () async {
+    await catalog.saveProduct(
+      ProductDraft(name: '徽章', variants: [VariantDraft(price: 1500)]),
+    );
+    final badge = (await catalog.loadCatalog()).single.variants.single;
+    await catalog.saveProduct(
+      ProductDraft(
+        name: '徽章套装',
+        kind: ProductKind.bundle,
+        variants: [VariantDraft(price: 2500)],
+        components: [BundleComponent(badge.id, 2)],
+      ),
+    );
+    final set = (await catalog.loadCatalog())
+        .firstWhere((p) => p.isBundle)
+        .variants
+        .single;
+    final eventId = await inventory.createEvent(name: 'CP30');
+    await inventory.setEventQuantity(
+      variantId: badge.id,
+      eventId: eventId,
+      eventQuantity: 3,
+    );
+    SaleLine badges(int n) =>
+        SaleLine(variantId: badge.id, name: '徽章', unitPrice: 1500, quantity: n);
+    final setLine = SaleLine(
+      variantId: set.id,
+      name: '徽章套装',
+      unitPrice: 2500,
+      quantity: 1,
+      components: [BundleComponent(badge.id, 2)],
+    );
+
+    await expectLater(
+      sales.placeOrder(
+        eventId: eventId,
+        lines: [badges(2), setLine], // 要 4 件，只有 3 件
+        paymentMethod: await cash(),
+      ),
+      throwsA(
+        isA<OutOfStockException>().having((e) => e.names, 'names', [
+          '徽章',
+          '徽章套装',
+        ]),
+      ),
+    );
+    expect(await db.stockAt(eventId), {badge.id: 3});
+    expect(await db.select(db.orders).get(), isEmpty);
+
+    await sales.placeOrder(
+      eventId: eventId,
+      lines: [badges(1), setLine], // 刚好 3 件
+      paymentMethod: await cash(),
+    );
+    expect(await db.stockAt(eventId), {badge.id: 0});
+    await expectLater(
+      sales.placeOrder(
+        eventId: eventId,
+        lines: [badges(1)],
+        paymentMethod: await cash(),
+      ),
+      throwsA(isA<OutOfStockException>()),
+    );
   });
 
   test('订单号前缀可以自己改，不能和团队里其他设备重复', () async {

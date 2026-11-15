@@ -10,6 +10,7 @@ import '../../providers.dart';
 import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/large_title_page.dart';
+import '../../ui/media.dart';
 import '../../ui/money.dart';
 import 'export_orders.dart';
 import '../team/team_switcher.dart';
@@ -157,12 +158,17 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
           itemCount: shown.length,
           separatorBuilder: (_, _) => ColoredBox(
             color: cell,
-            child: const Divider(height: 1, indent: Gap.lg),
+            // 分隔线从文字开始画：左内边距 + 缩略图 + 间距。
+            child: const Divider(
+              height: 1,
+              indent: Gap.lg + _OrderThumbnail.size + Gap.lg,
+            ),
           ),
           itemBuilder: (context, i) {
             final s = shown[i];
             final o = s.order;
             final tile = ListTile(
+              leading: _OrderThumbnail(s.previews),
               title: Wrap(
                 spacing: Gap.sm,
                 crossAxisAlignment: WrapCrossAlignment.center,
@@ -205,6 +211,62 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
         ),
       ),
     ];
+  }
+}
+
+/// 订单第一件商品的缩略图；不止一件时右下角标「+N」。
+class _OrderThumbnail extends StatelessWidget {
+  const _OrderThumbnail(this.previews);
+
+  static const size = 48.0;
+
+  final List<({String? imagePath, String name})> previews;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final first = previews.firstOrNull;
+    return ExcludeSemantics(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(Radii.sm),
+            child: SizedBox.square(
+              dimension: size,
+              child: first == null
+                  ? ColoredBox(color: scheme.surfaceContainerHigh)
+                  : StoredImage(
+                      first.imagePath,
+                      placeholder: NamePlaceholder(first.name),
+                    ),
+            ),
+          ),
+          if (previews.length > 1)
+            PositionedDirectional(
+              end: -6,
+              bottom: -6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: ShapeDecoration(
+                  color: scheme.primary,
+                  shape: StadiumBorder(
+                    side: BorderSide(color: scheme.surfaceContainer, width: 2),
+                  ),
+                ),
+                child: Text(
+                  '+${previews.length - 1}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.onPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 

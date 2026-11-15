@@ -395,6 +395,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String outOfStock(String name) {
+    return '“$name” has none left at this event. Change the event stock to sell more.';
+  }
+
+  @override
+  String checkoutOutOfStock(String names) {
+    return 'Not enough stock, order not placed: $names. Another device may have just sold them — adjust the cart.';
+  }
+
+  @override
   String get thisDevice => 'This device';
 
   @override

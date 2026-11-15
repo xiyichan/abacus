@@ -137,13 +137,21 @@ final _cartPanelExpandedProvider = StreamProvider(
 
 /// 收银台中可售的一件商品，以及它在本场的剩余数量（已扣除购物车占用）。
 class _SellableProduct {
-  const _SellableProduct(this.item, this.variants, this.remaining);
+  const _SellableProduct(
+    this.item,
+    this.variants,
+    this.remaining, {
+    required this.soldOut,
+  });
 
   final CatalogProduct item;
 
   /// 本场带了的规格。
   final List<Variant> variants;
   final int remaining;
+
+  /// 所有规格都没有剩余了：库存不能卖成负数，不能再加进购物车。
+  final bool soldOut;
 }
 
 class _Till extends ConsumerStatefulWidget {
@@ -160,14 +168,6 @@ class _TillState extends ConsumerState<_Till> {
   String? _selected;
   static const _otherKey = '\u0000other';
 
-  Map<String, int> _remaining(Map<String, int> stock, CartState cart) {
-    final remaining = Map.of(stock);
-    cart.reserved.forEach(
-      (id, q) => remaining.update(id, (v) => v - q, ifAbsent: () => -q),
-    );
-    return remaining;
-  }
-
   List<_SellableProduct> _sellable(
     List<CatalogProduct> catalog,
     Map<String, int> stock,
@@ -178,7 +178,12 @@ class _TillState extends ConsumerState<_Till> {
         if (p.components.values.firstOrNull case final comps?
             when comps.isNotEmpty &&
                 comps.every((c) => stock.containsKey(c.variantId)))
-          _SellableProduct(p, p.variants, bundleAvailable(comps, remaining))
+          _SellableProduct(
+            p,
+            p.variants,
+            bundleAvailable(comps, remaining),
+            soldOut: bundleAvailable(comps, remaining) <= 0,
+          )
         else
           ...[]
       else if (p.variants.where((v) => stock.containsKey(v.id)).toList()
@@ -187,6 +192,7 @@ class _TillState extends ConsumerState<_Till> {
           p,
           vs,
           vs.fold(0, (a, v) => a + (remaining[v.id] ?? 0)),
+          soldOut: vs.every((v) => (remaining[v.id] ?? 0) <= 0),
         ),
   ];
 
@@ -233,11 +239,10 @@ class _TillState extends ConsumerState<_Till> {
       s.item.isBundle || s.variants.length == 1;
 
   void _add(_SellableProduct s, Map<String, int> remaining) {
-    final notifier = ref.read(cartProvider.notifier);
     final item = s.item;
     if (item.isBundle) {
       final v = item.variants.single;
-      notifier.add(
+      _addLine(
         SaleLine(
           variantId: v.id,
           name: item.product.name,
@@ -245,20 +250,41 @@ class _TillState extends ConsumerState<_Till> {
           quantity: 1,
           components: item.components[v.id] ?? const [],
         ),
+        remaining,
       );
     } else if (s.variants.length == 1) {
       final v = s.variants.single;
-      notifier.add(
+      _addLine(
         SaleLine(
           variantId: v.id,
           name: item.displayName(v),
           unitPrice: v.price,
           quantity: 1,
         ),
+        remaining,
       );
+    } else if (s.soldOut) {
+      _showOutOfStock(item.product.name);
     } else {
       _chooseVariant(s, remaining);
     }
+  }
+
+  /// 加进购物车；本场剩余不够时不加，提示一下（库存不能卖成负数）。
+  void _addLine(SaleLine line, Map<String, int> remaining) {
+    if (!fitsInStock(line, remaining)) {
+      _showOutOfStock(line.name);
+      return;
+    }
+    ref.read(cartProvider.notifier).add(line);
+  }
+
+  void _showOutOfStock(String name) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).outOfStock(name))),
+    );
   }
 
   void _removeOne(_SellableProduct s, Map<String, int> inCart) {
@@ -286,6 +312,8 @@ class _TillState extends ConsumerState<_Till> {
             ),
             for (final v in s.variants)
               ListTile(
+                // 没有剩余的规格不能选。
+                enabled: (remaining[v.id] ?? 0) > 0,
                 title: Text(v.label),
                 subtitle: _StockText(remaining[v.id] ?? 0),
                 trailing: Text(money(v.price)),
@@ -491,7 +519,7 @@ class _TillState extends ConsumerState<_Till> {
         LayoutBuilder(
           builder: (context, constraints) {
             final tablet = isTabletWidth(constraints.maxWidth);
-            final remaining = _remaining(stock, cart);
+            final remaining = cart.remainingIn(stock);
             final sellable = _sellable(catalog, stock, remaining);
             // 平板可以展开侧边购物车，也可以收起成底部的购物车条（记住上次的选择）。
             final expanded =
@@ -920,61 +948,65 @@ class _MenuRow extends ConsumerWidget {
         ],
       );
     }
-    return InkWell(
-      onTap: onAdd,
-      child: Padding(
-        // 右边留给加减按钮自己的点击区域；“选择规格”按钮另外再留一点。
-        padding: EdgeInsetsDirectional.fromSTEB(
-          Gap.md,
-          Gap.md,
-          onRemove == null ? Gap.md : Gap.xs,
-          Gap.md,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(Radii.sm),
-              child: SizedBox.square(
-                dimension: imageSize,
-                child: StoredImage(
-                  p.imagePath,
-                  placeholder: NamePlaceholder(p.name),
+    // 卖完了变淡（点了会提示没有剩余）。
+    return Opacity(
+      opacity: sellable.soldOut ? 0.45 : 1,
+      child: InkWell(
+        onTap: onAdd,
+        child: Padding(
+          // 右边留给加减按钮自己的点击区域；“选择规格”按钮另外再留一点。
+          padding: EdgeInsetsDirectional.fromSTEB(
+            Gap.md,
+            Gap.md,
+            onRemove == null ? Gap.md : Gap.xs,
+            Gap.md,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(Radii.sm),
+                child: SizedBox.square(
+                  dimension: imageSize,
+                  child: StoredImage(
+                    p.imagePath,
+                    placeholder: NamePlaceholder(p.name),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: Gap.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    p.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 2),
-                  _StockText(sellable.remaining),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          priceText,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: scheme.primary,
-                            fontWeight: FontWeight.w700,
+              const SizedBox(width: Gap.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 2),
+                    _StockText(sellable.remaining),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            priceText,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: scheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                      ),
-                      control,
-                    ],
-                  ),
-                ],
+                        control,
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1065,54 +1097,58 @@ class _ProductCard extends ConsumerWidget {
     final priceText = prices.first == prices.last
         ? money(prices.first)
         : AppLocalizations.of(context).priceFrom(money(prices.first));
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      margin: EdgeInsets.zero,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  StoredImage(
-                    p.imagePath,
-                    placeholder: NamePlaceholder(p.name),
-                  ),
-                  if (count > 0)
-                    PositionedDirectional(
-                      top: Gap.sm,
-                      end: Gap.sm,
-                      child: _CountBadge(count),
+    // 卖完了变淡（点了会提示没有剩余）。
+    return Opacity(
+      opacity: sellable.soldOut ? 0.45 : 1,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        margin: EdgeInsets.zero,
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    StoredImage(
+                      p.imagePath,
+                      placeholder: NamePlaceholder(p.name),
                     ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          priceText,
-                          style: theme.textTheme.titleSmall,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                    if (count > 0)
+                      PositionedDirectional(
+                        top: Gap.sm,
+                        end: Gap.sm,
+                        child: _CountBadge(count),
                       ),
-                      _StockText(sellable.remaining),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            priceText,
+                            style: theme.textTheme.titleSmall,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        _StockText(sellable.remaining),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

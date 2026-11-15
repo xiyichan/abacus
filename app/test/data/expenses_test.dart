@@ -69,6 +69,11 @@ void main() {
       ProductDraft(name: '徽章', variants: [VariantDraft(price: 1500)]),
     );
     final v = (await node.catalog.loadCatalog()).single.variants.single;
+    await node.inventory.setEventQuantity(
+      variantId: v.id,
+      eventId: eventId,
+      eventQuantity: 4,
+    );
     await node.sales.placeOrder(
       eventId: eventId,
       lines: [

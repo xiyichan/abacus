@@ -147,6 +147,11 @@ void main() {
   test('全部场次：统计合计、各场对比、CSV 带场次列', () async {
     final inventory = InventoryRepository(db, (await ensureSession(db)));
     final earlier = await inventory.createEvent(name: 'CP29');
+    await inventory.setEventQuantity(
+      variantId: card.id,
+      eventId: earlier,
+      eventQuantity: 3,
+    );
     await sales.placeOrder(
       eventId: eventId,
       lines: [line(badge, '徽章', 2)],

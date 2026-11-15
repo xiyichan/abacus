@@ -54,9 +54,27 @@ void main() {
     paymentMethod: (await node.sales.watchPaymentMethods().first).first,
   );
 
+  /// 两台设备离线各卖了一件、同步后才发现卖超：本机下单拦得住，别的设备同步过来的拦不住。
+  Future<void> soldByOtherDevice(Variant v, int qty) => node.db
+      .into(node.db.stockMovements)
+      .insert(
+        StockMovementsCompanion.insert(
+          id: newId(),
+          updatedAt: node.session.clock.tick(),
+          variantId: v.id,
+          location: eventId,
+          delta: -qty,
+          reason: 'sale',
+          orderId: Value(newId()),
+          deviceId: newId(),
+          createdAt: DateTime.now(),
+        ),
+      );
+
   test('结束场次：标记已结束并取消当前场次，剩余数量保留在场次里', () async {
     await sell(badge, 3);
-    await sell(card, 3); // 带了 2 件卖了 3 件
+    await sell(card, 2);
+    await soldByOtherDevice(card, 1); // 带了 2 件卖了 3 件
     await node.inventory.endEvent(eventId);
 
     final event = await node.inventory.watchEvents().first;
@@ -80,7 +98,8 @@ void main() {
 
   test('沿用上一场剩余：取最近一个有剩余的场次，只含正数', () async {
     await sell(badge, 3);
-    await sell(card, 3);
+    await sell(card, 2);
+    await soldByOtherDevice(card, 1);
     await node.inventory.endEvent(eventId);
     final next = await node.inventory.createEvent(name: 'CP31');
     final (from, left) = (await node.inventory.previousLeftover(next))!;

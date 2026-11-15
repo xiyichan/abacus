@@ -143,6 +143,25 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
           );
       ref.read(cartProvider.notifier).clear();
       if (mounted) Navigator.pop(context, (order: order, pending: pending));
+    } on OutOfStockException catch (e) {
+      // 加购物车之后其他设备卖掉了：不下单，留在结账页说明原因。
+      if (mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            content: Text(
+              AppLocalizations.of(context)
+                  .checkoutOutOfStock(e.names.join('、')),
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(AppLocalizations.of(context).confirm),
+              ),
+            ],
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

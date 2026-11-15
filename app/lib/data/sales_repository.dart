@@ -42,12 +42,16 @@ class OrderSummary {
     required this.itemCount,
     this.refund,
     this.paymentPending = false,
+    this.previews = const [],
   });
 
   final Order order;
   final String paymentNames;
   final int itemCount;
   final Refund? refund;
+
+  /// 订单里每一行商品的图片和名字（按下单顺序），列表里显示第一件的缩略图。
+  final List<({String? imagePath, String name})> previews;
 
   /// 扫码付款还没确认到账。
   final bool paymentPending;
@@ -153,6 +157,16 @@ class OrderLine {
   final List<String> bundleContents;
 }
 
+/// 下单时本场库存不够（会卖成负数）：[names] 是缺货的那几行商品。
+class OutOfStockException implements Exception {
+  const OutOfStockException(this.names);
+
+  final List<String> names;
+
+  @override
+  String toString() => 'OutOfStockException($names)';
+}
+
 class SalesRepository {
   SalesRepository(this._db, this._session);
 
@@ -172,6 +186,30 @@ class SalesRepository {
   }) {
     if (lines.isEmpty) throw ArgumentError.value(lines, 'lines', 'empty');
     return _db.transaction(() async {
+      // 本场库存不能卖成负数：加购物车时查过，这里按最新库存再查一次
+      // （其他设备可能刚卖掉了最后几件）。
+      final needed = <String, int>{};
+      for (final l in lines) {
+        saleDeductions(
+          variantId: l.variantId,
+          quantity: l.quantity,
+          bundleComponents: l.components,
+        ).forEach(
+          (id, q) => needed.update(id, (v) => v + q, ifAbsent: () => q),
+        );
+      }
+      final short = stockShortages(await _db.stockAt(eventId), needed);
+      if (short.isNotEmpty) {
+        throw OutOfStockException([
+          for (final l in lines)
+            if (saleDeductions(
+              variantId: l.variantId,
+              quantity: l.quantity,
+              bundleComponents: l.components,
+            ).keys.any(short.contains))
+              l.name,
+        ]);
+      }
       final summary = summarize([
         for (final l in lines)
           CartLine(
@@ -342,6 +380,8 @@ class SalesRepository {
     _db.orderItems,
     _db.orderPayments,
     _db.refunds,
+    _db.products,
+    _db.variants,
   }, () => _loadOrders(eventId));
 
   Future<List<OrderSummary>> _loadOrders(String eventId) async {
@@ -383,6 +423,23 @@ class SalesRepository {
       );
     }
     final refundByOrder = {for (final r in refunds) r.orderId: r};
+    // 缩略图按现在的商品资料查（删掉的商品也查得到）。
+    final variants = await (_db.select(
+      _db.variants,
+    )..where((t) => t.id.isIn({for (final i in items) i.variantId}))).get();
+    final products = await (_db.select(
+      _db.products,
+    )..where((t) => t.id.isIn({for (final v in variants) v.productId}))).get();
+    final productOf = {for (final v in variants) v.id: v.productId};
+    final imageOf = {for (final p in products) p.id: p.imagePath};
+    final previews = <String, List<({String? imagePath, String name})>>{};
+    // 明细写入后不再改，按写入时的时间戳（HLC，可按字典序比）排就是下单时的顺序。
+    for (final i in items..sort((a, b) => a.updatedAt.compareTo(b.updatedAt))) {
+      previews.putIfAbsent(i.orderId, () => []).add((
+        imagePath: imageOf[productOf[i.variantId]],
+        name: i.nameSnapshot,
+      ));
+    }
     return [
       for (final o in orders)
         OrderSummary(
@@ -391,6 +448,7 @@ class SalesRepository {
           itemCount: itemCounts[o.id] ?? 0,
           refund: refundByOrder[o.id],
           paymentPending: pendingOrders.contains(o.id),
+          previews: previews[o.id] ?? const [],
         ),
     ];
   }
@@ -409,9 +467,11 @@ class SalesRepository {
       final order = await (_db.select(
         _db.orders,
       )..where((t) => t.id.equals(orderId))).getSingle();
-      final items = await (_db.select(
-        _db.orderItems,
-      )..where((t) => t.orderId.equals(orderId))).get();
+      final items =
+          await (_db.select(_db.orderItems)
+                ..where((t) => t.orderId.equals(orderId))
+                ..orderBy([(t) => OrderingTerm(expression: t.updatedAt)]))
+              .get();
       return OrderDetail(
         order: order,
         items: items,

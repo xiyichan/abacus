@@ -389,6 +389,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String outOfStock(String name) {
+    return '「$name」本场没有剩余了，不能再卖。可以去备货改数量。';
+  }
+
+  @override
+  String checkoutOutOfStock(String names) {
+    return '库存不够，没有下单：$names。可能刚被其他设备卖掉了，请调整购物车。';
+  }
+
+  @override
   String get thisDevice => '本机设备';
 
   @override
