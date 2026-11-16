@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import 'database.dart';
@@ -37,6 +39,9 @@ class InventoryRepository {
     String? booth,
   }) async {
     final id = newId();
+    // 收银台的顺序沿用最近一个调过顺序的场次。
+    final previous = _byRecent(await watchEvents().first)
+        .where((e) => e.groupOrder.isNotEmpty || e.productOrder.isNotEmpty);
     await _db
         .into(_db.events)
         .insert(
@@ -48,10 +53,38 @@ class InventoryRepository {
             startsOn: Value(startsOn),
             endsOn: Value(_lastDay(startsOn, endsOn)),
             booth: Value(booth?.trim().isEmpty ?? true ? null : booth!.trim()),
+            groupOrder: Value(previous.firstOrNull?.groupOrder ?? ''),
+            productOrder: Value(previous.firstOrNull?.productOrder ?? ''),
           ),
         );
     return id;
   }
+
+  /// 调整这一场收银台的顺序：左边分类栏的分组 key、商品 id（只改传了的）。
+  Future<void> setEventOrder(
+    String eventId, {
+    List<String>? groups,
+    List<String>? products,
+  }) => (_db.update(_db.events)..where((t) => t.id.equals(eventId))).write(
+    EventsCompanion(
+      groupOrder: groups == null
+          ? const Value.absent()
+          : Value(encodeOrder(groups)),
+      productOrder: products == null
+          ? const Value.absent()
+          : Value(encodeOrder(products)),
+      updatedAt: Value(_session.clock.tick()),
+    ),
+  );
+
+  /// 按日期从近到远，没设日期的放最后（同样没日期时按创建先后，UUIDv7 可排序）。
+  static List<Event> _byRecent(List<Event> events) => [...events]
+    ..sort((a, b) {
+      final byDate = (b.startsOn ?? DateTime(0)).compareTo(
+        a.startsOn ?? DateTime(0),
+      );
+      return byDate != 0 ? byDate : b.id.compareTo(a.id);
+    });
 
   Future<void> updateEvent(
     String id, {
@@ -155,15 +188,9 @@ class InventoryRepository {
 
   /// 最近一个有剩余货的其他场次及其剩余（variantId → 件数，只含正数），备货时可以沿用。
   Future<(Event, Map<String, int>)?> previousLeftover(String eventId) async {
-    final events =
-        (await watchEvents().first).where((e) => e.id != eventId).toList()
-          // 按日期从近到远，没设日期的放最后（同样没日期时按创建先后，UUIDv7 可排序）。
-          ..sort((a, b) {
-            final byDate = (b.startsOn ?? DateTime(0)).compareTo(
-              a.startsOn ?? DateTime(0),
-            );
-            return byDate != 0 ? byDate : b.id.compareTo(a.id);
-          });
+    final events = _byRecent(
+      (await watchEvents().first).where((e) => e.id != eventId).toList(),
+    );
     for (final e in events) {
       final left = {
         for (final MapEntry(:key, :value) in (await _db.stockAt(e.id)).entries)
@@ -195,4 +222,16 @@ class InventoryRepository {
           createdAt: DateTime.now(),
         ),
       );
+}
+
+/// 场次里存的顺序（JSON 字符串数组）。
+String encodeOrder(List<String> keys) => keys.isEmpty ? '' : jsonEncode(keys);
+
+List<String> decodeOrder(String text) {
+  if (text.isEmpty) return const [];
+  try {
+    return [for (final k in jsonDecode(text) as List) k as String];
+  } on Object {
+    return const [];
+  }
 }

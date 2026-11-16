@@ -436,10 +436,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reorderProductsHint =>
-      'Drag the handles to reorder. The till shows products in this order; without categories, the sidebar groups follow the order of their first product.';
+      'Drag the handles to reorder. This is the product list order, and the till’s default for events you haven’t ordered yet. To order the till for one event, use “Order” at the bottom of the till sidebar.';
 
   @override
   String get done => 'Done';
+
+  @override
+  String get eventOrderButton => 'Order the till';
+
+  @override
+  String get more => 'More';
+
+  @override
+  String get reorderShort => 'Order';
+
+  @override
+  String eventOrderTitle(String name) {
+    return 'Till order · $name';
+  }
+
+  @override
+  String get eventOrderHint =>
+      'Applies to this event only. Drag the handles to reorder. New events start with the most recent event\'s order.';
+
+  @override
+  String get eventOrderGroups => 'Sidebar groups';
+
+  @override
+  String get eventOrderProducts => 'Products';
 
   @override
   String get thisDevice => 'This device';

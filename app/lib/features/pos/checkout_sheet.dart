@@ -280,12 +280,22 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                         ),
                       ),
               ),
-            if (method != null &&
-                !isCash &&
-                _paymentCode != null &&
-                ref.watch(paymentCodeEnabledProvider)) ...[
-              const SizedBox(height: 16),
-              _PaymentCode(code: _paymentCode!, onEdit: _editPaymentCode),
+            if (method != null && !isCash) ...[
+              const SizedBox(height: 8),
+              // 付款备注码可以在这里直接开关（团队设置，和设置 → 支付方式里的是同一个）。
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.paymentCodeSwitch),
+                value: ref.watch(paymentCodeEnabledProvider),
+                activeTrackColor: theme.colorScheme.primary,
+                onChanged: (v) =>
+                    ref.read(teamRepositoryProvider).setPaymentCodeEnabled(v),
+              ),
+              if (_paymentCode != null &&
+                  ref.watch(paymentCodeEnabledProvider)) ...[
+                const SizedBox(height: 8),
+                _PaymentCode(code: _paymentCode!, onEdit: _editPaymentCode),
+              ],
             ],
             const SizedBox(height: 24),
             FilledButton(

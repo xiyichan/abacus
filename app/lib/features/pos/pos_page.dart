@@ -25,6 +25,7 @@ import 'cart.dart';
 import 'cart_panel.dart';
 import 'checkout_sheet.dart';
 import 'menu.dart';
+import '../../data/inventory_repository.dart' show decodeOrder;
 
 /// 收银台，和外卖点菜一样：左边分类，右边商品。平板右侧常驻购物车；手机底部是购物车条。
 class PosPage extends ConsumerWidget {
@@ -72,12 +73,38 @@ class PosPage extends ConsumerWidget {
               onPressed: () => unlockCashier(context, ref),
             )
           else if (current != null && current.endedAt == null) ...[
-            BarButton(
-              icon: CupertinoIcons.doc_plaintext,
-              tooltip: l10n.addExpense,
-              label: context.isTablet ? l10n.addExpense : null,
-              onPressed: () => showExpenseEditor(context, eventId: current.id),
-            ),
+            if (context.isTablet) ...[
+              // 这一场收银台的分组和商品顺序。
+              BarButton(
+                icon: CupertinoIcons.arrow_up_arrow_down,
+                tooltip: l10n.eventOrderButton,
+                label: l10n.reorderShort,
+                onPressed: () => context.go('/pos/order/${current.id}'),
+              ),
+              BarButton(
+                icon: CupertinoIcons.doc_plaintext,
+                tooltip: l10n.addExpense,
+                label: l10n.addExpense,
+                onPressed: () =>
+                    showExpenseEditor(context, eventId: current.id),
+              ),
+            ] else
+              // 手机上放不下四个按钮（会把场次名挤没）：记支出和排序收进「更多」。
+              _MoreButton(
+                tooltip: l10n.more,
+                items: [
+                  (
+                    CupertinoIcons.doc_plaintext,
+                    l10n.addExpense,
+                    () => showExpenseEditor(context, eventId: current.id),
+                  ),
+                  (
+                    CupertinoIcons.arrow_up_arrow_down,
+                    l10n.eventOrderButton,
+                    () => context.go('/pos/order/${current.id}'),
+                  ),
+                ],
+              ),
             BarButton(
               icon: CupertinoIcons.cube_box,
               tooltip: l10n.stockForEvent,
@@ -117,6 +144,55 @@ class PosPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// 导航栏上的「更多」：点开是一个菜单（图标、文字、点了做什么）。
+class _MoreButton extends StatelessWidget {
+  const _MoreButton({required this.tooltip, required this.items});
+
+  final String tooltip;
+  final List<(IconData, String, VoidCallback)> items;
+
+  @override
+  Widget build(BuildContext context) => Builder(
+    builder: (buttonContext) => BarButton(
+      icon: CupertinoIcons.ellipsis,
+      tooltip: tooltip,
+      onPressed: () async {
+        final box = buttonContext.findRenderObject()! as RenderBox;
+        final overlay =
+            Overlay.of(buttonContext).context.findRenderObject()! as RenderBox;
+        final rect = Rect.fromPoints(
+          box.localToGlobal(
+            box.size.bottomLeft(Offset.zero),
+            ancestor: overlay,
+          ),
+          box.localToGlobal(
+            box.size.bottomRight(Offset.zero),
+            ancestor: overlay,
+          ),
+        );
+        final chosen = await showMenu<int>(
+          context: buttonContext,
+          position: RelativeRect.fromRect(rect, Offset.zero & overlay.size),
+          items: [
+            for (final (i, (icon, label, _)) in items.indexed)
+              PopupMenuItem(
+                value: i,
+                child: Row(
+                  children: [
+                    Icon(icon, size: 20),
+                    const SizedBox(width: Gap.md),
+                    Text(label),
+                  ],
+                ),
+              ),
+          ],
+        );
+        if (chosen != null) items[chosen].$3();
+      },
+    ),
+  );
 }
 
 const _cartPanelKey = 'cartPanelExpanded';
@@ -164,9 +240,8 @@ class _Till extends ConsumerStatefulWidget {
 }
 
 class _TillState extends ConsumerState<_Till> {
-  /// 左边选中的分类（分类名，“其他”用 [_otherKey]）；null 表示“全部”。
+  /// 左边选中的分类（分类名，“其他”用 [otherGroupKey]）；null 表示“全部”。
   String? _selected;
-  static const _otherKey = '\u0000other';
 
   List<_SellableProduct> _sellable(
     List<CatalogProduct> catalog,
@@ -195,44 +270,6 @@ class _TillState extends ConsumerState<_Till> {
           soldOut: vs.every((v) => (remaining[v.id] ?? 0) <= 0),
         ),
   ];
-
-  /// 分类：优先用自定义分类（按分类的排序），没归类的放“其他”；
-  /// 还没给商品选分类时按标签分；都没有标签时按作者分；作者也没有就是一组“全部”。
-  static List<MenuSection<_SellableProduct>> _sections(
-    List<_SellableProduct> sellable,
-    List<ProductCategory> categories,
-  ) {
-    final order = {for (final (i, c) in categories.indexed) c.id: i};
-    List<String> categoriesOf(_SellableProduct s) => [
-      for (final id in s.item.categoryIds)
-        if (order.containsKey(id)) id,
-    ];
-    if (sellable.any((s) => categoriesOf(s).isNotEmpty)) {
-      final byId = groupByTags(sellable, categoriesOf)
-        ..sort(
-          (a, b) => (order[a.title] ?? categories.length).compareTo(
-            order[b.title] ?? categories.length,
-          ),
-        );
-      return [
-        for (final s in byId)
-          MenuSection(
-            s.title == null ? null : categories[order[s.title]!].name,
-            s.items,
-          ),
-      ];
-    }
-    final byTag = groupByTags(
-      sellable,
-      (s) => productTags(s.item.product.tags),
-    );
-    if (byTag.any((s) => s.title != null)) return byTag;
-    final byCreator = groupByTags(
-      sellable,
-      (s) => [if (s.item.creator case final c?) c.name],
-    );
-    return byCreator.any((s) => s.title != null) ? byCreator : byTag;
-  }
 
   /// 只有一个规格（或是套装）的商品可以在列表里直接加减。
   static bool _single(_SellableProduct s) =>
@@ -292,49 +329,56 @@ class _TillState extends ConsumerState<_Till> {
     ref.read(cartProvider.notifier).setQuantity(id, (inCart[id] ?? 0) - 1);
   }
 
+  /// 多规格商品选规格：平板上是居中的对话框，手机上是底部弹层；
+  /// 每个规格一张卡片（名字、价格、余量），点一下加进购物车。
   void _chooseVariant(_SellableProduct s, Map<String, int> remaining) {
-    final l10n = AppLocalizations.of(context);
-    final money = ref.read(moneyProvider);
-    showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-              child: Text(
-                '${s.item.product.name} · ${l10n.chooseVariant}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            for (final v in s.variants)
-              ListTile(
-                // 没有剩余的规格不能选。
-                enabled: (remaining[v.id] ?? 0) > 0,
-                title: Text(v.label),
-                subtitle: _StockText(remaining[v.id] ?? 0),
-                trailing: Text(money(v.price)),
-                onTap: () {
-                  ref
-                      .read(cartProvider.notifier)
-                      .add(
-                        SaleLine(
-                          variantId: v.id,
-                          name: s.item.displayName(v),
-                          unitPrice: v.price,
-                          quantity: 1,
-                        ),
-                      );
-                  Navigator.pop(sheetContext);
-                },
-              ),
-          ],
-        ),
-      ),
+    final inCart = {
+      for (final l in ref.read(cartProvider).lines) l.variantId: l.quantity,
+    };
+    Widget picker(BuildContext popupContext) => _VariantPicker(
+      sellable: s,
+      remaining: remaining,
+      inCart: inCart,
+      onPick: (v) {
+        Navigator.pop(popupContext);
+        _addLine(
+          SaleLine(
+            variantId: v.id,
+            name: s.item.displayName(v),
+            unitPrice: v.price,
+            quantity: 1,
+          ),
+          remaining,
+        );
+      },
     );
+    if (context.isTablet) {
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) => Dialog(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520, maxHeight: 640),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(Gap.xl),
+              child: picker(dialogContext),
+            ),
+          ),
+        ),
+      );
+    } else {
+      showModalBottomSheet<void>(
+        context: context,
+        useRootNavigator: true,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (sheetContext) => SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(Gap.xl, 0, Gap.xl, Gap.xl),
+            child: picker(sheetContext),
+          ),
+        ),
+      );
+    }
   }
 
   /// 点菜式菜单：左边分类，右边是选中分类的商品（“全部”时按分类分段列出所有商品）。
@@ -350,11 +394,18 @@ class _TillState extends ConsumerState<_Till> {
   }) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final sections = _sections(
-      sellable,
-      ref.watch(categoriesProvider).value ?? const [],
+    // 分组和商品按这一场调过的顺序排。
+    final sections = orderMenu(
+      menuSections(
+        sellable,
+        (s) => s.item,
+        ref.watch(categoriesProvider).value ?? const [],
+      ),
+      groupOrder: decodeOrder(widget.event.groupOrder),
+      productOrder: decodeOrder(widget.event.productOrder),
+      idOf: (s) => s.item.product.id,
     );
-    String keyOf(MenuSection<_SellableProduct> s) => s.title ?? _otherKey;
+    String keyOf(MenuSection<_SellableProduct> s) => groupKeyOf(s);
     String titleOf(MenuSection<_SellableProduct> s) =>
         s.title ?? (sections.length == 1 ? l10n.all : l10n.otherCategory);
     // 选中的分类没了（改了分类、卖完了）就回到“全部”。
@@ -1035,6 +1086,182 @@ class _ContentPanel extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(Radii.card),
         child: panel,
+      ),
+    );
+  }
+}
+
+/// 选规格：上面是商品图和名字，下面每个规格一张卡片。卖完的规格变淡、不能选。
+class _VariantPicker extends ConsumerWidget {
+  const _VariantPicker({
+    required this.sellable,
+    required this.remaining,
+    required this.inCart,
+    required this.onPick,
+  });
+
+  final _SellableProduct sellable;
+  final Map<String, int> remaining;
+
+  /// 购物车里每个规格已经有几件（卡片右上角标出来）。
+  final Map<String, int> inCart;
+  final ValueChanged<Variant> onPick;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final money = ref.watch(moneyProvider);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final p = sellable.item.product;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(Radii.sm),
+              child: SizedBox.square(
+                dimension: 64,
+                child: StoredImage(
+                  p.imagePath,
+                  placeholder: NamePlaceholder(p.name),
+                ),
+              ),
+            ),
+            const SizedBox(width: Gap.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.chooseVariant,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: Gap.lg),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            // 规格少时卡片放大铺满，不留一大块空白。
+            final columns = sellable.variants.length.clamp(
+              1,
+              constraints.maxWidth >= 420 ? 3 : 2,
+            );
+            final width =
+                (constraints.maxWidth - Gap.md * (columns - 1)) / columns;
+            return Wrap(
+              spacing: Gap.md,
+              runSpacing: Gap.md,
+              children: [
+                for (final v in sellable.variants)
+                  SizedBox(
+                    width: width,
+                    child: _VariantCard(
+                      label: v.label,
+                      price: money(v.price),
+                      left: remaining[v.id] ?? 0,
+                      count: inCart[v.id] ?? 0,
+                      onTap: (remaining[v.id] ?? 0) > 0
+                          ? () => onPick(v)
+                          : null,
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _VariantCard extends StatelessWidget {
+  const _VariantCard({
+    required this.label,
+    required this.price,
+    required this.left,
+    required this.count,
+    required this.onTap,
+  });
+
+  final String label;
+  final String price;
+  final int left;
+  final int count;
+
+  /// 为 null 时卖完了，不能选。
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Opacity(
+      opacity: onTap == null ? 0.45 : 1,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Material(
+            color: scheme.primaryContainer.withValues(alpha: 0.35),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.sm + 2),
+              side: BorderSide(color: scheme.outlineVariant),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.all(Gap.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: Gap.xs),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            price,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: scheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        _StockText(left),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (count > 0)
+            PositionedDirectional(
+              top: -Gap.xs,
+              end: -Gap.xs,
+              child: _CountBadge(count),
+            ),
+        ],
       ),
     );
   }

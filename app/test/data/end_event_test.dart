@@ -177,6 +177,8 @@ void main() {
     await db.customStatement(
       'ALTER TABLE teams DROP COLUMN payment_code_enabled',
     );
+    await db.customStatement('ALTER TABLE events DROP COLUMN group_order');
+    await db.customStatement('ALTER TABLE events DROP COLUMN product_order');
     await db.customStatement('PRAGMA user_version = 3');
     await db.close();
 

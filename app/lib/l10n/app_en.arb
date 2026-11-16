@@ -243,8 +243,22 @@
   "paymentCodeSwitchFooter": "When on, QR payments show a reference code (the order number by default) for the customer to put in the payment note, so you can match payments to orders later. Applies to every device in the team.",
   "paymentPendingBodyPlain": "Once you've found this payment, tap the button below.",
   "reorderProducts": "Reorder",
-  "reorderProductsHint": "Drag the handles to reorder. The till shows products in this order; without categories, the sidebar groups follow the order of their first product.",
+  "reorderProductsHint": "Drag the handles to reorder. This is the product list order, and the till\u2019s default for events you haven\u2019t ordered yet. To order the till for one event, use \u201cOrder\u201d at the bottom of the till sidebar.",
   "done": "Done",
+  "eventOrderButton": "Order the till",
+  "more": "More",
+  "reorderShort": "Order",
+  "eventOrderTitle": "Till order · {name}",
+  "@eventOrderTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "eventOrderHint": "Applies to this event only. Drag the handles to reorder. New events start with the most recent event's order.",
+  "eventOrderGroups": "Sidebar groups",
+  "eventOrderProducts": "Products",
   "thisDevice": "This device",
   "priceFrom": "from {price}",
   "@priceFrom": {

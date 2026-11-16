@@ -243,8 +243,22 @@
   "paymentCodeSwitchFooter": "打开后，扫码付款时显示一串备注码（默认是单号），请客人付款时填在备注里，事后好对上是哪一单。团队里的设备一起生效。",
   "paymentPendingBodyPlain": "核对到这笔付款后，点下面的按钮。",
   "reorderProducts": "调整顺序",
-  "reorderProductsHint": "拖动右边的把手排序。收银台按这个顺序显示；没有设分类时，左边分类栏的顺序也跟着第一件商品走。",
+  "reorderProductsHint": "拖动右边的把手排序。这是商品列表的顺序，也是场次还没调过顺序时收银台的默认顺序；每一场收银台的顺序，在收银台左边分类栏最下面的「排序」里单独调。",
   "done": "完成",
+  "eventOrderButton": "调整收银台顺序",
+  "more": "更多",
+  "reorderShort": "排序",
+  "eventOrderTitle": "收银台顺序 · {name}",
+  "@eventOrderTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "eventOrderHint": "只改这一场，拖右边的把手排序。新建场次会沿用最近一场的顺序。",
+  "eventOrderGroups": "左边分类栏",
+  "eventOrderProducts": "商品",
   "thisDevice": "本机设备",
   "priceFrom": "{price}起",
   "@priceFrom": {

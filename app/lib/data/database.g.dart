@@ -3423,6 +3423,30 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _groupOrderMeta = const VerificationMeta(
+    'groupOrder',
+  );
+  @override
+  late final GeneratedColumn<String> groupOrder = GeneratedColumn<String>(
+    'group_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _productOrderMeta = const VerificationMeta(
+    'productOrder',
+  );
+  @override
+  late final GeneratedColumn<String> productOrder = GeneratedColumn<String>(
+    'product_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3434,6 +3458,8 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
     endsOn,
     booth,
     endedAt,
+    groupOrder,
+    productOrder,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3506,6 +3532,21 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
         endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
       );
     }
+    if (data.containsKey('group_order')) {
+      context.handle(
+        _groupOrderMeta,
+        groupOrder.isAcceptableOrUnknown(data['group_order']!, _groupOrderMeta),
+      );
+    }
+    if (data.containsKey('product_order')) {
+      context.handle(
+        _productOrderMeta,
+        productOrder.isAcceptableOrUnknown(
+          data['product_order']!,
+          _productOrderMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3551,6 +3592,14 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}ended_at'],
       ),
+      groupOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_order'],
+      )!,
+      productOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_order'],
+      )!,
     );
   }
 
@@ -3574,6 +3623,11 @@ class Event extends DataClass implements Insertable<Event> {
 
   /// 结束（收摊）时间。结束时剩余库存退回家里；为 null 表示进行中。
   final DateTime? endedAt;
+
+  /// 这一场收银台的顺序（JSON 字符串数组）：左边分类栏的分组 key、商品 id。
+  /// 为空时按商品库的顺序；每场单独调，新场次沿用上一场的。
+  final String groupOrder;
+  final String productOrder;
   const Event({
     required this.id,
     required this.updatedAt,
@@ -3584,6 +3638,8 @@ class Event extends DataClass implements Insertable<Event> {
     this.endsOn,
     this.booth,
     this.endedAt,
+    required this.groupOrder,
+    required this.productOrder,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3605,6 +3661,8 @@ class Event extends DataClass implements Insertable<Event> {
     if (!nullToAbsent || endedAt != null) {
       map['ended_at'] = Variable<DateTime>(endedAt);
     }
+    map['group_order'] = Variable<String>(groupOrder);
+    map['product_order'] = Variable<String>(productOrder);
     return map;
   }
 
@@ -3627,6 +3685,8 @@ class Event extends DataClass implements Insertable<Event> {
       endedAt: endedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(endedAt),
+      groupOrder: Value(groupOrder),
+      productOrder: Value(productOrder),
     );
   }
 
@@ -3645,6 +3705,8 @@ class Event extends DataClass implements Insertable<Event> {
       endsOn: serializer.fromJson<DateTime?>(json['endsOn']),
       booth: serializer.fromJson<String?>(json['booth']),
       endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
+      groupOrder: serializer.fromJson<String>(json['groupOrder']),
+      productOrder: serializer.fromJson<String>(json['productOrder']),
     );
   }
   @override
@@ -3660,6 +3722,8 @@ class Event extends DataClass implements Insertable<Event> {
       'endsOn': serializer.toJson<DateTime?>(endsOn),
       'booth': serializer.toJson<String?>(booth),
       'endedAt': serializer.toJson<DateTime?>(endedAt),
+      'groupOrder': serializer.toJson<String>(groupOrder),
+      'productOrder': serializer.toJson<String>(productOrder),
     };
   }
 
@@ -3673,6 +3737,8 @@ class Event extends DataClass implements Insertable<Event> {
     Value<DateTime?> endsOn = const Value.absent(),
     Value<String?> booth = const Value.absent(),
     Value<DateTime?> endedAt = const Value.absent(),
+    String? groupOrder,
+    String? productOrder,
   }) => Event(
     id: id ?? this.id,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -3683,6 +3749,8 @@ class Event extends DataClass implements Insertable<Event> {
     endsOn: endsOn.present ? endsOn.value : this.endsOn,
     booth: booth.present ? booth.value : this.booth,
     endedAt: endedAt.present ? endedAt.value : this.endedAt,
+    groupOrder: groupOrder ?? this.groupOrder,
+    productOrder: productOrder ?? this.productOrder,
   );
   Event copyWithCompanion(EventsCompanion data) {
     return Event(
@@ -3695,6 +3763,12 @@ class Event extends DataClass implements Insertable<Event> {
       endsOn: data.endsOn.present ? data.endsOn.value : this.endsOn,
       booth: data.booth.present ? data.booth.value : this.booth,
       endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
+      groupOrder: data.groupOrder.present
+          ? data.groupOrder.value
+          : this.groupOrder,
+      productOrder: data.productOrder.present
+          ? data.productOrder.value
+          : this.productOrder,
     );
   }
 
@@ -3709,7 +3783,9 @@ class Event extends DataClass implements Insertable<Event> {
           ..write('startsOn: $startsOn, ')
           ..write('endsOn: $endsOn, ')
           ..write('booth: $booth, ')
-          ..write('endedAt: $endedAt')
+          ..write('endedAt: $endedAt, ')
+          ..write('groupOrder: $groupOrder, ')
+          ..write('productOrder: $productOrder')
           ..write(')'))
         .toString();
   }
@@ -3725,6 +3801,8 @@ class Event extends DataClass implements Insertable<Event> {
     endsOn,
     booth,
     endedAt,
+    groupOrder,
+    productOrder,
   );
   @override
   bool operator ==(Object other) =>
@@ -3738,7 +3816,9 @@ class Event extends DataClass implements Insertable<Event> {
           other.startsOn == this.startsOn &&
           other.endsOn == this.endsOn &&
           other.booth == this.booth &&
-          other.endedAt == this.endedAt);
+          other.endedAt == this.endedAt &&
+          other.groupOrder == this.groupOrder &&
+          other.productOrder == this.productOrder);
 }
 
 class EventsCompanion extends UpdateCompanion<Event> {
@@ -3751,6 +3831,8 @@ class EventsCompanion extends UpdateCompanion<Event> {
   final Value<DateTime?> endsOn;
   final Value<String?> booth;
   final Value<DateTime?> endedAt;
+  final Value<String> groupOrder;
+  final Value<String> productOrder;
   final Value<int> rowid;
   const EventsCompanion({
     this.id = const Value.absent(),
@@ -3762,6 +3844,8 @@ class EventsCompanion extends UpdateCompanion<Event> {
     this.endsOn = const Value.absent(),
     this.booth = const Value.absent(),
     this.endedAt = const Value.absent(),
+    this.groupOrder = const Value.absent(),
+    this.productOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   EventsCompanion.insert({
@@ -3774,6 +3858,8 @@ class EventsCompanion extends UpdateCompanion<Event> {
     this.endsOn = const Value.absent(),
     this.booth = const Value.absent(),
     this.endedAt = const Value.absent(),
+    this.groupOrder = const Value.absent(),
+    this.productOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        updatedAt = Value(updatedAt),
@@ -3789,6 +3875,8 @@ class EventsCompanion extends UpdateCompanion<Event> {
     Expression<DateTime>? endsOn,
     Expression<String>? booth,
     Expression<DateTime>? endedAt,
+    Expression<String>? groupOrder,
+    Expression<String>? productOrder,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3801,6 +3889,8 @@ class EventsCompanion extends UpdateCompanion<Event> {
       if (endsOn != null) 'ends_on': endsOn,
       if (booth != null) 'booth': booth,
       if (endedAt != null) 'ended_at': endedAt,
+      if (groupOrder != null) 'group_order': groupOrder,
+      if (productOrder != null) 'product_order': productOrder,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3815,6 +3905,8 @@ class EventsCompanion extends UpdateCompanion<Event> {
     Value<DateTime?>? endsOn,
     Value<String?>? booth,
     Value<DateTime?>? endedAt,
+    Value<String>? groupOrder,
+    Value<String>? productOrder,
     Value<int>? rowid,
   }) {
     return EventsCompanion(
@@ -3827,6 +3919,8 @@ class EventsCompanion extends UpdateCompanion<Event> {
       endsOn: endsOn ?? this.endsOn,
       booth: booth ?? this.booth,
       endedAt: endedAt ?? this.endedAt,
+      groupOrder: groupOrder ?? this.groupOrder,
+      productOrder: productOrder ?? this.productOrder,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3861,6 +3955,12 @@ class EventsCompanion extends UpdateCompanion<Event> {
     if (endedAt.present) {
       map['ended_at'] = Variable<DateTime>(endedAt.value);
     }
+    if (groupOrder.present) {
+      map['group_order'] = Variable<String>(groupOrder.value);
+    }
+    if (productOrder.present) {
+      map['product_order'] = Variable<String>(productOrder.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3879,6 +3979,8 @@ class EventsCompanion extends UpdateCompanion<Event> {
           ..write('endsOn: $endsOn, ')
           ..write('booth: $booth, ')
           ..write('endedAt: $endedAt, ')
+          ..write('groupOrder: $groupOrder, ')
+          ..write('productOrder: $productOrder, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -10530,6 +10632,8 @@ typedef $$EventsTableCreateCompanionBuilder = EventsCompanion Function({
   Value<DateTime?> endsOn,
   Value<String?> booth,
   Value<DateTime?> endedAt,
+  Value<String> groupOrder,
+  Value<String> productOrder,
   Value<int> rowid,
 });
 typedef $$EventsTableUpdateCompanionBuilder = EventsCompanion Function({
@@ -10542,6 +10646,8 @@ typedef $$EventsTableUpdateCompanionBuilder = EventsCompanion Function({
   Value<DateTime?> endsOn,
   Value<String?> booth,
   Value<DateTime?> endedAt,
+  Value<String> groupOrder,
+  Value<String> productOrder,
   Value<int> rowid,
 });
 
@@ -10596,6 +10702,16 @@ class $$EventsTableFilterComposer
 
   ColumnFilters<DateTime> get endedAt => $composableBuilder(
     column: $table.endedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupOrder => $composableBuilder(
+    column: $table.groupOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get productOrder => $composableBuilder(
+    column: $table.productOrder,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -10653,6 +10769,16 @@ class $$EventsTableOrderingComposer
     column: $table.endedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get groupOrder => $composableBuilder(
+    column: $table.groupOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get productOrder => $composableBuilder(
+    column: $table.productOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$EventsTableAnnotationComposer
@@ -10690,6 +10816,16 @@ class $$EventsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get endedAt =>
       $composableBuilder(column: $table.endedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get groupOrder => $composableBuilder(
+    column: $table.groupOrder,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get productOrder => $composableBuilder(
+    column: $table.productOrder,
+    builder: (column) => column,
+  );
 }
 
 class $$EventsTableTableManager
@@ -10729,6 +10865,8 @@ class $$EventsTableTableManager
                 Value<DateTime?> endsOn = const Value.absent(),
                 Value<String?> booth = const Value.absent(),
                 Value<DateTime?> endedAt = const Value.absent(),
+                Value<String> groupOrder = const Value.absent(),
+                Value<String> productOrder = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EventsCompanion(
                 id: id,
@@ -10740,6 +10878,8 @@ class $$EventsTableTableManager
                 endsOn: endsOn,
                 booth: booth,
                 endedAt: endedAt,
+                groupOrder: groupOrder,
+                productOrder: productOrder,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -10753,6 +10893,8 @@ class $$EventsTableTableManager
                 Value<DateTime?> endsOn = const Value.absent(),
                 Value<String?> booth = const Value.absent(),
                 Value<DateTime?> endedAt = const Value.absent(),
+                Value<String> groupOrder = const Value.absent(),
+                Value<String> productOrder = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EventsCompanion.insert(
                 id: id,
@@ -10764,6 +10906,8 @@ class $$EventsTableTableManager
                 endsOn: endsOn,
                 booth: booth,
                 endedAt: endedAt,
+                groupOrder: groupOrder,
+                productOrder: productOrder,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

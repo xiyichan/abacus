@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
+import 'features/events/event_order_page.dart';
 import 'features/events/event_stock_page.dart';
 import 'features/events/events_page.dart';
 import 'features/orders/order_detail_page.dart';
@@ -34,6 +35,12 @@ GoRouter createRouter({ValueListenable<bool>? locked}) => GoRouter(
               path: '/pos',
               builder: (_, _) => const PosPage(),
               routes: [
+                // 收银台顺序：从分类栏的「排序」进来，返回回到收银台。
+                GoRoute(
+                  path: 'order/:eventId',
+                  builder: (_, state) =>
+                      EventOrderPage(eventId: state.pathParameters['eventId']!),
+                ),
                 GoRoute(
                   path: 'events',
                   builder: (_, _) => const EventsPage(),

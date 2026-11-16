@@ -474,6 +474,29 @@ void main() {
     expect(await expenses.watchExpenses(null).first, hasLength(1));
   });
 
+  test('每场单独存收银台顺序，新场次沿用最近一场的', () async {
+    final first = await inventory.createEvent(
+      name: 'CP29',
+      startsOn: DateTime(2026, 10, 1),
+    );
+    final plain = await inventory.createEvent(name: 'CP30');
+    Future<Event> load(String id) =>
+        (db.select(db.events)..where((t) => t.id.equals(id))).getSingle();
+    expect((await load(plain)).groupOrder, '');
+
+    await inventory.setEventOrder(first, groups: ['立牌', '徽章']);
+    await inventory.setEventOrder(first, products: ['p2', 'p1']);
+    expect(decodeOrder((await load(first)).groupOrder), ['立牌', '徽章']);
+    expect(decodeOrder((await load(first)).productOrder), ['p2', 'p1']);
+    // 改这一场不影响别的场次。
+    expect(decodeOrder((await load(plain)).groupOrder), isEmpty);
+
+    final next = await inventory.createEvent(name: 'CP31');
+    expect(decodeOrder((await load(next)).groupOrder), ['立牌', '徽章']);
+    expect(decodeOrder((await load(next)).productOrder), ['p2', 'p1']);
+    expect(decodeOrder('坏的'), isEmpty);
+  });
+
   test('订单号前缀可以自己改，不能和团队里其他设备重复', () async {
     final teams = TeamRepository(db, session);
     await catalog.saveProduct(

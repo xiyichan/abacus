@@ -19,6 +19,85 @@ void main() {
     expect(sections.last.items, ['明信片']);
   });
 
+  test('按场次的顺序排分组和组里的商品，没列出的排后面保持原顺序', () {
+    final sections = [
+      const MenuSection('徽章', ['a', 'b', 'c']),
+      const MenuSection('立牌', ['d', 'e']),
+      const MenuSection<String>(null, ['f']),
+    ];
+    final ordered = orderMenu(
+      sections,
+      groupOrder: [otherGroupKey, '立牌'],
+      productOrder: ['c', 'e', 'a'],
+      idOf: (s) => s,
+    );
+    expect([for (final s in ordered) s.title], [null, '立牌', '徽章']);
+    expect(ordered[1].items, ['e', 'd']);
+    expect(ordered[2].items, ['c', 'a', 'b']);
+    // 没调过顺序就原样。
+    expect(
+      orderMenu(
+        sections,
+        groupOrder: [],
+        productOrder: [],
+        idOf: (s) => s,
+      ).map((s) => s.title),
+      ['徽章', '立牌', null],
+    );
+  });
+
+  testWidgets('收银台按这一场的顺序显示，分类栏下面的「排序」能打开这一场的排序页', (tester) async {
+    await pumpApp(
+      tester,
+      size: const Size(1180, 820),
+      seed: (db, session) async {
+        final catalog = CatalogRepository(db, session);
+        final inventory = InventoryRepository(db, session);
+        final eventId = await inventory.createEvent(name: 'CP30');
+        for (final (name, tag) in [
+          ('徽章A', '徽章'),
+          ('徽章B', '徽章'),
+          ('立牌', '立牌'),
+        ]) {
+          await catalog.saveProduct(
+            ProductDraft(
+              name: name,
+              tags: tag,
+              variants: [VariantDraft(price: 100)],
+            ),
+          );
+        }
+        final ids = {
+          for (final p in await catalog.loadCatalog()) p.product.name: p,
+        };
+        for (final p in ids.values) {
+          await inventory.setEventQuantity(
+            variantId: p.variants.single.id,
+            eventId: eventId,
+            eventQuantity: 3,
+          );
+        }
+        await inventory.setEventOrder(
+          eventId,
+          groups: ['立牌', '徽章'],
+          products: [ids['徽章B']!.product.id],
+        );
+        await inventory.setCurrentEvent(eventId);
+      },
+    );
+    double top(String text) => tester.getTopLeft(find.text(text).first).dy;
+    double left(String text) => tester.getTopLeft(find.text(text)).dx;
+    // 分类栏：立牌在徽章前面；徽章组里 B 在 A 前面（平板上同一行，B 在左边）。
+    expect(top('立牌'), lessThan(top('徽章')));
+    expect(left('徽章B'), lessThan(left('徽章A')));
+
+    await tester.tap(find.text('排序'));
+    await settle(tester);
+    expect(find.text('收银台顺序 · CP30'), findsOneWidget);
+    expect(find.byTooltip('拖动排序'), findsNWidgets(2 + 3));
+    await unmountApp(tester);
+  });
+
   testWidgets('手机点菜：左边分类，点分类跳过去，直接加减，多规格选规格', (tester) async {
     final semantics = tester.ensureSemantics();
     await pumpApp(

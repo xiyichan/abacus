@@ -429,10 +429,33 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reorderProductsHint =>
-      '拖动右边的把手排序。收银台按这个顺序显示；没有设分类时，左边分类栏的顺序也跟着第一件商品走。';
+      '拖动右边的把手排序。这是商品列表的顺序，也是场次还没调过顺序时收银台的默认顺序；每一场收银台的顺序，在收银台左边分类栏最下面的「排序」里单独调。';
 
   @override
   String get done => '完成';
+
+  @override
+  String get eventOrderButton => '调整收银台顺序';
+
+  @override
+  String get more => '更多';
+
+  @override
+  String get reorderShort => '排序';
+
+  @override
+  String eventOrderTitle(String name) {
+    return '收银台顺序 · $name';
+  }
+
+  @override
+  String get eventOrderHint => '只改这一场，拖右边的把手排序。新建场次会沿用最近一场的顺序。';
+
+  @override
+  String get eventOrderGroups => '左边分类栏';
+
+  @override
+  String get eventOrderProducts => '商品';
 
   @override
   String get thisDevice => '本机设备';

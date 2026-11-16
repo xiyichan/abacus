@@ -869,7 +869,7 @@ abstract class AppLocalizations {
   /// No description provided for @reorderProductsHint.
   ///
   /// In zh, this message translates to:
-  /// **'拖动右边的把手排序。收银台按这个顺序显示；没有设分类时，左边分类栏的顺序也跟着第一件商品走。'**
+  /// **'拖动右边的把手排序。这是商品列表的顺序，也是场次还没调过顺序时收银台的默认顺序；每一场收银台的顺序，在收银台左边分类栏最下面的「排序」里单独调。'**
   String get reorderProductsHint;
 
   /// No description provided for @done.
@@ -877,6 +877,48 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'完成'**
   String get done;
+
+  /// No description provided for @eventOrderButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'调整收银台顺序'**
+  String get eventOrderButton;
+
+  /// No description provided for @more.
+  ///
+  /// In zh, this message translates to:
+  /// **'更多'**
+  String get more;
+
+  /// No description provided for @reorderShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序'**
+  String get reorderShort;
+
+  /// No description provided for @eventOrderTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'收银台顺序 · {name}'**
+  String eventOrderTitle(String name);
+
+  /// No description provided for @eventOrderHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'只改这一场，拖右边的把手排序。新建场次会沿用最近一场的顺序。'**
+  String get eventOrderHint;
+
+  /// No description provided for @eventOrderGroups.
+  ///
+  /// In zh, this message translates to:
+  /// **'左边分类栏'**
+  String get eventOrderGroups;
+
+  /// No description provided for @eventOrderProducts.
+  ///
+  /// In zh, this message translates to:
+  /// **'商品'**
+  String get eventOrderProducts;
 
   /// No description provided for @thisDevice.
   ///

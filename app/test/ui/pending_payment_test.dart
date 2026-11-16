@@ -115,6 +115,13 @@ void main() {
     await settle(tester);
     expect(find.text('请客人付款时在备注里填写'), findsNothing);
     expect(find.byTooltip('修改备注码'), findsNothing);
+    // 结账页上就能打开，打开后显示备注码；关回去再下单。
+    await tester.tap(find.text('付款备注码'));
+    await settle(tester);
+    expect(find.text('请客人付款时在备注里填写'), findsOneWidget);
+    await tester.tap(find.text('付款备注码'));
+    await settle(tester);
+    expect(find.text('请客人付款时在备注里填写'), findsNothing);
     await tester.tap(find.text('稍后确认收款'));
     await settle(tester);
 

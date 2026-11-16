@@ -102,6 +102,11 @@ class Events extends Table with SyncColumns {
 
   /// 结束（收摊）时间。结束时剩余库存退回家里；为 null 表示进行中。
   DateTimeColumn get endedAt => dateTime().nullable()();
+
+  /// 这一场收银台的顺序（JSON 字符串数组）：左边分类栏的分组 key、商品 id。
+  /// 为空时按商品库的顺序；每场单独调，新场次沿用上一场的。
+  TextColumn get groupOrder => text().withDefault(const Constant(''))();
+  TextColumn get productOrder => text().withDefault(const Constant(''))();
 }
 
 /// 库存流水。库存 = 同一 SKU + 位置下所有 [delta] 之和，只追加不修改。
