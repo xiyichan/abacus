@@ -64,6 +64,20 @@ class $TeamsTable extends Teams with TableInfo<$TeamsTable, Team> {
     requiredDuringInsert: false,
     defaultValue: const Constant('CNY'),
   );
+  static const VerificationMeta _paymentCodeEnabledMeta =
+      const VerificationMeta('paymentCodeEnabled');
+  @override
+  late final GeneratedColumn<bool> paymentCodeEnabled = GeneratedColumn<bool>(
+    'payment_code_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("payment_code_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -71,6 +85,7 @@ class $TeamsTable extends Teams with TableInfo<$TeamsTable, Team> {
     deleted,
     name,
     currency,
+    paymentCodeEnabled,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -117,6 +132,15 @@ class $TeamsTable extends Teams with TableInfo<$TeamsTable, Team> {
         currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
       );
     }
+    if (data.containsKey('payment_code_enabled')) {
+      context.handle(
+        _paymentCodeEnabledMeta,
+        paymentCodeEnabled.isAcceptableOrUnknown(
+          data['payment_code_enabled']!,
+          _paymentCodeEnabledMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -146,6 +170,10 @@ class $TeamsTable extends Teams with TableInfo<$TeamsTable, Team> {
         DriftSqlType.string,
         data['${effectivePrefix}currency'],
       )!,
+      paymentCodeEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}payment_code_enabled'],
+      )!,
     );
   }
 
@@ -163,12 +191,16 @@ class Team extends DataClass implements Insertable<Team> {
 
   /// ISO 4217 币种代码，国内默认 CNY。
   final String currency;
+
+  /// 扫码付款时显示付款备注码（请客人填在备注里方便对账）。默认关。
+  final bool paymentCodeEnabled;
   const Team({
     required this.id,
     required this.updatedAt,
     required this.deleted,
     required this.name,
     required this.currency,
+    required this.paymentCodeEnabled,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -178,6 +210,7 @@ class Team extends DataClass implements Insertable<Team> {
     map['deleted'] = Variable<bool>(deleted);
     map['name'] = Variable<String>(name);
     map['currency'] = Variable<String>(currency);
+    map['payment_code_enabled'] = Variable<bool>(paymentCodeEnabled);
     return map;
   }
 
@@ -188,6 +221,7 @@ class Team extends DataClass implements Insertable<Team> {
       deleted: Value(deleted),
       name: Value(name),
       currency: Value(currency),
+      paymentCodeEnabled: Value(paymentCodeEnabled),
     );
   }
 
@@ -202,6 +236,7 @@ class Team extends DataClass implements Insertable<Team> {
       deleted: serializer.fromJson<bool>(json['deleted']),
       name: serializer.fromJson<String>(json['name']),
       currency: serializer.fromJson<String>(json['currency']),
+      paymentCodeEnabled: serializer.fromJson<bool>(json['paymentCodeEnabled']),
     );
   }
   @override
@@ -213,6 +248,7 @@ class Team extends DataClass implements Insertable<Team> {
       'deleted': serializer.toJson<bool>(deleted),
       'name': serializer.toJson<String>(name),
       'currency': serializer.toJson<String>(currency),
+      'paymentCodeEnabled': serializer.toJson<bool>(paymentCodeEnabled),
     };
   }
 
@@ -222,12 +258,14 @@ class Team extends DataClass implements Insertable<Team> {
     bool? deleted,
     String? name,
     String? currency,
+    bool? paymentCodeEnabled,
   }) => Team(
     id: id ?? this.id,
     updatedAt: updatedAt ?? this.updatedAt,
     deleted: deleted ?? this.deleted,
     name: name ?? this.name,
     currency: currency ?? this.currency,
+    paymentCodeEnabled: paymentCodeEnabled ?? this.paymentCodeEnabled,
   );
   Team copyWithCompanion(TeamsCompanion data) {
     return Team(
@@ -236,6 +274,9 @@ class Team extends DataClass implements Insertable<Team> {
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
       name: data.name.present ? data.name.value : this.name,
       currency: data.currency.present ? data.currency.value : this.currency,
+      paymentCodeEnabled: data.paymentCodeEnabled.present
+          ? data.paymentCodeEnabled.value
+          : this.paymentCodeEnabled,
     );
   }
 
@@ -246,13 +287,15 @@ class Team extends DataClass implements Insertable<Team> {
           ..write('updatedAt: $updatedAt, ')
           ..write('deleted: $deleted, ')
           ..write('name: $name, ')
-          ..write('currency: $currency')
+          ..write('currency: $currency, ')
+          ..write('paymentCodeEnabled: $paymentCodeEnabled')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, updatedAt, deleted, name, currency);
+  int get hashCode =>
+      Object.hash(id, updatedAt, deleted, name, currency, paymentCodeEnabled);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -261,7 +304,8 @@ class Team extends DataClass implements Insertable<Team> {
           other.updatedAt == this.updatedAt &&
           other.deleted == this.deleted &&
           other.name == this.name &&
-          other.currency == this.currency);
+          other.currency == this.currency &&
+          other.paymentCodeEnabled == this.paymentCodeEnabled);
 }
 
 class TeamsCompanion extends UpdateCompanion<Team> {
@@ -270,6 +314,7 @@ class TeamsCompanion extends UpdateCompanion<Team> {
   final Value<bool> deleted;
   final Value<String> name;
   final Value<String> currency;
+  final Value<bool> paymentCodeEnabled;
   final Value<int> rowid;
   const TeamsCompanion({
     this.id = const Value.absent(),
@@ -277,6 +322,7 @@ class TeamsCompanion extends UpdateCompanion<Team> {
     this.deleted = const Value.absent(),
     this.name = const Value.absent(),
     this.currency = const Value.absent(),
+    this.paymentCodeEnabled = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TeamsCompanion.insert({
@@ -285,6 +331,7 @@ class TeamsCompanion extends UpdateCompanion<Team> {
     this.deleted = const Value.absent(),
     required String name,
     this.currency = const Value.absent(),
+    this.paymentCodeEnabled = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        updatedAt = Value(updatedAt),
@@ -295,6 +342,7 @@ class TeamsCompanion extends UpdateCompanion<Team> {
     Expression<bool>? deleted,
     Expression<String>? name,
     Expression<String>? currency,
+    Expression<bool>? paymentCodeEnabled,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -303,6 +351,8 @@ class TeamsCompanion extends UpdateCompanion<Team> {
       if (deleted != null) 'deleted': deleted,
       if (name != null) 'name': name,
       if (currency != null) 'currency': currency,
+      if (paymentCodeEnabled != null)
+        'payment_code_enabled': paymentCodeEnabled,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -313,6 +363,7 @@ class TeamsCompanion extends UpdateCompanion<Team> {
     Value<bool>? deleted,
     Value<String>? name,
     Value<String>? currency,
+    Value<bool>? paymentCodeEnabled,
     Value<int>? rowid,
   }) {
     return TeamsCompanion(
@@ -321,6 +372,7 @@ class TeamsCompanion extends UpdateCompanion<Team> {
       deleted: deleted ?? this.deleted,
       name: name ?? this.name,
       currency: currency ?? this.currency,
+      paymentCodeEnabled: paymentCodeEnabled ?? this.paymentCodeEnabled,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -343,6 +395,9 @@ class TeamsCompanion extends UpdateCompanion<Team> {
     if (currency.present) {
       map['currency'] = Variable<String>(currency.value);
     }
+    if (paymentCodeEnabled.present) {
+      map['payment_code_enabled'] = Variable<bool>(paymentCodeEnabled.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -357,6 +412,7 @@ class TeamsCompanion extends UpdateCompanion<Team> {
           ..write('deleted: $deleted, ')
           ..write('name: $name, ')
           ..write('currency: $currency, ')
+          ..write('paymentCodeEnabled: $paymentCodeEnabled, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8736,6 +8792,7 @@ typedef $$TeamsTableCreateCompanionBuilder = TeamsCompanion Function({
   Value<bool> deleted,
   required String name,
   Value<String> currency,
+  Value<bool> paymentCodeEnabled,
   Value<int> rowid,
 });
 typedef $$TeamsTableUpdateCompanionBuilder = TeamsCompanion Function({
@@ -8744,6 +8801,7 @@ typedef $$TeamsTableUpdateCompanionBuilder = TeamsCompanion Function({
   Value<bool> deleted,
   Value<String> name,
   Value<String> currency,
+  Value<bool> paymentCodeEnabled,
   Value<int> rowid,
 });
 
@@ -8777,6 +8835,11 @@ class $$TeamsTableFilterComposer extends Composer<_$AppDatabase, $TeamsTable> {
 
   ColumnFilters<String> get currency => $composableBuilder(
     column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get paymentCodeEnabled => $composableBuilder(
+    column: $table.paymentCodeEnabled,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -8814,6 +8877,11 @@ class $$TeamsTableOrderingComposer
     column: $table.currency,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get paymentCodeEnabled => $composableBuilder(
+    column: $table.paymentCodeEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TeamsTableAnnotationComposer
@@ -8839,6 +8907,11 @@ class $$TeamsTableAnnotationComposer
 
   GeneratedColumn<String> get currency =>
       $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<bool> get paymentCodeEnabled => $composableBuilder(
+    column: $table.paymentCodeEnabled,
+    builder: (column) => column,
+  );
 }
 
 class $$TeamsTableTableManager
@@ -8874,6 +8947,7 @@ class $$TeamsTableTableManager
                 Value<bool> deleted = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String> currency = const Value.absent(),
+                Value<bool> paymentCodeEnabled = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TeamsCompanion(
                 id: id,
@@ -8881,6 +8955,7 @@ class $$TeamsTableTableManager
                 deleted: deleted,
                 name: name,
                 currency: currency,
+                paymentCodeEnabled: paymentCodeEnabled,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -8890,6 +8965,7 @@ class $$TeamsTableTableManager
                 Value<bool> deleted = const Value.absent(),
                 required String name,
                 Value<String> currency = const Value.absent(),
+                Value<bool> paymentCodeEnabled = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TeamsCompanion.insert(
                 id: id,
@@ -8897,6 +8973,7 @@ class $$TeamsTableTableManager
                 deleted: deleted,
                 name: name,
                 currency: currency,
+                paymentCodeEnabled: paymentCodeEnabled,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

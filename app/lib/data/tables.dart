@@ -19,6 +19,10 @@ class Teams extends Table with SyncColumns {
 
   /// ISO 4217 币种代码，国内默认 CNY。
   TextColumn get currency => text().withDefault(const Constant('CNY'))();
+
+  /// 扫码付款时显示付款备注码（请客人填在备注里方便对账）。默认关。
+  BoolColumn get paymentCodeEnabled =>
+      boolean().withDefault(const Constant(false))();
 }
 
 /// 设备。[shortCode] 是 6 位字母数字设备号，前两位用作订单号前缀，如 K7-048。

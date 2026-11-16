@@ -39,7 +39,7 @@
   "noStockTitle": "本场还没有备货",
   "noStockBody": "在「备货」里选择要带到本场的商品和数量。",
   "goStock": "去备货",
-  "stockLeft": "剩 {count}",
+  "stockLeft": "余 {count}",
   "@stockLeft": {
     "placeholders": {
       "count": {
@@ -221,6 +221,30 @@
       }
     }
   },
+  "deleteEvent": "删除场次",
+  "deleteEventTitle": "删除「{name}」？",
+  "@deleteEventTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteEventBody": "删除后场次列表里不再显示。",
+  "deleteEventWithOrders": "这个场次有 {count} 单订单。删除后场次、订单和备货都不再显示，「全部场次」的统计也不再计入。",
+  "@deleteEventWithOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paymentCodeSwitch": "付款备注码",
+  "paymentCodeSwitchFooter": "打开后，扫码付款时显示一串备注码（默认是单号），请客人付款时填在备注里，事后好对上是哪一单。团队里的设备一起生效。",
+  "paymentPendingBodyPlain": "核对到这笔付款后，点下面的按钮。",
+  "reorderProducts": "调整顺序",
+  "reorderProductsHint": "拖动右边的把手排序。收银台按这个顺序显示；没有设分类时，左边分类栏的顺序也跟着第一件商品走。",
+  "done": "完成",
   "thisDevice": "本机设备",
   "priceFrom": "{price}起",
   "@priceFrom": {

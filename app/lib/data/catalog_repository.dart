@@ -223,10 +223,43 @@ class CatalogRepository {
     }
   });
 
+  /// 按 [ids] 的顺序重新排商品（收银台和商品列表都按这个顺序），只改顺序变了的。
+  Future<void> reorderProducts(List<String> ids) => _db.transaction(() async {
+    final current = {
+      for (final p in await (_db.select(
+        _db.products,
+      )..where((t) => t.teamId.equals(_session.teamId))).get())
+        p.id: p,
+    };
+    for (final (i, id) in ids.indexed) {
+      if (current[id]?.sortOrder == i) continue;
+      await (_db.update(_db.products)..where((t) => t.id.equals(id))).write(
+        ProductsCompanion(
+          sortOrder: Value(i),
+          updatedAt: Value(_session.clock.tick()),
+        ),
+      );
+    }
+  });
+
   /// 新建或更新商品。规格被移除时软删除；家里库存有变化时记一条盘点流水。
   Future<String> saveProduct(ProductDraft draft) {
     return _db.transaction(() async {
       final productId = draft.id ?? newId();
+      // 新商品排在最后；改商品时不动顺序（upsert 只更新给了值的列）。
+      final sortOrder = draft.id != null
+          ? const Value<int>.absent()
+          : Value(
+              (await (_db.selectOnly(_db.products)
+                            ..addColumns([_db.products.sortOrder.max()])
+                            ..where(
+                              _db.products.teamId.equals(_session.teamId),
+                            ))
+                          .map((r) => r.read(_db.products.sortOrder.max()))
+                          .getSingle() ??
+                      -1) +
+                  1,
+            );
       final ts = _session.clock.tick();
       await _db
           .into(_db.products)
@@ -241,6 +274,7 @@ class CatalogRepository {
               imagePath: Value(draft.imagePath),
               tags: Value(draft.tags.trim()),
               categoryIds: Value(draft.categoryIds.join(',')),
+              sortOrder: sortOrder,
             ),
           );
 

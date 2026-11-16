@@ -35,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.named(String name) : super(driftDatabase(name: name));
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -60,6 +60,7 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 9) await m.addColumn(orders, orders.paymentCode);
       if (from < 10) await m.addColumn(devices, devices.orderPrefix);
+      if (from < 11) await m.addColumn(teams, teams.paymentCodeEnabled);
       if (from < 3) {
         await installOpLogTriggers(this);
         // 旧数据补记操作日志：空更新会触发触发器，把每一行记成本机的一条操作。
@@ -101,6 +102,14 @@ class AppDatabase extends _$AppDatabase {
 
   /// 某个位置（家里或某场次）下各 SKU 的当前库存。
   /// 只包含在该位置有过流水的 SKU，可据此判断“这件货有没有带到本场”。
+  /// 删掉的场次的 id，用于把这些场次的订单、支出排除在「全部场次」之外。
+  Expression<bool> notInDeletedEvent(GeneratedColumn<String> eventId) =>
+      eventId.isNotInQuery(
+        selectOnly(events)
+          ..addColumns([events.id])
+          ..where(events.deleted.equals(true)),
+      );
+
   Future<Map<String, int>> stockAt(String location) async =>
       Map.fromEntries(await _stockQuery(location).get());
 

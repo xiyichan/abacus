@@ -54,6 +54,7 @@ class OrderDetailPage extends ConsumerWidget {
           error: (e, s) => Scaffold(appBar: AppBar(), body: asyncError(e, s)),
           data: (detail) {
             final o = detail.order;
+            final codeEnabled = ref.watch(paymentCodeEnabledProvider);
             return Scaffold(
               appBar: AppBar(title: Text('${l10n.orderDetail} ${o.number}')),
               body: Align(
@@ -83,7 +84,11 @@ class OrderDetailPage extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  l10n.paymentPendingBody(orderPaymentCode(o)),
+                                  codeEnabled
+                                      ? l10n.paymentPendingBody(
+                                          orderPaymentCode(o),
+                                        )
+                                      : l10n.paymentPendingBodyPlain,
                                 ),
                                 const SizedBox(height: 12),
                                 FilledButton.icon(
@@ -157,10 +162,12 @@ class OrderDetailPage extends ConsumerWidget {
                       GroupedSection(
                         margin: _sectionMargin,
                         children: [
-                          LabeledRow(
-                            label: l10n.paymentCode,
-                            value: orderPaymentCode(o),
-                          ),
+                          // 备注码关着、也没手动改过时不显示。
+                          if (codeEnabled || o.paymentCode != null)
+                            LabeledRow(
+                              label: l10n.paymentCode,
+                              value: orderPaymentCode(o),
+                            ),
                           for (final p in detail.payments) ...[
                             LabeledRow(
                               label: l10n.paymentMethod,

@@ -30,6 +30,53 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
   /// 只看某个分类；null 为全部。
   String? _categoryId;
 
+  /// 调整顺序模式：整个列表可以拖动排序。
+  bool _sorting = false;
+
+  /// 拖完还没等数据库回来时先按新顺序显示，免得闪回去。
+  List<CatalogProduct>? _reordered;
+
+  void _reorder(List<CatalogProduct> list, int from, int to) {
+    final order = [...list];
+    order.insert(to, order.removeAt(from));
+    setState(() => _reordered = order);
+    ref.read(catalogRepositoryProvider).reorderProducts([
+      for (final p in order) p.product.id,
+    ]);
+  }
+
+  List<Widget> _sortSlivers(List<CatalogProduct> items) {
+    final theme = Theme.of(context);
+    final list = _reordered ?? items;
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(Gap.xl, 0, Gap.xl, Gap.sm),
+        sliver: SliverToBoxAdapter(
+          child: Text(
+            AppLocalizations.of(context).reorderProductsHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: Gap.lg),
+        sliver: SliverReorderableList(
+          itemCount: list.length,
+          onReorderItem: (from, to) => _reorder(list, from, to),
+          itemBuilder: (context, i) => _SortRow(
+            key: ValueKey(list[i].product.id),
+            index: i,
+            item: list[i],
+            first: i == 0,
+            last: i == list.length - 1,
+          ),
+        ),
+      ),
+    ];
+  }
+
   bool _matches(
     CatalogProduct item,
     String? categoryId,
@@ -59,10 +106,36 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
     final categories = {for (final c in categoryList) c.id: c};
     // 选中的分类被删掉后回到全部。
     final categoryId = categories.containsKey(_categoryId) ? _categoryId : null;
+    ref.listen(catalogProvider, (_, _) {
+      if (_reordered != null) setState(() => _reordered = null);
+    });
+    final items = catalog.value ?? const <CatalogProduct>[];
+    if (_sorting && items.isNotEmpty) {
+      return LargeTitlePage(
+        title: l10n.reorderProducts,
+        leading: const TeamSwitcherButton(separator: true),
+        actions: [
+          BarButton(
+            icon: CupertinoIcons.checkmark,
+            tooltip: l10n.done,
+            label: l10n.done,
+            onPressed: () => setState(() => _sorting = false),
+          ),
+        ],
+        slivers: _sortSlivers(items),
+      );
+    }
     return LargeTitlePage(
       title: l10n.navProducts,
       leading: const TeamSwitcherButton(separator: true),
       actions: [
+        if (items.length > 1)
+          BarButton(
+            icon: CupertinoIcons.arrow_up_arrow_down,
+            tooltip: l10n.reorderProducts,
+            label: context.isTablet ? l10n.reorderProducts : null,
+            onPressed: () => setState(() => _sorting = true),
+          ),
         BarButton(
           icon: CupertinoIcons.square_grid_2x2,
           tooltip: l10n.manageCategories,
@@ -300,6 +373,78 @@ class _ProductTile extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 调整顺序时的一行：缩略图、名字，右边是拖动把手。整列是一张圆角卡片。
+class _SortRow extends StatelessWidget {
+  const _SortRow({
+    super.key,
+    required this.index,
+    required this.item,
+    required this.first,
+    required this.last,
+  });
+
+  final int index;
+  final CatalogProduct item;
+  final bool first;
+  final bool last;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    const r = Radius.circular(Radii.card);
+    final p = item.product;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Material(
+          color: theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.vertical(
+            top: first ? r : Radius.zero,
+            bottom: last ? r : Radius.zero,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: ListTile(
+            contentPadding: const EdgeInsetsDirectional.only(
+              start: Gap.lg,
+              end: Gap.xs,
+            ),
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(Radii.sm),
+              child: SizedBox.square(
+                dimension: 44,
+                child: StoredImage(
+                  p.imagePath,
+                  placeholder: NamePlaceholder(p.name),
+                ),
+              ),
+            ),
+            title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+            trailing: ReorderableDragStartListener(
+              index: index,
+              child: Tooltip(
+                message: l10n.moveHandle,
+                child: SizedBox.square(
+                  dimension: minTapSize,
+                  child: Icon(
+                    CupertinoIcons.line_horizontal_3,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (!last)
+          ColoredBox(
+            color: theme.colorScheme.surfaceContainer,
+            child: const Divider(height: 1, indent: Gap.lg + 44 + Gap.lg),
+          ),
+      ],
     );
   }
 }

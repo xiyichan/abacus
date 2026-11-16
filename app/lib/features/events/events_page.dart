@@ -13,7 +13,7 @@ import '../../ui/empty_state.dart';
 import 'end_event.dart';
 import 'event_dates.dart';
 
-enum _EventAction { edit, end, reopen }
+enum _EventAction { edit, end, reopen, delete }
 
 class _EventTile extends ConsumerWidget {
   const _EventTile({required this.event, required this.isCurrent});
@@ -76,6 +76,7 @@ class _EventTile extends ConsumerWidget {
               _EventAction.edit => _editEvent(context, ref, event: event),
               _EventAction.end => confirmEndEvent(context, ref, event),
               _EventAction.reopen => confirmReopenEvent(context, ref, event),
+              _EventAction.delete => confirmDeleteEvent(context, ref, event),
             },
             itemBuilder: (_) => [
               PopupMenuItem(
@@ -92,6 +93,13 @@ class _EventTile extends ConsumerWidget {
                   value: _EventAction.end,
                   child: Text(l10n.endEvent),
                 ),
+              PopupMenuItem(
+                value: _EventAction.delete,
+                child: Text(
+                  l10n.deleteEvent,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
             ],
           ),
         ],

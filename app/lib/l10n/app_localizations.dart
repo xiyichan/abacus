@@ -293,7 +293,7 @@ abstract class AppLocalizations {
   /// No description provided for @stockLeft.
   ///
   /// In zh, this message translates to:
-  /// **'剩 {count}'**
+  /// **'余 {count}'**
   String stockLeft(int count);
 
   /// No description provided for @chooseVariant.
@@ -817,6 +817,66 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'库存不够，没有下单：{names}。可能刚被其他设备卖掉了，请调整购物车。'**
   String checkoutOutOfStock(String names);
+
+  /// No description provided for @deleteEvent.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除场次'**
+  String get deleteEvent;
+
+  /// No description provided for @deleteEventTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除「{name}」？'**
+  String deleteEventTitle(String name);
+
+  /// No description provided for @deleteEventBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除后场次列表里不再显示。'**
+  String get deleteEventBody;
+
+  /// No description provided for @deleteEventWithOrders.
+  ///
+  /// In zh, this message translates to:
+  /// **'这个场次有 {count} 单订单。删除后场次、订单和备货都不再显示，「全部场次」的统计也不再计入。'**
+  String deleteEventWithOrders(int count);
+
+  /// No description provided for @paymentCodeSwitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'付款备注码'**
+  String get paymentCodeSwitch;
+
+  /// No description provided for @paymentCodeSwitchFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开后，扫码付款时显示一串备注码（默认是单号），请客人付款时填在备注里，事后好对上是哪一单。团队里的设备一起生效。'**
+  String get paymentCodeSwitchFooter;
+
+  /// No description provided for @paymentPendingBodyPlain.
+  ///
+  /// In zh, this message translates to:
+  /// **'核对到这笔付款后，点下面的按钮。'**
+  String get paymentPendingBodyPlain;
+
+  /// No description provided for @reorderProducts.
+  ///
+  /// In zh, this message translates to:
+  /// **'调整顺序'**
+  String get reorderProducts;
+
+  /// No description provided for @reorderProductsHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'拖动右边的把手排序。收银台按这个顺序显示；没有设分类时，左边分类栏的顺序也跟着第一件商品走。'**
+  String get reorderProductsHint;
+
+  /// No description provided for @done.
+  ///
+  /// In zh, this message translates to:
+  /// **'完成'**
+  String get done;
 
   /// No description provided for @thisDevice.
   ///

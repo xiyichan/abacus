@@ -49,7 +49,7 @@ class ExpenseRepository {
             t.teamId.equals(_session.teamId) &
             t.deleted.equals(false) &
             (eventId == null
-                ? const Constant(true)
+                ? (t.eventId.isNull() | _db.notInDeletedEvent(t.eventId))
                 : t.eventId.equals(eventId)),
       )
       ..orderBy([

@@ -174,6 +174,9 @@ void main() {
     await db.customStatement('ALTER TABLE products DROP COLUMN category_ids');
     await db.customStatement('ALTER TABLE orders DROP COLUMN payment_code');
     await db.customStatement('ALTER TABLE devices DROP COLUMN order_prefix');
+    await db.customStatement(
+      'ALTER TABLE teams DROP COLUMN payment_code_enabled',
+    );
     await db.customStatement('PRAGMA user_version = 3');
     await db.close();
 

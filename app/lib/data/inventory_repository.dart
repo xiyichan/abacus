@@ -99,6 +99,22 @@ class InventoryRepository {
     }
   });
 
+  /// 删除场次（软删除，数据还在，其他设备同步后也看不到）。订单、备货和支出都留着，
+  /// 但「全部场次」的统计和支出不再计入。删的是当前场次时取消当前场次。
+  Future<void> deleteEvent(String eventId) => _db.transaction(() async {
+    await (_db.update(_db.events)..where((t) => t.id.equals(eventId))).write(
+      EventsCompanion(
+        deleted: const Value(true),
+        updatedAt: Value(_session.clock.tick()),
+      ),
+    );
+    if (await _db.getSetting(_currentEventKey) == eventId) {
+      await (_db.delete(
+        _db.localSettings,
+      )..where((t) => t.key.equals(_currentEventKey))).go();
+    }
+  });
+
   /// 重新开启已结束的场次。
   ///
   /// 旧版本结束时会把剩余退回家里（reason = close），这里一并撤销，货回到场次里。

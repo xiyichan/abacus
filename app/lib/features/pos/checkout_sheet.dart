@@ -280,7 +280,10 @@ class _CheckoutSheetState extends ConsumerState<CheckoutSheet> {
                         ),
                       ),
               ),
-            if (method != null && !isCash && _paymentCode != null) ...[
+            if (method != null &&
+                !isCash &&
+                _paymentCode != null &&
+                ref.watch(paymentCodeEnabledProvider)) ...[
               const SizedBox(height: 16),
               _PaymentCode(code: _paymentCode!, onEdit: _editPaymentCode),
             ],

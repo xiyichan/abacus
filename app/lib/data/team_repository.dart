@@ -31,6 +31,15 @@ class TeamRepository {
         ),
       );
 
+  /// 开关付款备注码（整个团队一起生效）。
+  Future<void> setPaymentCodeEnabled(bool enabled) =>
+      (_db.update(_db.teams)..where((t) => t.id.equals(_session.teamId))).write(
+        TeamsCompanion(
+          paymentCodeEnabled: Value(enabled),
+          updatedAt: Value(_session.clock.tick()),
+        ),
+      );
+
   /// 改本机的订单号前缀；传空字符串恢复默认（设备号前两位）。
   /// 前缀不合格式时抛 [FormatException]；和团队里其他设备撞了时抛 [OrderPrefixTakenException]。
   Future<void> setOrderPrefix(String prefix) async {

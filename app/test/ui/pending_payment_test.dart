@@ -2,12 +2,19 @@ import 'package:abacus/data/catalog_repository.dart';
 import 'package:abacus/data/database.dart';
 import 'package:abacus/data/inventory_repository.dart';
 import 'package:abacus/data/session.dart';
+import 'package:abacus/data/team_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers.dart';
 
 Future<void> _seed(AppDatabase db, Session session) async {
+  await _seedWithoutCode(db, session);
+  await TeamRepository(db, session).setPaymentCodeEnabled(true);
+}
+
+/// 付款备注码默认关。
+Future<void> _seedWithoutCode(AppDatabase db, Session session) async {
   final catalog = CatalogRepository(db, session);
   final inventory = InventoryRepository(db, session);
   await catalog.saveProduct(
@@ -90,6 +97,33 @@ void main() {
     await tester.tap(find.text('${app.session.orderPrefix}-001'));
     await settle(tester);
     expect(find.text('核对到客人备注 小林8899 的付款后，点下面的按钮。'), findsOneWidget);
+    await unmountApp(tester);
+  });
+
+  testWidgets('付款备注码默认关：结账不显示，待确认的订单也不提备注码', (tester) async {
+    final app = await pumpApp(
+      tester,
+      size: const Size(1180, 820),
+      seed: _seedWithoutCode,
+    );
+
+    await tester.tap(find.text('徽章'));
+    await settle(tester);
+    await tester.tap(find.widgetWithText(FilledButton, '结账'));
+    await settle(tester);
+    await tester.tap(find.widgetWithText(ChoiceChip, '微信'));
+    await settle(tester);
+    expect(find.text('请客人付款时在备注里填写'), findsNothing);
+    expect(find.byTooltip('修改备注码'), findsNothing);
+    await tester.tap(find.text('稍后确认收款'));
+    await settle(tester);
+
+    await tester.tap(find.text('订单'));
+    await settle(tester);
+    await tester.tap(find.text('${app.session.orderPrefix}-001'));
+    await settle(tester);
+    expect(find.text('核对到这笔付款后，点下面的按钮。'), findsOneWidget);
+    expect(find.text('付款备注码'), findsNothing);
     await unmountApp(tester);
   });
 }

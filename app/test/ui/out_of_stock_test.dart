@@ -34,7 +34,7 @@ void main() {
 
     await tester.tap(find.text('徽章'));
     await settle(tester);
-    expect(find.text('剩 0'), findsOneWidget);
+    expect(find.text('余 0'), findsOneWidget);
     await tester.tap(find.text('徽章'));
     await settle(tester);
     expect(find.textContaining('「徽章」本场没有剩余了'), findsOneWidget);

@@ -95,6 +95,18 @@ class PaymentMethodsPage extends ConsumerWidget {
                   ),
               ],
             ),
+            GroupedSection(
+              footer: l10n.paymentCodeSwitchFooter,
+              children: [
+                SwitchListTile.adaptive(
+                  title: Text(l10n.paymentCodeSwitch),
+                  value: ref.watch(paymentCodeEnabledProvider),
+                  activeTrackColor: Theme.of(context).colorScheme.primary,
+                  onChanged: (v) =>
+                      ref.read(teamRepositoryProvider).setPaymentCodeEnabled(v),
+                ),
+              ],
+            ),
           ],
         ),
       ),

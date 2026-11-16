@@ -130,6 +130,11 @@ final teamRepositoryProvider = Provider(
 final teamProvider = StreamProvider(
   (ref) => ref.watch(teamRepositoryProvider).watchTeam(),
 );
+
+/// 扫码付款时是否显示付款备注码（团队设置，默认关）。
+final paymentCodeEnabledProvider = Provider(
+  (ref) => ref.watch(teamProvider).value?.paymentCodeEnabled ?? false,
+);
 final devicesProvider = StreamProvider(
   (ref) => ref.watch(teamRepositoryProvider).watchDevices(),
 );

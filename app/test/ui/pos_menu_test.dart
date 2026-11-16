@@ -108,7 +108,7 @@ void main() {
     await frames();
     expect(inItem(postcard, find.text('1')), findsOneWidget);
     expect(inItem(otherTab, find.text('1')), findsOneWidget);
-    expect(inItem(postcard, find.text('剩 4')), findsOneWidget);
+    expect(inItem(postcard, find.text('余 4')), findsOneWidget);
 
     // 多规格：到“色纸”里选规格，选一个加进购物车。
     await tester.tap(find.text('色纸').first);

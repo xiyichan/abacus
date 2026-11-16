@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/stock.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
+import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/input_dialog.dart';
+import '../../ui/media.dart';
 import '../../ui/money.dart';
 import 'end_event.dart';
 
@@ -95,7 +97,7 @@ class EventStockPage extends ConsumerWidget {
               final components = p.components.values.firstOrNull ?? const [];
               tiles.add(
                 ListTile(
-                  leading: const Icon(Icons.collections_bookmark_outlined),
+                  leading: _Thumbnail(p.product.imagePath, p.product.name),
                   title: Text(p.product.name),
                   subtitle: Text(
                     l10n.bundleAvailable(bundleAvailable(components, atEvent)),
@@ -108,6 +110,7 @@ class EventStockPage extends ConsumerWidget {
               tiles.add(
                 _StockRow(
                   name: p.displayName(v),
+                  imagePath: p.product.imagePath,
                   atEvent: atEvent[v.id],
                   onChanged: (q) => repo.setEventQuantity(
                     variantId: v.id,
@@ -132,11 +135,13 @@ class EventStockPage extends ConsumerWidget {
 class _StockRow extends StatelessWidget {
   const _StockRow({
     required this.name,
+    required this.imagePath,
     required this.atEvent,
     required this.onChanged,
   });
 
   final String name;
+  final String? imagePath;
 
   /// null 表示还没带到本场。
   final int? atEvent;
@@ -163,6 +168,7 @@ class _StockRow extends StatelessWidget {
     final theme = Theme.of(context);
     final current = atEvent ?? 0;
     return ListTile(
+      leading: _Thumbnail(imagePath, name),
       title: Text(
         name,
         style: current < 0 ? TextStyle(color: theme.colorScheme.error) : null,
@@ -195,4 +201,21 @@ class _StockRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 商品缩略图，没有图片时是首字色块，和商品列表一样。
+class _Thumbnail extends StatelessWidget {
+  const _Thumbnail(this.imagePath, this.name);
+
+  final String? imagePath;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(Radii.sm),
+    child: SizedBox.square(
+      dimension: 44,
+      child: StoredImage(imagePath, placeholder: NamePlaceholder(name)),
+    ),
+  );
 }

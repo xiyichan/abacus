@@ -559,7 +559,7 @@ class SalesRepository {
               ..where(
                 (t) =>
                     (eventId == null
-                        ? const Constant(true)
+                        ? _db.notInDeletedEvent(t.eventId)
                         : t.eventId.equals(eventId)) &
                     t.deleted.equals(false),
               )
@@ -600,6 +600,7 @@ class SalesRepository {
   /// （包括其他设备同步过来的）时自动重算。
   Stream<SalesStats> watchEventStats(String? eventId) => _db.watchTables(
     {
+      _db.events,
       _db.orders,
       _db.orderItems,
       _db.orderPayments,

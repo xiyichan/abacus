@@ -153,6 +153,33 @@ Future<bool> confirmReopenEvent(
   return true;
 }
 
+/// 删除场次前确认；有订单时说清楚订单会跟着不再显示。
+Future<bool> confirmDeleteEvent(
+  BuildContext context,
+  WidgetRef ref,
+  Event event,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final orders = await ref
+      .read(salesRepositoryProvider)
+      .watchOrders(event.id)
+      .first;
+  if (!context.mounted) return false;
+  final ok = await confirmDialog(
+    context,
+    title: l10n.deleteEventTitle(event.name),
+    body: orders.isEmpty
+        ? l10n.deleteEventBody
+        : l10n.deleteEventWithOrders(orders.length),
+    confirmLabel: l10n.delete,
+    cancelLabel: l10n.cancel,
+    destructive: true,
+  );
+  if (!ok) return false;
+  await ref.read(inventoryRepositoryProvider).deleteEvent(event.id);
+  return true;
+}
+
 /// 切换或新建场次前：如果上一场还没结束且还有剩余货，问一下要不要先结束它。
 Future<void> promptEndPrevious(
   BuildContext context,

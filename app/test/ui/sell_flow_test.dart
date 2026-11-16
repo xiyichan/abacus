@@ -49,12 +49,12 @@ void main() {
     );
 
     expect(find.text('CP30'), findsOneWidget);
-    expect(find.text('剩 5'), findsOneWidget);
+    expect(find.text('余 5'), findsOneWidget);
 
     await tester.tap(find.text('徽章'));
     await tester.tap(find.text('徽章').first);
     await settle(tester);
-    expect(find.text('剩 3'), findsOneWidget);
+    expect(find.text('余 3'), findsOneWidget);
     // 平板默认收起侧边购物车，底部购物车条显示件数和合计。
     expect(find.text('2 件 · ¥30.00'), findsOneWidget);
 
@@ -75,7 +75,7 @@ void main() {
     await tester.tap(find.text('确认收款'));
     await settle(tester);
     expect(find.text('已保存订单 ${app.session.orderPrefix}-001'), findsOneWidget);
-    expect(find.text('剩 3'), findsOneWidget);
+    expect(find.text('余 3'), findsOneWidget);
 
     await tester.tap(find.text('订单'));
     await settle(tester);

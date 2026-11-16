@@ -405,6 +405,43 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get deleteEvent => 'Delete event';
+
+  @override
+  String deleteEventTitle(String name) {
+    return 'Delete “$name”?';
+  }
+
+  @override
+  String get deleteEventBody => 'It will no longer appear in the event list.';
+
+  @override
+  String deleteEventWithOrders(int count) {
+    return 'This event has $count orders. After deleting, the event, its orders and stock are hidden and no longer counted in all-event stats.';
+  }
+
+  @override
+  String get paymentCodeSwitch => 'Payment reference code';
+
+  @override
+  String get paymentCodeSwitchFooter =>
+      'When on, QR payments show a reference code (the order number by default) for the customer to put in the payment note, so you can match payments to orders later. Applies to every device in the team.';
+
+  @override
+  String get paymentPendingBodyPlain =>
+      'Once you\'ve found this payment, tap the button below.';
+
+  @override
+  String get reorderProducts => 'Reorder';
+
+  @override
+  String get reorderProductsHint =>
+      'Drag the handles to reorder. The till shows products in this order; without categories, the sidebar groups follow the order of their first product.';
+
+  @override
+  String get done => 'Done';
+
+  @override
   String get thisDevice => 'This device';
 
   @override

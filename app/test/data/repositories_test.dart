@@ -1,5 +1,6 @@
 import 'package:abacus/data/catalog_repository.dart';
 import 'package:abacus/data/database.dart';
+import 'package:abacus/data/expense_repository.dart';
 import 'package:abacus/data/inventory_repository.dart';
 import 'package:abacus/data/sales_repository.dart';
 import 'package:abacus/data/session.dart';
@@ -389,6 +390,88 @@ void main() {
       ),
       throwsA(isA<OutOfStockException>()),
     );
+  });
+
+  test('商品可以调整顺序；新商品排在最后', () async {
+    for (final name in ['C', 'A', 'B']) {
+      await catalog.saveProduct(
+        ProductDraft(name: name, variants: [VariantDraft(price: 100)]),
+      );
+    }
+    List<String> names(List<CatalogProduct> items) => [
+      for (final p in items) p.product.name,
+    ];
+    expect(names(await catalog.loadCatalog()), ['C', 'A', 'B']);
+
+    final byName = {
+      for (final p in await catalog.loadCatalog()) p.product.name: p.product.id,
+    };
+    await catalog.reorderProducts([byName['B']!, byName['C']!, byName['A']!]);
+    expect(names(await catalog.loadCatalog()), ['B', 'C', 'A']);
+
+    // 改商品不动顺序，新商品排最后。
+    await catalog.saveProduct(
+      ProductDraft(
+        id: byName['B'],
+        name: 'B2',
+        variants: [
+          VariantDraft(
+            id: (await catalog.loadCatalog()).first.variants.single.id,
+            price: 200,
+          ),
+        ],
+      ),
+    );
+    await catalog.saveProduct(
+      ProductDraft(name: 'D', variants: [VariantDraft(price: 100)]),
+    );
+    expect(names(await catalog.loadCatalog()), ['B2', 'C', 'A', 'D']);
+  });
+
+  test('删除场次：软删除，取消当前场次，全部场次的统计和支出不再计入', () async {
+    await catalog.saveProduct(
+      ProductDraft(name: '徽章', variants: [VariantDraft(price: 1500)]),
+    );
+    final v = (await catalog.loadCatalog()).single.variants.single;
+    final keep = await inventory.createEvent(name: 'CP30');
+    final gone = await inventory.createEvent(name: 'CP30 重复');
+    final expenses = ExpenseRepository(db, session);
+    for (final e in [keep, gone]) {
+      await inventory.setEventQuantity(
+        variantId: v.id,
+        eventId: e,
+        eventQuantity: 5,
+      );
+      await sales.placeOrder(
+        eventId: e,
+        lines: [
+          SaleLine(variantId: v.id, name: '徽章', unitPrice: 1500, quantity: 1),
+        ],
+        paymentMethod: await cash(),
+      );
+      await expenses.addExpense(
+        eventId: e,
+        category: 'booth',
+        amount: 10000,
+        spentOn: DateTime(2026, 11, 16),
+      );
+    }
+    await inventory.setCurrentEvent(gone);
+    expect((await sales.watchEventStats(null).first).revenue, 3000);
+
+    await inventory.deleteEvent(gone);
+    expect([for (final e in await inventory.watchEvents().first) e.id], [keep]);
+    expect(await inventory.watchCurrentEventId().first, isNull);
+    final row = await (db.select(
+      db.events,
+    )..where((t) => t.id.equals(gone))).getSingle();
+    expect(row.deleted, isTrue);
+    expect((await sales.watchEventStats(null).first).revenue, 1500);
+    expect(
+      [for (final r in await sales.watchEventComparison().first) r.event.id],
+      [keep],
+    );
+    expect(await expenses.watchExpenses(null).first, hasLength(1));
   });
 
   test('订单号前缀可以自己改，不能和团队里其他设备重复', () async {
