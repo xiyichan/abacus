@@ -217,7 +217,7 @@ void main() {
     expect(rows.length, 3);
     expect(
       rows[0],
-      startsWith('单号,时间,商品,件数,小计,优惠,实收,支付方式,付款备注码,收款状态,收到现金,找零,状态'),
+      startsWith('单号,时间,商品,件数,小计,优惠,实收,支付方式,付款备注,收款状态,收到现金,找零,状态'),
     );
     final first = rows[1].split(',');
     expect(first[0], '$prefix-001');

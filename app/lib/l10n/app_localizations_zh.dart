@@ -411,15 +411,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String deleteEventWithOrders(int count) {
-    return '这个场次有 $count 单订单。删除后场次、订单和备货都不再显示，「全部场次」的统计也不再计入。';
+    return '这个场次有 $count 单订单。删除后场次、订单、备货和统计都不再显示。';
   }
 
   @override
-  String get paymentCodeSwitch => '付款备注码';
+  String get paymentCodeSwitch => '付款备注';
 
   @override
   String get paymentCodeSwitchFooter =>
-      '打开后，扫码付款时显示一串备注码（默认是单号），请客人付款时填在备注里，事后好对上是哪一单。团队里的设备一起生效。';
+      '打开后，扫码付款时显示一串付款备注（默认是单号），请客人付款时填在备注里，事后好对上是哪一单。团队里的设备一起生效。';
 
   @override
   String get paymentPendingBodyPlain => '核对到这笔付款后，点下面的按钮。';
@@ -934,7 +934,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confirmReceived => '确认已收款';
 
   @override
-  String get paymentCode => '付款备注码';
+  String get paymentCode => '付款备注';
 
   @override
   String paymentConfirmedAt(String time) {
@@ -955,7 +955,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get paymentConfirmedDone => '已确认收款';
 
   @override
-  String get searchOrdersHint => '搜索单号或付款备注码';
+  String get searchOrdersHint => '搜索单号或付款备注';
 
   @override
   String get allEvents => '全部场次';
@@ -1206,7 +1206,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get changeImage => '更换图片';
 
   @override
-  String get editPaymentCode => '修改备注码';
+  String get editPaymentCode => '修改付款备注';
 
   @override
   String get editPaymentCodeBody => '可以改成客人方便填写的内容，比如名字或手机尾号。留空就用单号。';

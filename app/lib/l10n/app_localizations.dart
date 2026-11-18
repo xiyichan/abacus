@@ -839,19 +839,19 @@ abstract class AppLocalizations {
   /// No description provided for @deleteEventWithOrders.
   ///
   /// In zh, this message translates to:
-  /// **'这个场次有 {count} 单订单。删除后场次、订单和备货都不再显示，「全部场次」的统计也不再计入。'**
+  /// **'这个场次有 {count} 单订单。删除后场次、订单、备货和统计都不再显示。'**
   String deleteEventWithOrders(int count);
 
   /// No description provided for @paymentCodeSwitch.
   ///
   /// In zh, this message translates to:
-  /// **'付款备注码'**
+  /// **'付款备注'**
   String get paymentCodeSwitch;
 
   /// No description provided for @paymentCodeSwitchFooter.
   ///
   /// In zh, this message translates to:
-  /// **'打开后，扫码付款时显示一串备注码（默认是单号），请客人付款时填在备注里，事后好对上是哪一单。团队里的设备一起生效。'**
+  /// **'打开后，扫码付款时显示一串付款备注（默认是单号），请客人付款时填在备注里，事后好对上是哪一单。团队里的设备一起生效。'**
   String get paymentCodeSwitchFooter;
 
   /// No description provided for @paymentPendingBodyPlain.
@@ -1745,7 +1745,7 @@ abstract class AppLocalizations {
   /// No description provided for @paymentCode.
   ///
   /// In zh, this message translates to:
-  /// **'付款备注码'**
+  /// **'付款备注'**
   String get paymentCode;
 
   /// No description provided for @paymentConfirmedAt.
@@ -1775,7 +1775,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchOrdersHint.
   ///
   /// In zh, this message translates to:
-  /// **'搜索单号或付款备注码'**
+  /// **'搜索单号或付款备注'**
   String get searchOrdersHint;
 
   /// No description provided for @allEvents.
@@ -2237,7 +2237,7 @@ abstract class AppLocalizations {
   /// No description provided for @editPaymentCode.
   ///
   /// In zh, this message translates to:
-  /// **'修改备注码'**
+  /// **'修改付款备注'**
   String get editPaymentCode;
 
   /// No description provided for @editPaymentCodeBody.

@@ -417,7 +417,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String deleteEventWithOrders(int count) {
-    return 'This event has $count orders. After deleting, the event, its orders and stock are hidden and no longer counted in all-event stats.';
+    return 'This event has $count orders. After deleting, the event, its orders, stock and stats are hidden.';
   }
 
   @override

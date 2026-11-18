@@ -80,7 +80,7 @@ void main() {
     await settle(tester);
     await tester.tap(find.widgetWithText(ChoiceChip, '微信'));
     await settle(tester);
-    await tester.tap(find.byTooltip('修改备注码'));
+    await tester.tap(find.byTooltip('修改付款备注'));
     await settle(tester);
     await tester.enterText(find.byType(TextField).last, ' 小林8899 ');
     await tester.tap(find.text('保存'));
@@ -114,12 +114,12 @@ void main() {
     await tester.tap(find.widgetWithText(ChoiceChip, '微信'));
     await settle(tester);
     expect(find.text('请客人付款时在备注里填写'), findsNothing);
-    expect(find.byTooltip('修改备注码'), findsNothing);
+    expect(find.byTooltip('修改付款备注'), findsNothing);
     // 结账页上就能打开，打开后显示备注码；关回去再下单。
-    await tester.tap(find.text('付款备注码'));
+    await tester.tap(find.text('付款备注'));
     await settle(tester);
     expect(find.text('请客人付款时在备注里填写'), findsOneWidget);
-    await tester.tap(find.text('付款备注码'));
+    await tester.tap(find.text('付款备注'));
     await settle(tester);
     expect(find.text('请客人付款时在备注里填写'), findsNothing);
     await tester.tap(find.text('稍后确认收款'));
@@ -130,7 +130,7 @@ void main() {
     await tester.tap(find.text('${app.session.orderPrefix}-001'));
     await settle(tester);
     expect(find.text('核对到这笔付款后，点下面的按钮。'), findsOneWidget);
-    expect(find.text('付款备注码'), findsNothing);
+    expect(find.text('付款备注'), findsNothing);
     await unmountApp(tester);
   });
 }
