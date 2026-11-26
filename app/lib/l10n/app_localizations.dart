@@ -1091,8 +1091,26 @@ abstract class AppLocalizations {
   /// No description provided for @topSellers.
   ///
   /// In zh, this message translates to:
-  /// **'热销榜'**
+  /// **'售出商品'**
   String get topSellers;
+
+  /// No description provided for @soldColumnItem.
+  ///
+  /// In zh, this message translates to:
+  /// **'商品'**
+  String get soldColumnItem;
+
+  /// No description provided for @soldColumnQty.
+  ///
+  /// In zh, this message translates to:
+  /// **'件数'**
+  String get soldColumnQty;
+
+  /// No description provided for @soldSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'{kinds} 款 · 共 {count} 件'**
+  String soldSummary(int kinds, int count);
 
   /// No description provided for @byCreator.
   ///

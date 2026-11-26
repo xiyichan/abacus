@@ -64,7 +64,7 @@ void main() {
     expect(stats.refundAmount, 3000);
   });
 
-  test('热销榜按销量排序，金额为摊完优惠后的实收', () {
+  test('售出商品按销量排序，金额为摊完优惠后的实收，合计等于实收', () {
     final stats = computeSalesStats([
       const StatsOrder(
         discount: 1000,
@@ -91,6 +91,27 @@ void main() {
     expect(stats.topSellers.last.revenue, 2250);
     expect(stats.topSellers.first.revenue, 750 + 1000 + 1000);
     expect(stats.discountTotal, 1000);
+    expect(stats.topSellers.fold<int>(0, (a, s) => a + s.revenue), 5000);
+  });
+
+  test('售出商品列出卖过的每一样，不只前 10', () {
+    final stats = computeSalesStats([
+      for (var i = 0; i < 12; i++)
+        StatsOrder(
+          discount: 0,
+          total: 100,
+          lines: [
+            StatsLine(
+              variantId: 'v$i',
+              name: '谷子$i',
+              unitPrice: 100,
+              quantity: 1,
+            ),
+          ],
+          paymentName: '现金',
+        ),
+    ], const {});
+    expect(stats.topSellers, hasLength(12));
   });
 
   test('按作者分账：套装按成分价值拆分，总额等于营业额', () {

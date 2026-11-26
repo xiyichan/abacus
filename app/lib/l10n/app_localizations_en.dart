@@ -565,7 +565,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deviceName => 'Device name';
 
   @override
-  String get topSellers => 'Best sellers';
+  String get topSellers => 'Items sold';
+
+  @override
+  String get soldColumnItem => 'Item';
+
+  @override
+  String get soldColumnQty => 'Qty';
+
+  @override
+  String soldSummary(int kinds, int count) {
+    return '$kinds products · $count items';
+  }
 
   @override
   String get byCreator => 'By creator';

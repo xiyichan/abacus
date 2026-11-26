@@ -103,7 +103,7 @@ class SalesStats {
   final int pendingCount;
   final int pendingAmount;
 
-  /// 按销量从高到低。
+  /// 卖出的每一个 SKU（全部，不截断），按销量从高到低。
   final List<TopSeller> topSellers;
 
   /// 作者 id（未设置作者为 [unassignedCreator]）→ 应得金额，按金额从高到低。
@@ -139,7 +139,7 @@ SalesStats computeSalesStats(
       pendingAmount += order.total;
     }
     discountTotal += order.discount;
-    // 整单优惠按金额比例摊到每一行，分账和热销榜都用摊后的实收。
+    // 整单优惠按金额比例摊到每一行，分账和售出商品都用摊后的实收。
     final shares = allocate(order.discount, [
       for (final l in order.lines) l.amount,
     ]);

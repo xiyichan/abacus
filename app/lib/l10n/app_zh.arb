@@ -322,7 +322,16 @@
   },
   "rename": "改名",
   "deviceName": "设备名称",
-  "topSellers": "热销榜",
+  "topSellers": "售出商品",
+  "soldColumnItem": "商品",
+  "soldColumnQty": "件数",
+  "soldSummary": "{kinds} 款 · 共 {count} 件",
+  "@soldSummary": {
+    "placeholders": {
+      "kinds": {"type": "int"},
+      "count": {"type": "int"}
+    }
+  },
   "byCreator": "按作者分账",
   "byPayment": "按支付方式",
   "noCreator": "未设置作者",

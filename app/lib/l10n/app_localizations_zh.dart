@@ -552,7 +552,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deviceName => '设备名称';
 
   @override
-  String get topSellers => '热销榜';
+  String get topSellers => '售出商品';
+
+  @override
+  String get soldColumnItem => '商品';
+
+  @override
+  String get soldColumnQty => '件数';
+
+  @override
+  String soldSummary(int kinds, int count) {
+    return '$kinds 款 · 共 $count 件';
+  }
 
   @override
   String get byCreator => '按作者分账';

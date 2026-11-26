@@ -322,7 +322,16 @@
   },
   "rename": "Rename",
   "deviceName": "Device name",
-  "topSellers": "Best sellers",
+  "topSellers": "Items sold",
+  "soldColumnItem": "Item",
+  "soldColumnQty": "Qty",
+  "soldSummary": "{kinds} products · {count} items",
+  "@soldSummary": {
+    "placeholders": {
+      "kinds": {"type": "int"},
+      "count": {"type": "int"}
+    }
+  },
   "byCreator": "By creator",
   "byPayment": "By payment method",
   "noCreator": "No creator",

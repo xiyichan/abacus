@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../helpers.dart';
 
 void main() {
-  testWidgets('统计页显示实收、热销、作者分账和支付方式', (tester) async {
+  testWidgets('统计页显示实收、售出商品、作者分账和支付方式', (tester) async {
     await pumpApp(
       tester,
       size: const Size(1180, 820),
@@ -96,8 +96,12 @@ void main() {
     expect(tester.widget<ChoiceChip>(cp30Chip).selected, isTrue);
     expect(find.text('各场对比'), findsNothing);
     expect(find.text('¥40.00'), findsWidgets); // 实收
-    expect(find.text('热销榜'), findsOneWidget);
-    expect(find.text('2 件 · ¥30.00'), findsOneWidget);
+    // 售出商品：每样一行（件数、实收），最后合计。
+    expect(find.text('售出商品'), findsOneWidget);
+    expect(find.text('2 款 · 共 3 件'), findsOneWidget);
+    expect(find.text('徽章'), findsOneWidget);
+    expect(find.text('¥30.00'), findsOneWidget);
+    expect(find.text('合计'), findsOneWidget);
     expect(find.text('Miya'), findsOneWidget);
     expect(find.text('未设置作者'), findsOneWidget);
     expect(find.text('¥30.00 · 75%'), findsOneWidget);

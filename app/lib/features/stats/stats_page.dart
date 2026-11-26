@@ -6,13 +6,13 @@ import 'package:intl/intl.dart';
 
 import '../../data/database.dart';
 import '../../data/expense_repository.dart';
-import '../../domain/creator_split.dart';
 import '../../domain/sales_stats.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/large_title_page.dart';
+import '../../ui/media.dart';
 import '../../ui/money.dart';
 import '../events/event_dates.dart';
 import '../expenses/expense_editor.dart';
@@ -251,28 +251,26 @@ class _StatsBody extends ConsumerWidget {
     }
 
     final summary = _Summary(stats: stats, expenses: ExpenseSummary(expenses));
-    final topSellers = _Section(
+    final soldItems = _Section(
       title: l10n.topSellers,
-      child: _RankedBars(
-        rows: [
-          for (final s in stats.topSellers.take(10))
-            (
-              s.name,
-              s.quantity,
-              '${l10n.itemCount(s.quantity)} · ${money(s.revenue)}',
-            ),
-        ],
-      ),
+      child: _SoldItemsTable(stats: stats),
     );
+    // 作者被删掉的商品也算「未设置作者」，和真没设作者的并成一行。
+    // key 为作者 id，认不出的（含未设置）都归到 null。
+    final creatorTotals = <String?, int>{};
+    for (final MapEntry(key: id, value: amount) in stats.byCreator) {
+      final key = creators.containsKey(id) ? id : null;
+      creatorTotals[key] = (creatorTotals[key] ?? 0) + amount;
+    }
+    final creatorRows = creatorTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     final byCreator = _Section(
       title: l10n.byCreator,
       child: _RankedBars(
         rows: [
-          for (final MapEntry(key: id, value: amount) in stats.byCreator)
+          for (final MapEntry(key: id, value: amount) in creatorRows)
             (
-              id == unassignedCreator
-                  ? l10n.noCreator
-                  : creators[id] ?? l10n.noCreator,
+              creators[id] ?? l10n.noCreator,
               amount,
               '${money(amount)} · ${_percent(amount, stats.revenue)}',
             ),
@@ -305,29 +303,24 @@ class _StatsBody extends ConsumerWidget {
           const SizedBox(height: 16),
           if (noSales)
             const SizedBox.shrink()
-          else if (wide)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: topSellers),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    children: [
-                      byCreator,
-                      const SizedBox(height: 16),
-                      byPayment,
-                    ],
-                  ),
-                ),
-              ],
-            )
           else ...[
-            topSellers,
+            // 售出商品是一整张表，占满整行。
+            soldItems,
             const SizedBox(height: 16),
-            byCreator,
-            const SizedBox(height: 16),
-            byPayment,
+            if (wide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: byCreator),
+                  const SizedBox(width: 16),
+                  Expanded(child: byPayment),
+                ],
+              )
+            else ...[
+              byCreator,
+              const SizedBox(height: 16),
+              byPayment,
+            ],
           ],
         ],
       ),
@@ -525,6 +518,102 @@ class _Section extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 售出商品：卖出的每一样东西（含规格）一行，件数和摊完优惠后的实收，最后一行合计。
+class _SoldItemsTable extends ConsumerWidget {
+  const _SoldItemsTable({required this.stats});
+
+  static const _imageSize = 36.0;
+
+  final SalesStats stats;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final money = ref.watch(moneyProvider);
+    // 订单里存的是下单时的名字；图片按 SKU 去商品库里找，删掉的商品就显示首字。
+    final images = {
+      for (final p in ref.watch(catalogProvider).value ?? const [])
+        for (final v in p.variants) v.id: p.product.imagePath,
+    };
+    final muted = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    final figures = theme.textTheme.bodyLarge?.copyWith(
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+    final rows = stats.topSellers;
+    final total = rows.fold<int>(0, (a, s) => a + s.revenue);
+
+    Widget row({
+      Widget? leading,
+      required Widget name,
+      required Widget qty,
+      required Widget amount,
+    }) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          ?leading,
+          if (leading != null) const SizedBox(width: 12),
+          Expanded(child: name),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 64,
+            child: Align(alignment: Alignment.centerRight, child: qty),
+          ),
+          SizedBox(
+            width: 112,
+            child: Align(alignment: Alignment.centerRight, child: amount),
+          ),
+        ],
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l10n.soldSummary(rows.length, stats.itemCount), style: muted),
+        const SizedBox(height: 4),
+        row(
+          name: Text(l10n.soldColumnItem, style: muted),
+          qty: Text(l10n.soldColumnQty, style: muted),
+          amount: Text(l10n.revenue, style: muted),
+        ),
+        const Divider(height: 1),
+        for (final s in rows)
+          row(
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(Radii.sm),
+              child: SizedBox.square(
+                dimension: _imageSize,
+                child: StoredImage(
+                  images[s.variantId],
+                  placeholder: NamePlaceholder(s.name),
+                ),
+              ),
+            ),
+            name: Text(s.name, maxLines: 2, overflow: TextOverflow.ellipsis),
+            qty: Text('${s.quantity}', style: figures),
+            amount: Text(money(s.revenue), style: figures),
+          ),
+        const Divider(height: 1),
+        row(
+          name: Text(l10n.total, style: theme.textTheme.titleSmall),
+          qty: Text(
+            '${stats.itemCount}',
+            style: figures?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          amount: Text(
+            money(total),
+            style: figures?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
     );
   }
 }
