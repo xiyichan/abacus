@@ -411,7 +411,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String deleteEventWithOrders(int count) {
-    return '这个场次有 $count 单订单。删除后场次、订单、备货和统计都不再显示。';
+    return '这个场次有 $count 单订单。删除后场次、订单和备货都不再显示，「全部场次」的统计也不再计入。';
   }
 
   @override
@@ -827,6 +827,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get eventEnded => '已结束';
 
   @override
+  String get viewOrders => '查看订单';
+
+  @override
   String endEventTitle(String name) {
     return '结束「$name」？';
   }
@@ -876,7 +879,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get eventEndedBody => '选择另一个场次继续收银，或重新开启这个场次。';
+  String get eventEndedBody =>
+      '已结束的场次不能再收银，在场次列表里点它可以查看订单。选择另一个场次继续收银，或重新开启这个场次。';
 
   @override
   String endPromptTitle(String name) {

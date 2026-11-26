@@ -417,7 +417,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String deleteEventWithOrders(int count) {
-    return 'This event has $count orders. After deleting, the event, its orders, stock and stats are hidden.';
+    return 'This event has $count orders. After deleting, the event, its orders and stock are hidden and no longer counted in all-event stats.';
   }
 
   @override
@@ -848,6 +848,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventEnded => 'Ended';
 
   @override
+  String get viewOrders => 'View orders';
+
+  @override
   String endEventTitle(String name) {
     return 'End “$name”?';
   }
@@ -900,7 +903,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventEndedBody =>
-      'Choose another event to keep selling, or reopen this one.';
+      'An ended event can\'t take new sales. Tap it in the event list to view its orders. Choose another event to keep selling, or reopen this one.';
 
   @override
   String endPromptTitle(String name) {

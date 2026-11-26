@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../data/database.dart';
 import '../../data/sales_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
@@ -18,8 +19,12 @@ import '../team/team_switcher.dart';
 final _timeFormat = DateFormat('HH:mm');
 
 /// 当前场次的订单列表。
+/// 订单列表。默认看当前场次；从场次列表点进已结束的场次时传 [eventId]，
+/// 只能查看（订单页本来就不能下单），左上角是返回。
 class OrdersPage extends ConsumerStatefulWidget {
-  const OrdersPage({super.key});
+  const OrdersPage({super.key, this.eventId});
+
+  final String? eventId;
 
   @override
   ConsumerState<OrdersPage> createState() => _OrdersPageState();
@@ -32,10 +37,18 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final event = ref.watch(currentEventProvider).value;
+    final event = widget.eventId == null
+        ? ref.watch(currentEventProvider).value
+        : ref
+              .watch(eventsProvider)
+              .value
+              ?.where((e) => e.id == widget.eventId)
+              .firstOrNull;
     return LargeTitlePage(
       title: l10n.navOrders,
-      leading: const TeamSwitcherButton(separator: true),
+      leading: widget.eventId == null
+          ? const TeamSwitcherButton(separator: true)
+          : const BackButton(),
       actions: [if (event != null) ExportOrdersButton(event: event)],
       slivers: event == null
           ? [
@@ -69,12 +82,12 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
                             ),
                           ),
                         ]
-                      : _orderSlivers(event.name, orders),
+                      : _orderSlivers(event, orders),
                 ),
     );
   }
 
-  List<Widget> _orderSlivers(String eventName, List<OrderSummary> orders) {
+  List<Widget> _orderSlivers(Event event, List<OrderSummary> orders) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final money = ref.watch(moneyProvider);
@@ -106,7 +119,11 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
               TextSpan(
                 children: [
                   TextSpan(
-                    text: '$eventName · ',
+                    text: [
+                      event.name,
+                      if (event.endedAt != null) l10n.eventEnded,
+                      '',
+                    ].join(' · '),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -198,7 +215,12 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
                   decoration: s.isRefunded ? TextDecoration.lineThrough : null,
                 ),
               ),
-              onTap: () => context.go('/orders/${o.id}'),
+              // 从场次列表进来的留在这一支里，返回回到这一场的订单。
+              onTap: () => context.go(
+                widget.eventId == null
+                    ? '/orders/${o.id}'
+                    : '/pos/events/${widget.eventId}/orders/${o.id}',
+              ),
             );
             return ClipRRect(
               borderRadius: BorderRadius.vertical(

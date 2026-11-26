@@ -839,7 +839,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteEventWithOrders.
   ///
   /// In zh, this message translates to:
-  /// **'这个场次有 {count} 单订单。删除后场次、订单、备货和统计都不再显示。'**
+  /// **'这个场次有 {count} 单订单。删除后场次、订单和备货都不再显示，「全部场次」的统计也不再计入。'**
   String deleteEventWithOrders(int count);
 
   /// No description provided for @paymentCodeSwitch.
@@ -1580,6 +1580,12 @@ abstract class AppLocalizations {
   /// **'已结束'**
   String get eventEnded;
 
+  /// No description provided for @viewOrders.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看订单'**
+  String get viewOrders;
+
   /// No description provided for @endEventTitle.
   ///
   /// In zh, this message translates to:
@@ -1649,7 +1655,7 @@ abstract class AppLocalizations {
   /// No description provided for @eventEndedBody.
   ///
   /// In zh, this message translates to:
-  /// **'选择另一个场次继续收银，或重新开启这个场次。'**
+  /// **'已结束的场次不能再收银，在场次列表里点它可以查看订单。选择另一个场次继续收银，或重新开启这个场次。'**
   String get eventEndedBody;
 
   /// No description provided for @endPromptTitle.

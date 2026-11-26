@@ -231,7 +231,7 @@
     }
   },
   "deleteEventBody": "删除后场次列表里不再显示。",
-  "deleteEventWithOrders": "这个场次有 {count} 单订单。删除后场次、订单、备货和统计都不再显示。",
+  "deleteEventWithOrders": "这个场次有 {count} 单订单。删除后场次、订单和备货都不再显示，「全部场次」的统计也不再计入。",
   "@deleteEventWithOrders": {
     "placeholders": {
       "count": {
@@ -489,6 +489,7 @@
   "endEvent": "结束场次",
   "reopenEvent": "重新开启",
   "eventEnded": "已结束",
+  "viewOrders": "查看订单",
   "endEventTitle": "结束「{name}」？",
   "@endEventTitle": {
     "placeholders": {
@@ -565,7 +566,7 @@
       }
     }
   },
-  "eventEndedBody": "选择另一个场次继续收银，或重新开启这个场次。",
+  "eventEndedBody": "已结束的场次不能再收银，在场次列表里点它可以查看订单。选择另一个场次继续收银，或重新开启这个场次。",
   "endPromptTitle": "「{name}」的日期已经过了，结束了吗？",
   "@endPromptTitle": {
     "placeholders": {

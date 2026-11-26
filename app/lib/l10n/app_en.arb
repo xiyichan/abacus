@@ -231,7 +231,7 @@
     }
   },
   "deleteEventBody": "It will no longer appear in the event list.",
-  "deleteEventWithOrders": "This event has {count} orders. After deleting, the event, its orders, stock and stats are hidden.",
+  "deleteEventWithOrders": "This event has {count} orders. After deleting, the event, its orders and stock are hidden and no longer counted in all-event stats.",
   "@deleteEventWithOrders": {
     "placeholders": {
       "count": {
@@ -474,6 +474,7 @@
   "endEvent": "End event",
   "reopenEvent": "Reopen",
   "eventEnded": "Ended",
+  "viewOrders": "View orders",
   "endEventTitle": "End “{name}”?",
   "@endEventTitle": {
     "placeholders": {
@@ -550,7 +551,7 @@
       }
     }
   },
-  "eventEndedBody": "Choose another event to keep selling, or reopen this one.",
+  "eventEndedBody": "An ended event can't take new sales. Tap it in the event list to view its orders. Choose another event to keep selling, or reopen this one.",
   "endPromptTitle": "“{name}” is in the past. Has it ended?",
   "@endPromptTitle": {
     "placeholders": {

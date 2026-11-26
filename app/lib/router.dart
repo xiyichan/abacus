@@ -51,6 +51,20 @@ GoRouter createRouter({ValueListenable<bool>? locked}) => GoRouter(
                         eventId: state.pathParameters['eventId']!,
                       ),
                     ),
+                    // 已结束的场次：只看订单，不能收银。
+                    GoRoute(
+                      path: ':eventId/orders',
+                      builder: (_, state) =>
+                          OrdersPage(eventId: state.pathParameters['eventId']!),
+                      routes: [
+                        GoRoute(
+                          path: ':orderId',
+                          builder: (_, state) => OrderDetailPage(
+                            orderId: state.pathParameters['orderId']!,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ],

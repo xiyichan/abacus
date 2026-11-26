@@ -14,18 +14,25 @@ import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/large_title_page.dart';
 import '../../ui/money.dart';
+import '../events/event_dates.dart';
 import '../expenses/expense_editor.dart';
 import '../orders/export_orders.dart';
 import '../team/team_switcher.dart';
 
+/// key 为 null 时汇总所有场次。
 final _statsProvider = StreamProvider.family<SalesStats, String?>(
   (ref, eventId) => ref.watch(salesRepositoryProvider).watchEventStats(eventId),
 );
 
+final _comparisonProvider = StreamProvider(
+  (ref) => ref.watch(salesRepositoryProvider).watchEventComparison(),
+);
+
+const _all = '__all__';
 final _dateFormat = DateFormat('MM-dd');
 
-/// 统计：顶部一排场次标签切换场次，看该场的实收、支出、热销、分账、支付方式。
-/// 不做「全部场次」合计：每场的数字才有用。
+/// 统计：顶部一排场次标签切换单场 / 全部场次。单场看该场的实收、热销、分账、支付方式；
+/// 全部场次看合计和各场对比。
 class StatsPage extends ConsumerStatefulWidget {
   const StatsPage({super.key});
 
@@ -34,7 +41,7 @@ class StatsPage extends ConsumerStatefulWidget {
 }
 
 class _StatsPageState extends ConsumerState<StatsPage> {
-  /// 选中的场次 id；null（或已删除）时跟随当前场次，没有当前场次时看最近一场。
+  /// 选中的场次 id，或 [_all]；null 时跟随当前场次。
   String? _selected;
 
   @override
@@ -42,8 +49,11 @@ class _StatsPageState extends ConsumerState<StatsPage> {
     final l10n = AppLocalizations.of(context);
     final events = ref.watch(eventsProvider).value ?? const <Event>[];
     final currentId = ref.watch(currentEventIdProvider).value;
-    Event? byId(String? id) => events.where((e) => e.id == id).firstOrNull;
-    final event = byId(_selected) ?? byId(currentId) ?? events.firstOrNull;
+    final fallback = events.any((e) => e.id == currentId) ? currentId! : _all;
+    final selected = _selected == _all || events.any((e) => e.id == _selected)
+        ? _selected!
+        : fallback;
+    final event = events.where((e) => e.id == selected).firstOrNull;
 
     return LargeTitlePage(
       title: l10n.navStats,
@@ -72,13 +82,16 @@ class _StatsPageState extends ConsumerState<StatsPage> {
                   ),
                   child: Row(
                     children: [
-                      for (final e in events)
+                      for (final (id, label) in [
+                        (_all, l10n.allEvents),
+                        for (final e in events) (e.id, e.name),
+                      ])
                         Padding(
                           padding: const EdgeInsets.only(right: Gap.sm),
                           child: ChoiceChip(
-                            label: Text(e.name),
-                            selected: event?.id == e.id,
-                            onSelected: (_) => setState(() => _selected = e.id),
+                            label: Text(label),
+                            selected: selected == id,
+                            onSelected: (_) => setState(() => _selected = id),
                           ),
                         ),
                     ],
@@ -98,9 +111,95 @@ class _StatsPageState extends ConsumerState<StatsPage> {
                       expenses:
                           ref.watch(expensesProvider(event?.id)).value ??
                           const [],
+                      header: event == null
+                          ? _Comparison(
+                              onSelect: (id) => setState(() => _selected = id),
+                            )
+                          : null,
                     ),
                   ),
             ],
+    );
+  }
+}
+
+/// 全部场次视图里的各场对比表，点一行切到那一场。
+class _Comparison extends ConsumerWidget {
+  const _Comparison({required this.onSelect});
+
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final money = ref.watch(moneyProvider);
+    final rows = ref.watch(_comparisonProvider).value ?? const [];
+    final muted = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    return _Section(
+      title: l10n.eventComparison,
+      child: Column(
+        children: [
+          for (final r in rows)
+            InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => onSelect(r.event.id),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            r.event.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            [
+                              r.event.dateLabel(withYear: false) ??
+                                  l10n.noEventDate,
+                              if (r.event.endedAt != null) l10n.eventEnded,
+                              l10n.comparisonOrders(r.orderCount),
+                              l10n.itemCount(r.itemCount),
+                              if (r.pendingCount > 0)
+                                '${l10n.pendingPayment} ${r.pendingCount}',
+                            ].join(' · '),
+                            style: muted,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          money(r.revenue),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        if (r.expenses > 0)
+                          Text(l10n.netShort(money(r.net)), style: muted),
+                      ],
+                    ),
+                    Icon(
+                      CupertinoIcons.chevron_forward,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.onSurface
+                          .withValues(alpha: 0.3),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -110,6 +209,7 @@ class _StatsBody extends ConsumerWidget {
     required this.stats,
     required this.eventId,
     required this.expenses,
+    this.header,
   });
 
   final SalesStats stats;
@@ -117,6 +217,9 @@ class _StatsBody extends ConsumerWidget {
   /// 选中的场次；null 为全部场次。
   final String? eventId;
   final List<Expense> expenses;
+
+  /// 显示在汇总下面的额外内容（全部场次时为各场对比）。
+  final Widget? header;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -197,6 +300,7 @@ class _StatsBody extends ConsumerWidget {
         children: [
           summary,
           const SizedBox(height: 16),
+          if (header != null) ...[header!, const SizedBox(height: 16)],
           expenseSection,
           const SizedBox(height: 16),
           if (noSales)
@@ -321,6 +425,10 @@ class _ExpensesSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final money = ref.watch(moneyProvider);
+    final eventNames = {
+      for (final e in ref.watch(eventsProvider).value ?? const <Event>[])
+        e.id: e.name,
+    };
     final muted = theme.textTheme.bodySmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
@@ -353,6 +461,11 @@ class _ExpensesSection extends ConsumerWidget {
                             Text(
                               [
                                 _dateFormat.format(x.spentOn),
+                                // 全部场次里注明是哪一场的。
+                                if (eventId == null)
+                                  x.eventId == null
+                                      ? l10n.expenseNoEvent
+                                      : eventNames[x.eventId] ?? '',
                                 if (x.note.isNotEmpty) x.note,
                               ].join(' · '),
                               style: muted,

@@ -23,9 +23,11 @@ class _EventTile extends ConsumerWidget {
 
   Future<void> _select(BuildContext context, WidgetRef ref) async {
     if (event.endedAt != null) {
-      // 已结束的场次要先重新开启才能收银。
-      if (!await confirmReopenEvent(context, ref, event)) return;
-    } else if (!isCurrent) {
+      // 已结束的场次只能查看订单，不能再收银；要收银得从菜单里重新开启。
+      context.go('/pos/events/${event.id}/orders');
+      return;
+    }
+    if (!isCurrent) {
       await promptEndPrevious(context, ref, nextEventId: event.id);
     }
     await ref.read(inventoryRepositoryProvider).setCurrentEvent(event.id);
@@ -66,7 +68,12 @@ class _EventTile extends ConsumerWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (!ended)
+          if (ended)
+            FilledButton.tonal(
+              onPressed: () => context.go('/pos/events/${event.id}/orders'),
+              child: Text(l10n.viewOrders),
+            )
+          else
             FilledButton.tonal(
               onPressed: () => context.go('/pos/events/${event.id}/stock'),
               child: Text(l10n.stockForEvent),
