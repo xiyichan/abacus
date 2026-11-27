@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/catalog_repository.dart';
+import '../../data/database.dart';
 import '../../domain/stock.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
@@ -12,13 +14,24 @@ import '../../ui/money.dart';
 import 'end_event.dart';
 
 /// 备货：每场单独记带了多少件货，可以沿用上一场的剩余。
-class EventStockPage extends ConsumerWidget {
+/// 商品按作者分组，点组标题可以折叠不想看的作者。
+class EventStockPage extends ConsumerStatefulWidget {
   const EventStockPage({super.key, required this.eventId});
 
   final String eventId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EventStockPage> createState() => _EventStockPageState();
+}
+
+class _EventStockPageState extends ConsumerState<EventStockPage> {
+  /// 折叠起来的作者 id（null 是未设置作者）。
+  final _collapsed = <String?>{};
+
+  String get eventId => widget.eventId;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final event = ref
         .watch(eventsProvider)
@@ -26,6 +39,7 @@ class EventStockPage extends ConsumerWidget {
         ?.where((e) => e.id == eventId)
         .firstOrNull;
     final catalog = ref.watch(catalogProvider);
+    final creators = ref.watch(creatorsProvider).value ?? const <Creator>[];
     final atEvent = ref.watch(stockProvider(eventId)).value ?? const {};
     final repo = ref.read(inventoryRepositoryProvider);
 
@@ -54,6 +68,19 @@ class EventStockPage extends ConsumerWidget {
           variantId: variantId,
           eventId: eventId,
           eventQuantity: qty,
+        );
+      }
+    }
+
+    Future<void> removeFromEvent(String variantId) async {
+      final messenger = ScaffoldMessenger.of(context);
+      final ok = await repo.removeFromEvent(
+        variantId: variantId,
+        eventId: eventId,
+      );
+      if (!ok) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.cannotRemoveFromEvent)),
         );
       }
     }
@@ -91,42 +118,139 @@ class EventStockPage extends ConsumerWidget {
               title: l10n.noProducts,
             );
           }
-          final tiles = <Widget>[];
+          // 按作者分组：作者列表的顺序，未设置作者放最后。
+          final known = {for (final c in creators) c.id};
+          final groups = <String?, List<CatalogProduct>>{
+            for (final c in creators) c.id: [],
+          };
           for (final p in items) {
-            if (p.isBundle) {
-              final components = p.components.values.firstOrNull ?? const [];
-              tiles.add(
-                ListTile(
-                  leading: _Thumbnail(p.product.imagePath, p.product.name),
-                  title: Text(p.product.name),
-                  subtitle: Text(
-                    l10n.bundleAvailable(bundleAvailable(components, atEvent)),
+            final id = p.creator?.id;
+            groups.putIfAbsent(known.contains(id) ? id : null, () => []).add(p);
+          }
+          final names = {for (final c in creators) c.id: c.name};
+
+          final tiles = <Widget>[];
+          for (final MapEntry(key: creatorId, value: products)
+              in groups.entries) {
+            if (products.isEmpty) continue;
+            final variantIds = [
+              for (final p in products)
+                if (!p.isBundle)
+                  for (final v in p.variants) v.id,
+            ];
+            final collapsed = _collapsed.contains(creatorId);
+            tiles.add(
+              _GroupHeader(
+                name: names[creatorId] ?? l10n.noCreator,
+                summary: l10n.stockGroupSummary(
+                  variantIds.where(atEvent.containsKey).length,
+                  variantIds.length,
+                  variantIds.fold<int>(
+                    0,
+                    (a, id) => a + ((atEvent[id] ?? 0).clamp(0, 1 << 30)),
                   ),
                 ),
-              );
-              continue;
-            }
-            for (final v in p.variants) {
-              tiles.add(
-                _StockRow(
-                  name: p.displayName(v),
-                  imagePath: p.product.imagePath,
-                  atEvent: atEvent[v.id],
-                  onChanged: (q) => repo.setEventQuantity(
-                    variantId: v.id,
-                    eventId: eventId,
-                    eventQuantity: q,
+                collapsed: collapsed,
+                onTap: () => setState(() {
+                  if (!_collapsed.remove(creatorId)) _collapsed.add(creatorId);
+                }),
+              ),
+            );
+            if (collapsed) continue;
+            for (final p in products) {
+              if (p.isBundle) {
+                final components = p.components.values.firstOrNull ?? const [];
+                tiles.add(
+                  ListTile(
+                    leading: _Thumbnail(p.product.imagePath, p.product.name),
+                    title: Text(p.product.name),
+                    subtitle: Text(
+                      l10n.bundleAvailable(
+                        bundleAvailable(components, atEvent),
+                      ),
+                    ),
                   ),
-                ),
-              );
+                );
+                continue;
+              }
+              for (final v in p.variants) {
+                tiles.add(
+                  _StockRow(
+                    name: p.displayName(v),
+                    imagePath: p.product.imagePath,
+                    atEvent: atEvent[v.id],
+                    onChanged: (q) => repo.setEventQuantity(
+                      variantId: v.id,
+                      eventId: eventId,
+                      eventQuantity: q,
+                    ),
+                    onRemove: () => removeFromEvent(v.id),
+                  ),
+                );
+              }
             }
           }
           return ListView.separated(
             itemCount: tiles.length,
-            separatorBuilder: (_, _) => const Divider(height: 1),
+            separatorBuilder: (_, i) =>
+                i + 1 < tiles.length && tiles[i + 1] is _GroupHeader
+                ? const SizedBox.shrink()
+                : const Divider(height: 1),
             itemBuilder: (_, i) => tiles[i],
           );
         },
+      ),
+    );
+  }
+}
+
+/// 作者分组标题：名字、已备货款数和件数，点一下折叠/展开。
+class _GroupHeader extends StatelessWidget {
+  const _GroupHeader({
+    required this.name,
+    required this.summary,
+    required this.collapsed,
+    required this.onTap,
+  });
+
+  final String name;
+  final String summary;
+  final bool collapsed;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Row(
+            children: [
+              AnimatedRotation(
+                turns: collapsed ? -0.25 : 0,
+                duration: const Duration(milliseconds: 150),
+                child: const Icon(Icons.expand_more),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  name,
+                  style: theme.textTheme.titleSmall,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                summary,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -138,6 +262,7 @@ class _StockRow extends StatelessWidget {
     required this.imagePath,
     required this.atEvent,
     required this.onChanged,
+    required this.onRemove,
   });
 
   final String name;
@@ -146,6 +271,9 @@ class _StockRow extends StatelessWidget {
   /// null 表示还没带到本场。
   final int? atEvent;
   final ValueChanged<int> onChanged;
+
+  /// 数量为 0 时再减：移出本场，回到「—」。
+  final VoidCallback onRemove;
 
   Future<void> _edit(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
@@ -178,7 +306,11 @@ class _StockRow extends StatelessWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.remove_circle_outline),
-            onPressed: current > 0 ? () => onChanged(current - 1) : null,
+            onPressed: atEvent == null || current < 0
+                ? null
+                : current > 0
+                ? () => onChanged(current - 1)
+                : onRemove,
           ),
           InkWell(
             borderRadius: BorderRadius.circular(12),

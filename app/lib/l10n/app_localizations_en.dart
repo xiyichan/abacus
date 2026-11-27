@@ -591,6 +591,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get byPayment => 'By payment method';
 
   @override
+  String stockGroupSummary(int stocked, int total, int count) {
+    return '$stocked/$total stocked · $count pcs';
+  }
+
+  @override
+  String get cannotRemoveFromEvent =>
+      'Already sold at this event, can\'t remove it';
+
+  @override
   String get noCreator => 'No creator';
 
   @override

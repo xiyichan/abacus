@@ -1136,6 +1136,18 @@ abstract class AppLocalizations {
   /// **'按支付方式'**
   String get byPayment;
 
+  /// No description provided for @stockGroupSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'{stocked}/{total} 款已备货 · 共 {count} 件'**
+  String stockGroupSummary(int stocked, int total, int count);
+
+  /// No description provided for @cannotRemoveFromEvent.
+  ///
+  /// In zh, this message translates to:
+  /// **'本场已经卖过这件货，不能移出备货'**
+  String get cannotRemoveFromEvent;
+
   /// No description provided for @noCreator.
   ///
   /// In zh, this message translates to:

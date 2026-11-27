@@ -186,6 +186,39 @@ class InventoryRepository {
     await _move(variantId, eventId, delta, 'restock');
   });
 
+  /// 把还没卖过的 SKU 移出场次（备货数回到「—」）：软删除它在本场的备货流水。
+  /// 本场已经有过销售或退款流水时不能移出，返回 false。
+  Future<bool> removeFromEvent({
+    required String variantId,
+    required String eventId,
+  }) => _db.transaction(() async {
+    final rows =
+        await (_db.select(_db.stockMovements)..where(
+              (t) =>
+                  t.variantId.equals(variantId) &
+                  t.location.equals(eventId) &
+                  t.deleted.equals(false),
+            ))
+            .get();
+    if (rows.any((m) => m.reason != 'restock')) return false;
+    if (rows.isEmpty) return true;
+    final ts = _session.clock.tick();
+    await (_db.update(_db.stockMovements)..where(
+          (t) =>
+              t.variantId.equals(variantId) &
+              t.location.equals(eventId) &
+              t.reason.equals('restock') &
+              t.deleted.equals(false),
+        ))
+        .write(
+          StockMovementsCompanion(
+            deleted: const Value(true),
+            updatedAt: Value(ts),
+          ),
+        );
+    return true;
+  });
+
   /// 最近一个有剩余货的其他场次及其剩余（variantId → 件数，只含正数），备货时可以沿用。
   Future<(Event, Map<String, int>)?> previousLeftover(String eventId) async {
     final events = _byRecent(

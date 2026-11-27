@@ -578,6 +578,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get byPayment => '按支付方式';
 
   @override
+  String stockGroupSummary(int stocked, int total, int count) {
+    return '$stocked/$total 款已备货 · 共 $count 件';
+  }
+
+  @override
+  String get cannotRemoveFromEvent => '本场已经卖过这件货，不能移出备货';
+
+  @override
   String get noCreator => '未设置作者';
 
   @override
