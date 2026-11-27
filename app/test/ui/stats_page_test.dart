@@ -108,7 +108,31 @@ void main() {
     expect(find.text('1 单 · ¥10.00'), findsOneWidget); // 微信
     expect(find.byTooltip('导出 CSV（订单和支出）'), findsOneWidget);
 
+    // 点分账里的作者，看他名下卖了哪些东西。
+    await tester.ensureVisible(find.text('Miya'));
+    await settle(tester);
+    await tester.tap(find.text('Miya'));
+    await settle(tester);
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(Dialog), matching: find.text('徽章')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: find.byType(Dialog), matching: find.text('色纸')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: find.byType(Dialog), matching: find.text('分得')),
+      findsOneWidget,
+    );
+    await tester.tapAt(const Offset(10, 10));
+    await settle(tester);
+    expect(find.byType(Dialog), findsNothing);
+
     // 全部场次：合计 + 各场对比。
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 2000));
+    await settle(tester);
     await tester.tap(find.widgetWithText(ChoiceChip, '全部场次'));
     await settle(tester);
     expect(find.text('¥55.00'), findsWidgets);

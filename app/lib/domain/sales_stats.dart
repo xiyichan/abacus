@@ -88,6 +88,7 @@ class SalesStats {
     this.pendingAmount = 0,
     required this.topSellers,
     required this.byCreator,
+    this.creatorItems = const {},
     required this.byPayment,
   });
 
@@ -108,6 +109,9 @@ class SalesStats {
 
   /// 作者 id（未设置作者为 [unassignedCreator]）→ 应得金额，按金额从高到低。
   final List<MapEntry<String, int>> byCreator;
+
+  /// 作者 id → 名下卖出的每样商品（点分账那一行看明细）。
+  final Map<String, List<CreatorItem>> creatorItems;
 
   /// 按金额从高到低。
   final List<PaymentTotal> byPayment;
@@ -157,6 +161,9 @@ SalesStats computeSalesStats(
       final owner = ownership[line.variantId];
       soldLines.add(
         SoldLine(
+          variantId: line.variantId,
+          name: line.name,
+          quantity: line.quantity,
           netAmount: net,
           creatorId: owner?.creatorId,
           bundleParts: owner?.bundleParts ?? const [],
@@ -176,6 +183,7 @@ SalesStats computeSalesStats(
       final byQty = b.quantity.compareTo(a.quantity);
       return byQty != 0 ? byQty : b.revenue.compareTo(a.revenue);
     });
+  final creatorItems = itemsByCreator(soldLines);
   final byCreator = splitByCreator(soldLines).entries.toList()
     ..sort((a, b) => b.value.compareTo(a.value));
   final byPayment = payments.values.toList()
@@ -192,6 +200,7 @@ SalesStats computeSalesStats(
     pendingAmount: pendingAmount,
     topSellers: topSellers,
     byCreator: byCreator,
+    creatorItems: creatorItems,
     byPayment: byPayment,
   );
 }

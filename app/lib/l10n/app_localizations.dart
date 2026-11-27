@@ -1100,6 +1100,18 @@ abstract class AppLocalizations {
   /// **'商品'**
   String get soldColumnItem;
 
+  /// No description provided for @creatorShareColumn.
+  ///
+  /// In zh, this message translates to:
+  /// **'分得'**
+  String get creatorShareColumn;
+
+  /// No description provided for @creatorBundleShare.
+  ///
+  /// In zh, this message translates to:
+  /// **'套装，按成分价值分到的部分'**
+  String get creatorBundleShare;
+
   /// No description provided for @soldColumnQty.
   ///
   /// In zh, this message translates to:

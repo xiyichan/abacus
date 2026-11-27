@@ -324,6 +324,8 @@
   "deviceName": "设备名称",
   "topSellers": "售出商品",
   "soldColumnItem": "商品",
+  "creatorShareColumn": "分得",
+  "creatorBundleShare": "套装，按成分价值分到的部分",
   "soldColumnQty": "件数",
   "soldSummary": "{kinds} 款 · 共 {count} 件",
   "@soldSummary": {

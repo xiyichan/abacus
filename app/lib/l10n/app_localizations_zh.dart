@@ -558,6 +558,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get soldColumnItem => '商品';
 
   @override
+  String get creatorShareColumn => '分得';
+
+  @override
+  String get creatorBundleShare => '套装，按成分价值分到的部分';
+
+  @override
   String get soldColumnQty => '件数';
 
   @override

@@ -571,6 +571,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get soldColumnItem => 'Item';
 
   @override
+  String get creatorShareColumn => 'Share';
+
+  @override
+  String get creatorBundleShare => 'Bundle — share by component value';
+
+  @override
   String get soldColumnQty => 'Qty';
 
   @override

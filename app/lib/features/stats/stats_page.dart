@@ -6,12 +6,14 @@ import 'package:intl/intl.dart';
 
 import '../../data/database.dart';
 import '../../data/expense_repository.dart';
+import '../../domain/creator_split.dart';
 import '../../domain/sales_stats.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 import '../../ui/design.dart';
 import '../../ui/empty_state.dart';
 import '../../ui/large_title_page.dart';
+import '../../ui/layout.dart';
 import '../../ui/media.dart';
 import '../../ui/money.dart';
 import '../events/event_dates.dart';
@@ -253,14 +255,29 @@ class _StatsBody extends ConsumerWidget {
     final summary = _Summary(stats: stats, expenses: ExpenseSummary(expenses));
     final soldItems = _Section(
       title: l10n.topSellers,
-      child: _SoldItemsTable(stats: stats),
+      child: _ItemTable(
+        rows: [
+          for (final s in stats.topSellers)
+            (
+              variantId: s.variantId,
+              name: s.name,
+              quantity: s.quantity,
+              amount: s.revenue,
+              note: null,
+            ),
+        ],
+        summary: l10n.soldSummary(stats.topSellers.length, stats.itemCount),
+        amountLabel: l10n.revenue,
+      ),
     );
     // 作者被删掉的商品也算「未设置作者」，和真没设作者的并成一行。
     // key 为作者 id，认不出的（含未设置）都归到 null。
     final creatorTotals = <String?, int>{};
+    final creatorItems = <String?, List<CreatorItem>>{};
     for (final MapEntry(key: id, value: amount) in stats.byCreator) {
       final key = creators.containsKey(id) ? id : null;
       creatorTotals[key] = (creatorTotals[key] ?? 0) + amount;
+      (creatorItems[key] ??= []).addAll(stats.creatorItems[id] ?? const []);
     }
     final creatorRows = creatorTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -275,6 +292,16 @@ class _StatsBody extends ConsumerWidget {
               '${money(amount)} · ${_percent(amount, stats.revenue)}',
             ),
         ],
+        // 点一行看这个作者名下卖了哪些东西。
+        onTap: (i) {
+          final MapEntry(key: id, value: amount) = creatorRows[i];
+          _showCreatorItems(
+            context,
+            name: creators[id] ?? l10n.noCreator,
+            amount: amount,
+            items: creatorItems[id] ?? const [],
+          );
+        },
       ),
     );
     final byPayment = _Section(
@@ -522,13 +549,32 @@ class _Section extends StatelessWidget {
   }
 }
 
-/// 售出商品：卖出的每一样东西（含规格）一行，件数和摊完优惠后的实收，最后一行合计。
-class _SoldItemsTable extends ConsumerWidget {
-  const _SoldItemsTable({required this.stats});
+/// 表格里的一行商品。
+typedef _ItemRow = ({
+  String variantId,
+  String name,
+  int quantity,
+  int amount,
+  String? note,
+});
+
+/// 商品表：每样一行（缩略图、名字、件数、金额），最后一行合计。售出商品和作者明细共用。
+class _ItemTable extends ConsumerWidget {
+  const _ItemTable({
+    required this.rows,
+    required this.summary,
+    required this.amountLabel,
+  });
 
   static const _imageSize = 36.0;
 
-  final SalesStats stats;
+  final List<_ItemRow> rows;
+
+  /// 表格上面那一行小字，例如「5 款 · 共 18 件」。
+  final String summary;
+
+  /// 金额那一列的表头。
+  final String amountLabel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -546,8 +592,8 @@ class _SoldItemsTable extends ConsumerWidget {
     final figures = theme.textTheme.bodyLarge?.copyWith(
       fontFeatures: const [FontFeature.tabularFigures()],
     );
-    final rows = stats.topSellers;
-    final total = rows.fold<int>(0, (a, s) => a + s.revenue);
+    final totalQty = rows.fold<int>(0, (a, r) => a + r.quantity);
+    final total = rows.fold<int>(0, (a, r) => a + r.amount);
 
     Widget row({
       Widget? leading,
@@ -563,11 +609,11 @@ class _SoldItemsTable extends ConsumerWidget {
           Expanded(child: name),
           const SizedBox(width: 12),
           SizedBox(
-            width: 64,
+            width: 56,
             child: Align(alignment: Alignment.centerRight, child: qty),
           ),
           SizedBox(
-            width: 112,
+            width: 104,
             child: Align(alignment: Alignment.centerRight, child: amount),
           ),
         ],
@@ -577,35 +623,41 @@ class _SoldItemsTable extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(l10n.soldSummary(rows.length, stats.itemCount), style: muted),
+        Text(summary, style: muted),
         const SizedBox(height: 4),
         row(
           name: Text(l10n.soldColumnItem, style: muted),
           qty: Text(l10n.soldColumnQty, style: muted),
-          amount: Text(l10n.revenue, style: muted),
+          amount: Text(amountLabel, style: muted),
         ),
         const Divider(height: 1),
-        for (final s in rows)
+        for (final r in rows)
           row(
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(Radii.sm),
               child: SizedBox.square(
                 dimension: _imageSize,
                 child: StoredImage(
-                  images[s.variantId],
-                  placeholder: NamePlaceholder(s.name),
+                  images[r.variantId],
+                  placeholder: NamePlaceholder(r.name),
                 ),
               ),
             ),
-            name: Text(s.name, maxLines: 2, overflow: TextOverflow.ellipsis),
-            qty: Text('${s.quantity}', style: figures),
-            amount: Text(money(s.revenue), style: figures),
+            name: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(r.name, maxLines: 2, overflow: TextOverflow.ellipsis),
+                if (r.note != null) Text(r.note!, style: muted),
+              ],
+            ),
+            qty: Text('${r.quantity}', style: figures),
+            amount: Text(money(r.amount), style: figures),
           ),
         const Divider(height: 1),
         row(
           name: Text(l10n.total, style: theme.textTheme.titleSmall),
           qty: Text(
-            '${stats.itemCount}',
+            '$totalQty',
             style: figures?.copyWith(fontWeight: FontWeight.w600),
           ),
           amount: Text(
@@ -618,12 +670,91 @@ class _SoldItemsTable extends ConsumerWidget {
   }
 }
 
+/// 作者分账明细：这个作者名下卖出的每样商品和分到的钱。平板居中弹窗，手机底部弹层。
+void _showCreatorItems(
+  BuildContext context, {
+  required String name,
+  required int amount,
+  required List<CreatorItem> items,
+}) {
+  final l10n = AppLocalizations.of(context);
+  // 合并「未设置作者」时同一件商品可能来自好几个 id，再按 SKU 合一次。
+  final merged = <String, CreatorItem>{};
+  for (final i in items) {
+    final prev = merged[i.variantId];
+    merged[i.variantId] = CreatorItem(
+      variantId: i.variantId,
+      name: i.name,
+      quantity: (prev?.quantity ?? 0) + i.quantity,
+      amount: (prev?.amount ?? 0) + i.amount,
+      bundleShare: i.bundleShare || (prev?.bundleShare ?? false),
+    );
+  }
+  final rows = merged.values.toList()
+    ..sort((a, b) => b.amount.compareTo(a.amount));
+  Widget content(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(name, style: Theme.of(context).textTheme.titleLarge),
+      const SizedBox(height: Gap.md),
+      _ItemTable(
+        rows: [
+          for (final i in rows)
+            (
+              variantId: i.variantId,
+              name: i.name,
+              quantity: i.quantity,
+              amount: i.amount,
+              note: i.bundleShare ? l10n.creatorBundleShare : null,
+            ),
+        ],
+        summary: l10n.soldSummary(
+          rows.length,
+          rows.fold<int>(0, (a, i) => a + i.quantity),
+        ),
+        amountLabel: l10n.creatorShareColumn,
+      ),
+    ],
+  );
+  if (context.isTablet) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(Gap.xl),
+            child: content(dialogContext),
+          ),
+        ),
+      ),
+    );
+  } else {
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(Gap.xl, 0, Gap.xl, Gap.xl),
+          child: content(sheetContext),
+        ),
+      ),
+    );
+  }
+}
+
 /// 排行条形图：一行一个条目，条的长度表示数值，文字用正文颜色写在条上方。
 class _RankedBars extends StatelessWidget {
-  const _RankedBars({required this.rows});
+  const _RankedBars({required this.rows, this.onTap});
 
   /// (名称, 用于比较长度的数值, 右侧显示的文字)
   final List<(String, int, String)> rows;
+
+  /// 设置了就每行可点（右边带箭头），参数是第几行。
+  final ValueChanged<int>? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -631,56 +762,78 @@ class _RankedBars extends StatelessWidget {
     final max = rows.fold<int>(0, (a, r) => r.$2 > a ? r.$2 : a);
     return Column(
       children: [
-        for (final (name, value, label) in rows)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+        for (final (i, (name, value, label)) in rows.indexed)
+          _tappable(
+            context,
+            i,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      label,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                      const SizedBox(width: 12),
+                      Text(
+                        label,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                // iOS 风格的进度条：浅色胶囊轨道，主色胶囊填充。
-                LayoutBuilder(
-                  builder: (context, constraints) => Container(
-                    height: 8,
-                    alignment: Alignment.centerLeft,
-                    decoration: ShapeDecoration(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.07,
-                      ),
-                      shape: const StadiumBorder(),
-                    ),
-                    child: Container(
-                      width: max <= 0 ? 0 : constraints.maxWidth * value / max,
+                      if (onTap != null)
+                        Icon(
+                          CupertinoIcons.chevron_forward,
+                          size: 16,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.3,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  // iOS 风格的进度条：浅色胶囊轨道，主色胶囊填充。
+                  LayoutBuilder(
+                    builder: (context, constraints) => Container(
+                      height: 8,
+                      alignment: Alignment.centerLeft,
                       decoration: ShapeDecoration(
-                        color: theme.colorScheme.primary,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.07,
+                        ),
                         shape: const StadiumBorder(),
+                      ),
+                      child: Container(
+                        width: max <= 0
+                            ? 0
+                            : constraints.maxWidth * value / max,
+                        decoration: ShapeDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: const StadiumBorder(),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
       ],
     );
   }
+
+  Widget _tappable(BuildContext context, int i, Widget child) => onTap == null
+      ? child
+      : InkWell(
+          borderRadius: BorderRadius.circular(Radii.sm),
+          onTap: () => onTap!(i),
+          child: child,
+        );
 }
