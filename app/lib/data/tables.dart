@@ -81,6 +81,9 @@ class Variants extends Table with SyncColumns {
   IntColumn get cost => integer().withDefault(const Constant(0))();
   TextColumn get sku => text().nullable()();
   TextColumn get barcode => text().nullable()();
+
+  /// 同一商品里规格的顺序，编辑商品时可以拖动调整；旧数据都是 0，再按插入顺序排。
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 }
 
 /// 套装组成：[bundleVariantId] = [componentVariantId] × [quantity] 的组合。

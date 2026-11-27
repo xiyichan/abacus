@@ -2443,6 +2443,18 @@ class $VariantsTable extends Variants with TableInfo<$VariantsTable, Variant> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2454,6 +2466,7 @@ class $VariantsTable extends Variants with TableInfo<$VariantsTable, Variant> {
     cost,
     sku,
     barcode,
+    sortOrder,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2526,6 +2539,12 @@ class $VariantsTable extends Variants with TableInfo<$VariantsTable, Variant> {
         barcode.isAcceptableOrUnknown(data['barcode']!, _barcodeMeta),
       );
     }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
     return context;
   }
 
@@ -2571,6 +2590,10 @@ class $VariantsTable extends Variants with TableInfo<$VariantsTable, Variant> {
         DriftSqlType.string,
         data['${effectivePrefix}barcode'],
       ),
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
     );
   }
 
@@ -2594,6 +2617,9 @@ class Variant extends DataClass implements Insertable<Variant> {
   final int cost;
   final String? sku;
   final String? barcode;
+
+  /// 同一商品里规格的顺序，编辑商品时可以拖动调整；旧数据都是 0，再按插入顺序排。
+  final int sortOrder;
   const Variant({
     required this.id,
     required this.updatedAt,
@@ -2604,6 +2630,7 @@ class Variant extends DataClass implements Insertable<Variant> {
     required this.cost,
     this.sku,
     this.barcode,
+    required this.sortOrder,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2621,6 +2648,7 @@ class Variant extends DataClass implements Insertable<Variant> {
     if (!nullToAbsent || barcode != null) {
       map['barcode'] = Variable<String>(barcode);
     }
+    map['sort_order'] = Variable<int>(sortOrder);
     return map;
   }
 
@@ -2637,6 +2665,7 @@ class Variant extends DataClass implements Insertable<Variant> {
       barcode: barcode == null && nullToAbsent
           ? const Value.absent()
           : Value(barcode),
+      sortOrder: Value(sortOrder),
     );
   }
 
@@ -2655,6 +2684,7 @@ class Variant extends DataClass implements Insertable<Variant> {
       cost: serializer.fromJson<int>(json['cost']),
       sku: serializer.fromJson<String?>(json['sku']),
       barcode: serializer.fromJson<String?>(json['barcode']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
     );
   }
   @override
@@ -2670,6 +2700,7 @@ class Variant extends DataClass implements Insertable<Variant> {
       'cost': serializer.toJson<int>(cost),
       'sku': serializer.toJson<String?>(sku),
       'barcode': serializer.toJson<String?>(barcode),
+      'sortOrder': serializer.toJson<int>(sortOrder),
     };
   }
 
@@ -2683,6 +2714,7 @@ class Variant extends DataClass implements Insertable<Variant> {
     int? cost,
     Value<String?> sku = const Value.absent(),
     Value<String?> barcode = const Value.absent(),
+    int? sortOrder,
   }) => Variant(
     id: id ?? this.id,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -2693,6 +2725,7 @@ class Variant extends DataClass implements Insertable<Variant> {
     cost: cost ?? this.cost,
     sku: sku.present ? sku.value : this.sku,
     barcode: barcode.present ? barcode.value : this.barcode,
+    sortOrder: sortOrder ?? this.sortOrder,
   );
   Variant copyWithCompanion(VariantsCompanion data) {
     return Variant(
@@ -2705,6 +2738,7 @@ class Variant extends DataClass implements Insertable<Variant> {
       cost: data.cost.present ? data.cost.value : this.cost,
       sku: data.sku.present ? data.sku.value : this.sku,
       barcode: data.barcode.present ? data.barcode.value : this.barcode,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
     );
   }
 
@@ -2719,7 +2753,8 @@ class Variant extends DataClass implements Insertable<Variant> {
           ..write('price: $price, ')
           ..write('cost: $cost, ')
           ..write('sku: $sku, ')
-          ..write('barcode: $barcode')
+          ..write('barcode: $barcode, ')
+          ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
   }
@@ -2735,6 +2770,7 @@ class Variant extends DataClass implements Insertable<Variant> {
     cost,
     sku,
     barcode,
+    sortOrder,
   );
   @override
   bool operator ==(Object other) =>
@@ -2748,7 +2784,8 @@ class Variant extends DataClass implements Insertable<Variant> {
           other.price == this.price &&
           other.cost == this.cost &&
           other.sku == this.sku &&
-          other.barcode == this.barcode);
+          other.barcode == this.barcode &&
+          other.sortOrder == this.sortOrder);
 }
 
 class VariantsCompanion extends UpdateCompanion<Variant> {
@@ -2761,6 +2798,7 @@ class VariantsCompanion extends UpdateCompanion<Variant> {
   final Value<int> cost;
   final Value<String?> sku;
   final Value<String?> barcode;
+  final Value<int> sortOrder;
   final Value<int> rowid;
   const VariantsCompanion({
     this.id = const Value.absent(),
@@ -2772,6 +2810,7 @@ class VariantsCompanion extends UpdateCompanion<Variant> {
     this.cost = const Value.absent(),
     this.sku = const Value.absent(),
     this.barcode = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   VariantsCompanion.insert({
@@ -2784,6 +2823,7 @@ class VariantsCompanion extends UpdateCompanion<Variant> {
     this.cost = const Value.absent(),
     this.sku = const Value.absent(),
     this.barcode = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        updatedAt = Value(updatedAt),
@@ -2799,6 +2839,7 @@ class VariantsCompanion extends UpdateCompanion<Variant> {
     Expression<int>? cost,
     Expression<String>? sku,
     Expression<String>? barcode,
+    Expression<int>? sortOrder,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2811,6 +2852,7 @@ class VariantsCompanion extends UpdateCompanion<Variant> {
       if (cost != null) 'cost': cost,
       if (sku != null) 'sku': sku,
       if (barcode != null) 'barcode': barcode,
+      if (sortOrder != null) 'sort_order': sortOrder,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2825,6 +2867,7 @@ class VariantsCompanion extends UpdateCompanion<Variant> {
     Value<int>? cost,
     Value<String?>? sku,
     Value<String?>? barcode,
+    Value<int>? sortOrder,
     Value<int>? rowid,
   }) {
     return VariantsCompanion(
@@ -2837,6 +2880,7 @@ class VariantsCompanion extends UpdateCompanion<Variant> {
       cost: cost ?? this.cost,
       sku: sku ?? this.sku,
       barcode: barcode ?? this.barcode,
+      sortOrder: sortOrder ?? this.sortOrder,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2871,6 +2915,9 @@ class VariantsCompanion extends UpdateCompanion<Variant> {
     if (barcode.present) {
       map['barcode'] = Variable<String>(barcode.value);
     }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2889,6 +2936,7 @@ class VariantsCompanion extends UpdateCompanion<Variant> {
           ..write('cost: $cost, ')
           ..write('sku: $sku, ')
           ..write('barcode: $barcode, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -10123,6 +10171,7 @@ typedef $$VariantsTableCreateCompanionBuilder = VariantsCompanion Function({
   Value<int> cost,
   Value<String?> sku,
   Value<String?> barcode,
+  Value<int> sortOrder,
   Value<int> rowid,
 });
 typedef $$VariantsTableUpdateCompanionBuilder = VariantsCompanion Function({
@@ -10135,6 +10184,7 @@ typedef $$VariantsTableUpdateCompanionBuilder = VariantsCompanion Function({
   Value<int> cost,
   Value<String?> sku,
   Value<String?> barcode,
+  Value<int> sortOrder,
   Value<int> rowid,
 });
 
@@ -10189,6 +10239,11 @@ class $$VariantsTableFilterComposer
 
   ColumnFilters<String> get barcode => $composableBuilder(
     column: $table.barcode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -10246,6 +10301,11 @@ class $$VariantsTableOrderingComposer
     column: $table.barcode,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$VariantsTableAnnotationComposer
@@ -10283,6 +10343,9 @@ class $$VariantsTableAnnotationComposer
 
   GeneratedColumn<String> get barcode =>
       $composableBuilder(column: $table.barcode, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
 }
 
 class $$VariantsTableTableManager
@@ -10322,6 +10385,7 @@ class $$VariantsTableTableManager
                 Value<int> cost = const Value.absent(),
                 Value<String?> sku = const Value.absent(),
                 Value<String?> barcode = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VariantsCompanion(
                 id: id,
@@ -10333,6 +10397,7 @@ class $$VariantsTableTableManager
                 cost: cost,
                 sku: sku,
                 barcode: barcode,
+                sortOrder: sortOrder,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -10346,6 +10411,7 @@ class $$VariantsTableTableManager
                 Value<int> cost = const Value.absent(),
                 Value<String?> sku = const Value.absent(),
                 Value<String?> barcode = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VariantsCompanion.insert(
                 id: id,
@@ -10357,6 +10423,7 @@ class $$VariantsTableTableManager
                 cost: cost,
                 sku: sku,
                 barcode: barcode,
+                sortOrder: sortOrder,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

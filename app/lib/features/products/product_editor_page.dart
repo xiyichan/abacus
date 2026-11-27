@@ -546,21 +546,31 @@ class _ProductEditorPageState extends ConsumerState<ProductEditorPage> {
       padding: const EdgeInsets.symmetric(horizontal: Gap.md),
       child: Text(title, style: muted),
     );
-    Widget columns(Widget a, Widget b, Widget c, [Widget? trailing]) => Row(
+    // 最左边一列是拖动把手：按住上下拖可以调整规格顺序。
+    Widget columns(
+      Widget a,
+      Widget b,
+      Widget c, {
+      Widget? leading,
+      Widget? trailing,
+    }) => Row(
       children: [
+        SizedBox(width: minTapSize, child: leading),
         Expanded(flex: 5, child: a),
         Expanded(flex: 4, child: b),
         Expanded(flex: 4, child: c),
         SizedBox(width: 44, child: trailing),
       ],
     );
+    final cardColor =
+        theme.cardTheme.color ?? theme.colorScheme.surfaceContainerLowest;
     return [
       GroupedSection(
         margin: const EdgeInsets.only(bottom: Gap.lg),
         dividerIndent: Gap.lg,
         children: [
           Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(Gap.xs, Gap.md, 0, 0),
+            padding: const EdgeInsets.only(top: Gap.md),
             // 标题和单元格用同样的左内边距，列对齐。
             child: columns(
               head(l10n.variantLabel),
@@ -568,47 +578,83 @@ class _ProductEditorPageState extends ConsumerState<ProductEditorPage> {
               head(l10n.cost),
             ),
           ),
-          for (final row in _variants)
-            Padding(
-              key: ObjectKey(row),
-              padding: const EdgeInsetsDirectional.only(start: Gap.xs),
-              child: columns(
-                _CellField(
-                  controller: row.label,
-                  hint: l10n.variantLabelHint,
-                  semanticLabel: l10n.variantLabel,
-                  validator: (v) =>
-                      (v ?? '').trim().isEmpty ? l10n.required : null,
-                ),
-                _CellField(
-                  controller: row.price,
-                  money: true,
-                  prefix: '$currency ',
-                  semanticLabel: l10n.price,
-                  validator: _requiredMoney,
-                ),
-                _CellField(
-                  controller: row.cost,
-                  money: true,
-                  prefix: '$currency ',
-                  hint: l10n.optional,
-                  semanticLabel: l10n.cost,
-                  validator: _optionalMoney,
-                ),
-                canRemove
-                    ? IconButton(
-                        tooltip: l10n.delete,
-                        icon: Icon(
-                          CupertinoIcons.minus_circle_fill,
-                          color: theme.colorScheme.error,
-                          size: 22,
-                        ),
-                        onPressed: () =>
-                            setState(() => _variants.remove(row..dispose())),
-                      )
-                    : null,
-              ),
+          ReorderableListView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            onReorderItem: (from, to) =>
+                setState(() => _variants.insert(to, _variants.removeAt(from))),
+            // 拖起来的那一行：卡片底色加一点阴影。
+            proxyDecorator: (child, index, animation) => Material(
+              color: cardColor,
+              elevation: 6,
+              borderRadius: BorderRadius.circular(Radii.sm),
+              child: child,
             ),
+            children: [
+              for (final (i, row) in _variants.indexed)
+                Column(
+                  key: ObjectKey(row),
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (i > 0) const Divider(height: 0.5, indent: Gap.lg),
+                    columns(
+                      _CellField(
+                        controller: row.label,
+                        hint: l10n.variantLabelHint,
+                        semanticLabel: l10n.variantLabel,
+                        validator: (v) =>
+                            (v ?? '').trim().isEmpty ? l10n.required : null,
+                      ),
+                      _CellField(
+                        controller: row.price,
+                        money: true,
+                        prefix: '$currency ',
+                        semanticLabel: l10n.price,
+                        validator: _requiredMoney,
+                      ),
+                      _CellField(
+                        controller: row.cost,
+                        money: true,
+                        prefix: '$currency ',
+                        hint: l10n.optional,
+                        semanticLabel: l10n.cost,
+                        validator: _optionalMoney,
+                      ),
+                      leading: canRemove
+                          ? ReorderableDragStartListener(
+                              index: i,
+                              child: Tooltip(
+                                message: l10n.moveHandle,
+                                child: SizedBox(
+                                  height: minTapSize,
+                                  child: Icon(
+                                    CupertinoIcons.line_horizontal_3,
+                                    size: 20,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : null,
+                      trailing: canRemove
+                          ? IconButton(
+                              tooltip: l10n.delete,
+                              icon: Icon(
+                                CupertinoIcons.minus_circle_fill,
+                                color: theme.colorScheme.error,
+                                size: 22,
+                              ),
+                              onPressed: () => setState(
+                                () => _variants.remove(row..dispose()),
+                              ),
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
+            ],
+          ),
           _AddRow(
             label: l10n.addVariant,
             onTap: () => setState(() {

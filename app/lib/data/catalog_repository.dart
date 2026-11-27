@@ -105,9 +105,14 @@ class CatalogRepository {
                 (t) => OrderingTerm(expression: t.name),
               ]))
             .get();
-    final variants = await (_db.select(
-      _db.variants,
-    )..where((t) => t.deleted.equals(false))).get();
+    final variants =
+        await (_db.select(_db.variants)
+              ..where((t) => t.deleted.equals(false))
+              ..orderBy([
+                (t) => OrderingTerm(expression: t.sortOrder),
+                (t) => OrderingTerm(expression: t.rowId),
+              ]))
+            .get();
     final bundleItems = await (_db.select(
       _db.bundleItems,
     )..where((t) => t.deleted.equals(false))).get();
@@ -289,7 +294,7 @@ class CatalogRepository {
             VariantsCompanion(deleted: const Value(true), updatedAt: Value(ts)),
           );
 
-      for (final v in draft.variants) {
+      for (final (i, v) in draft.variants.indexed) {
         final variantId = v.id ??= newId();
         await _db
             .into(_db.variants)
@@ -301,6 +306,7 @@ class CatalogRepository {
                 label: Value(v.label.trim()),
                 price: v.price,
                 cost: Value(v.cost),
+                sortOrder: Value(i),
               ),
             );
       }

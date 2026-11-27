@@ -35,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.named(String name) : super(driftDatabase(name: name));
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -65,6 +65,7 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(events, events.groupOrder);
         await m.addColumn(events, events.productOrder);
       }
+      if (from < 13) await m.addColumn(variants, variants.sortOrder);
       if (from < 3) {
         await installOpLogTriggers(this);
         // 旧数据补记操作日志：空更新会触发触发器，把每一行记成本机的一条操作。

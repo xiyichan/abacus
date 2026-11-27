@@ -131,6 +131,43 @@ void main() {
     expect(await db.stockAt(homeLocation), isEmpty);
   });
 
+  test('规格按编辑时的顺序保存，调整顺序后也跟着变', () async {
+    List<String> labels(CatalogProduct p) => [
+      for (final v in p.variants) v.label,
+    ];
+    final id = await catalog.saveProduct(
+      ProductDraft(
+        name: '谷子',
+        kind: ProductKind.variants,
+        variants: [
+          VariantDraft(label: '拍立得', price: 600),
+          VariantDraft(label: '钥匙扣', price: 500),
+          VariantDraft(label: '徽章', price: 1800),
+        ],
+      ),
+    );
+    final first = (await catalog.loadCatalog()).single;
+    expect(labels(first), ['拍立得', '钥匙扣', '徽章']);
+
+    final byLabel = {for (final v in first.variants) v.label: v};
+    await catalog.saveProduct(
+      ProductDraft(
+        id: id,
+        name: '谷子',
+        kind: ProductKind.variants,
+        variants: [
+          for (final l in ['徽章', '拍立得', '钥匙扣'])
+            VariantDraft(
+              id: byLabel[l]!.id,
+              label: l,
+              price: byLabel[l]!.price,
+            ),
+        ],
+      ),
+    );
+    expect(labels((await catalog.loadCatalog()).single), ['徽章', '拍立得', '钥匙扣']);
+  });
+
   test('场次备货、下单扣库存（含套装）、退款回补', () async {
     await catalog.saveProduct(
       ProductDraft(name: '亚克力', variants: [VariantDraft(price: 3000)]),
